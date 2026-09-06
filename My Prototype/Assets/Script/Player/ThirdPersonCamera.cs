@@ -51,6 +51,10 @@ public class ThirdPersonCamera : MonoBehaviour
         get { return isAiming; }
     }
 
+    public float CurrentYaw
+    {
+        get { return yaw; }
+    }
 
     private void Start()
     {
@@ -67,21 +71,27 @@ public class ThirdPersonCamera : MonoBehaviour
     }
 
 
-    private void LateUpdate()
+    private void Update()
     {
         if (target == null)
             return;
-
 
         CheckAimInput();
 
         CameraRotation();
 
+        CursorControl();
+    }
+
+
+    private void LateUpdate()
+    {
+        if (target == null)
+            return;
+
         UpdateCameraState();
 
         CameraPosition();
-
-        CursorControl();
     }
 
 

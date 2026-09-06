@@ -18,6 +18,8 @@ public class PlayerMovement : MonoBehaviour
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
 
+    [SerializeField] private ThirdPersonCamera thirdPersonCamera;
+
     private CharacterController controller;
 
     private float verticalVelocity;
@@ -34,6 +36,17 @@ public class PlayerMovement : MonoBehaviour
         {
             cameraTransform = Camera.main.transform;
         }
+
+        if (thirdPersonCamera == null && cameraTransform != null)
+        {
+            thirdPersonCamera =
+                cameraTransform.GetComponent<ThirdPersonCamera>();
+        }
+    }
+
+    private void LateUpdate()
+    {
+        RotateWhileAiming();
     }
 
 
@@ -167,11 +180,17 @@ public class PlayerMovement : MonoBehaviour
 
 
         // 이동 방향 바라보기
-        if (moveDirection.sqrMagnitude > 0.01f)
+        bool isAiming =
+            thirdPersonCamera != null &&
+            thirdPersonCamera.IsAiming;
+
+
+        // 일반 상태일 때만 이동 방향으로 회전
+        if (!isAiming &&
+            moveDirection.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation =
                 Quaternion.LookRotation(moveDirection);
-
 
             transform.rotation =
                 Quaternion.Slerp(
@@ -265,5 +284,33 @@ public class PlayerMovement : MonoBehaviour
             groundCheckPosition,
             checkRadius
         );
+    }
+
+    private void RotateWhileAiming()
+    {
+        if (thirdPersonCamera == null)
+            return;
+
+
+        if (!thirdPersonCamera.IsAiming)
+            return;
+
+
+        // 카메라의 좌우 회전값만 가져온다.
+        // 위/아래 Pitch는 Player에 적용하지 않는다.
+        Quaternion targetRotation =
+            Quaternion.Euler(
+                0f,
+                thirdPersonCamera.CurrentYaw,
+                0f
+            );
+
+
+        transform.rotation =
+            Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                rotationSpeed * Time.deltaTime
+            );
     }
 }
