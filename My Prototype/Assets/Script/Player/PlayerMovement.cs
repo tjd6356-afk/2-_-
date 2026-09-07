@@ -20,6 +20,8 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private ThirdPersonCamera thirdPersonCamera;
 
+    [SerializeField] private float aimRotationSpeed = 20f;
+
     private CharacterController controller;
 
     private float verticalVelocity;
@@ -310,7 +312,7 @@ public class PlayerMovement : MonoBehaviour
             Quaternion.Slerp(
                 transform.rotation,
                 targetRotation,
-                rotationSpeed * Time.deltaTime
+                aimRotationSpeed * Time.deltaTime
             );
     }
 }
