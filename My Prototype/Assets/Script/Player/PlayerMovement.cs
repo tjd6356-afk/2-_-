@@ -4,8 +4,10 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float rotationSpeed = 10f;
+
+    [Header("Stats")]
+    [SerializeField] private PlayerStats playerStats;
 
     [Header("Jump")]
     [SerializeField] private float jumpHeight = 1.5f;
@@ -34,12 +36,21 @@ public class PlayerMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
 
-        if (cameraTransform == null && Camera.main != null)
+        if (playerStats == null)
         {
-            cameraTransform = Camera.main.transform;
+            playerStats =
+                GetComponent<PlayerStats>();
         }
 
-        if (thirdPersonCamera == null && cameraTransform != null)
+        if (cameraTransform == null &&
+            Camera.main != null)
+        {
+            cameraTransform =
+                Camera.main.transform;
+        }
+
+        if (thirdPersonCamera == null &&
+            cameraTransform != null)
         {
             thirdPersonCamera =
                 cameraTransform.GetComponent<ThirdPersonCamera>();
@@ -174,11 +185,11 @@ public class PlayerMovement : MonoBehaviour
             cameraRight * input.x;
 
 
-        controller.Move(
-            moveDirection *
-            moveSpeed *
-            Time.deltaTime
-        );
+            controller.Move(
+        moveDirection *
+        playerStats.MoveSpeed *
+        Time.deltaTime);
+                    
 
 
         // 이동 방향 바라보기
