@@ -8,6 +8,9 @@ public class Projectile : MonoBehaviour
 
     private Rigidbody rb;
 
+    private float damage;
+
+    public float Damage => damage;
 
     private void Awake()
     {
@@ -22,9 +25,14 @@ public class Projectile : MonoBehaviour
     }
 
 
-    public void Launch(Vector3 direction)
+    public void Launch(
+    Vector3 direction,
+    float projectileDamage
+)
     {
         direction.Normalize();
+
+        damage = projectileDamage;
 
         rb.linearVelocity =
             direction * speed;

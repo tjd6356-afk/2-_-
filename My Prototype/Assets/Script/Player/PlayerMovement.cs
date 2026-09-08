@@ -186,10 +186,11 @@ public class PlayerMovement : MonoBehaviour
 
 
             controller.Move(
-        moveDirection *
-        playerStats.MoveSpeed *
-        Time.deltaTime);
-                    
+            moveDirection *
+            playerStats.MoveSpeed *
+            Time.deltaTime
+            );
+
 
 
         // 이동 방향 바라보기

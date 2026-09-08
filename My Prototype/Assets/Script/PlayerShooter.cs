@@ -12,6 +12,9 @@ public class PlayerShooter : MonoBehaviour
 
     [SerializeField] private ThirdPersonCamera thirdPersonCamera;
 
+    [SerializeField] private PlayerStats playerStats;
+
+    private float nextFireTime;
 
     [Header("Aim")]
     [SerializeField] private float maxAimDistance = 100f;
@@ -21,10 +24,15 @@ public class PlayerShooter : MonoBehaviour
 
     private void Awake()
     {
-        // 직접 연결하지 않았으면 Main Camera 자동 검색
         if (playerCamera == null)
         {
             playerCamera = Camera.main;
+        }
+
+        if (playerStats == null)
+        {
+            playerStats =
+                GetComponent<PlayerStats>();
         }
     }
 
@@ -44,9 +52,16 @@ public class PlayerShooter : MonoBehaviour
 
 
         // 좌클릭 한 번
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        if (Mouse.current.leftButton.isPressed)
         {
-            Shoot();
+            if (Time.time >= nextFireTime)
+            {
+                Shoot();
+
+                nextFireTime =
+                    Time.time +
+                    (1f / playerStats.FireRate);
+            }
         }
     }
 
@@ -124,6 +139,9 @@ public class PlayerShooter : MonoBehaviour
         // 5. 총알 발사
         // =====================================================
 
-        projectile.Launch(shootDirection);
+                projectile.Launch(
+            shootDirection,
+            playerStats.AttackPower
+        );
     }
 }
