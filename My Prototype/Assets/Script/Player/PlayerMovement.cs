@@ -30,6 +30,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dashDuration = 0.18f;
     [SerializeField] private float dashCooldown = 0.5f;
 
+    [Header("Wire")]
+    [SerializeField] private WireController wireController;
+
     private bool isDashing;
     private float nextDashTime;
 
@@ -66,6 +69,12 @@ public class PlayerMovement : MonoBehaviour
             thirdPersonCamera =
                 cameraTransform.GetComponent<ThirdPersonCamera>();
         }
+
+        if (wireController == null)
+        {
+            wireController =
+                GetComponent<WireController>();
+        }
     }
 
     private void LateUpdate()
@@ -76,12 +85,28 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        // ==========================================
+        // 와이어가 현재 Player 이동을 제어 중
+        // ==========================================
+
+        if (wireController != null &&
+            wireController.IsControllingMovement)
+        {
+            /*
+             * 와이어 사용 중에는
+             * 기존 중력이 누적되지 않도록 초기화
+             */
+            verticalVelocity = 0f;
+
+            return;
+        }
+
+
         CheckGround();
 
         CheckDashInput();
 
 
-        // 대쉬 중에는 일반 이동/점프를 잠시 막는다.
         if (isDashing)
         {
             DashMove();
@@ -90,6 +115,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         Move();
+
         JumpAndGravity();
     }
 
