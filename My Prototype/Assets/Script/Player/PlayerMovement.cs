@@ -24,6 +24,17 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private float aimRotationSpeed = 20f;
 
+
+    [Header("Dash")]
+    [SerializeField] private float dashSpeed = 18f;
+    [SerializeField] private float dashDuration = 0.18f;
+    [SerializeField] private float dashCooldown = 0.5f;
+
+    private bool isDashing;
+    private float nextDashTime;
+
+    private Vector3 dashDirection;
+
     private CharacterController controller;
 
     private float verticalVelocity;
@@ -66,6 +77,17 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         CheckGround();
+
+        CheckDashInput();
+
+
+        // 대쉬 중에는 일반 이동/점프를 잠시 막는다.
+        if (isDashing)
+        {
+            DashMove();
+            return;
+        }
+
 
         Move();
         JumpAndGravity();
@@ -146,23 +168,7 @@ public class PlayerMovement : MonoBehaviour
             return;
 
 
-        Vector2 input = Vector2.zero;
-
-
-        if (Keyboard.current != null)
-        {
-            if (Keyboard.current.wKey.isPressed)
-                input.y += 1f;
-
-            if (Keyboard.current.sKey.isPressed)
-                input.y -= 1f;
-
-            if (Keyboard.current.dKey.isPressed)
-                input.x += 1f;
-
-            if (Keyboard.current.aKey.isPressed)
-                input.x -= 1f;
-        }
+        Vector2 input = GetMovementInput();
 
 
         input = Vector2.ClampMagnitude(input, 1f);
@@ -185,11 +191,11 @@ public class PlayerMovement : MonoBehaviour
             cameraRight * input.x;
 
 
-            controller.Move(
-            moveDirection *
-            playerStats.MoveSpeed *
-            Time.deltaTime
-            );
+        controller.Move(
+        moveDirection *
+        playerStats.MoveSpeed *
+        Time.deltaTime
+        );
 
 
 
@@ -326,5 +332,158 @@ public class PlayerMovement : MonoBehaviour
                 targetRotation,
                 aimRotationSpeed * Time.deltaTime
             );
+    }
+
+    private void CheckDashInput()
+    {
+        if (Keyboard.current == null)
+            return;
+
+
+        if (isDashing)
+            return;
+
+
+        if (Time.time < nextDashTime)
+            return;
+
+
+        // ==========================================
+        // 현재 이동 입력 확인
+        // ==========================================
+
+        Vector2 input = GetMovementInput();
+
+
+        // 방향키를 아무것도 안 누르고 있다면 대쉬 불가능
+        if (input.sqrMagnitude <= 0.01f)
+            return;
+
+
+        bool shiftPressed =
+            Keyboard.current.leftShiftKey.wasPressedThisFrame ||
+            Keyboard.current.rightShiftKey.wasPressedThisFrame;
+
+
+        /*
+         * Shift를 먼저 누르고
+         * W/A/S/D를 누르는 경우도 처리한다.
+         */
+        bool directionPressed =
+            Keyboard.current.wKey.wasPressedThisFrame ||
+            Keyboard.current.aKey.wasPressedThisFrame ||
+            Keyboard.current.sKey.wasPressedThisFrame ||
+            Keyboard.current.dKey.wasPressedThisFrame;
+
+
+        bool shiftHeld =
+            Keyboard.current.leftShiftKey.isPressed ||
+            Keyboard.current.rightShiftKey.isPressed;
+
+
+        /*
+         * 경우 1
+         * W를 누르고 있는 상태에서 Shift
+         *
+         * 경우 2
+         * Shift를 누르고 있는 상태에서 W
+         */
+        if (!shiftPressed &&
+            !(shiftHeld && directionPressed))
+        {
+            return;
+        }
+
+
+        StartDash(input);
+    }
+
+    private Vector2 GetMovementInput()
+    {
+        Vector2 input = Vector2.zero;
+
+
+        if (Keyboard.current == null)
+            return input;
+
+
+        if (Keyboard.current.wKey.isPressed)
+            input.y += 1f;
+
+        if (Keyboard.current.sKey.isPressed)
+            input.y -= 1f;
+
+        if (Keyboard.current.dKey.isPressed)
+            input.x += 1f;
+
+        if (Keyboard.current.aKey.isPressed)
+            input.x -= 1f;
+
+
+        return Vector2.ClampMagnitude(
+            input,
+            1f
+        );
+    }
+
+    private void StartDash(Vector2 input)
+    {
+        if (cameraTransform == null)
+            return;
+
+
+        // 카메라 기준 앞/오른쪽
+        Vector3 cameraForward =
+            cameraTransform.forward;
+
+        Vector3 cameraRight =
+            cameraTransform.right;
+
+
+        // 대쉬는 수평 방향으로만
+        cameraForward.y = 0f;
+        cameraRight.y = 0f;
+
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+
+
+        // ==========================================
+        // 입력 방향에 따른 대쉬 방향 계산
+        // ==========================================
+
+        dashDirection =
+            cameraForward * input.y +
+            cameraRight * input.x;
+
+
+        dashDirection.Normalize();
+
+
+        isDashing = true;
+
+
+        nextDashTime =
+            Time.time +
+            dashCooldown;
+
+
+        // 일정 시간이 지나면 대쉬 종료
+        Invoke(
+            nameof(EndDash),
+            dashDuration
+        );
+    }
+    private void DashMove()
+    {
+        controller.Move(
+            dashDirection *
+            dashSpeed *
+            Time.deltaTime
+        );
+    }
+    private void EndDash()
+    {
+        isDashing = false;
     }
 }
