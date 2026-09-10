@@ -2,21 +2,25 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 
-// PlayerMovement보다 먼저 Update되도록 설정
+// PlayerMovement보다 먼저 실행
 [DefaultExecutionOrder(-50)]
 public class WireController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Camera playerCamera;
     [SerializeField] private CharacterController controller;
+    [SerializeField] private PlayerMovement playerMovement;
+
 
     [Header("Wire Origins")]
     [SerializeField] private Transform qWireOrigin;
     [SerializeField] private Transform eWireOrigin;
 
+
     [Header("Wire Lines")]
     [SerializeField] private LineRenderer qWireLine;
     [SerializeField] private LineRenderer eWireLine;
+
 
     [Header("Wire Target")]
     [SerializeField] private LayerMask wireableMask;
@@ -24,26 +28,60 @@ public class WireController : MonoBehaviour
     [SerializeField] private float minWireDistance = 1f;
 
 
-    [Header("Single Wire Swing")]
-    [Tooltip("A/D로 회전하는 기본 속도")]
-    [SerializeField] private float swingAngularSpeed = 90f;
+    // =========================================================
+    // 진자 스윙
+    // =========================================================
 
-    [Tooltip("Shift 사용 시 회전 속도 배율")]
+    [Header("Pendulum Swing")]
+
+    [Tooltip("중력의 세기. 1 = 기본 중력")]
+    [SerializeField] private float gravityScale = 1f;
+
+    [Tooltip("A/D가 스윙에 추가하는 가속력")]
+    [SerializeField] private float swingAcceleration = 18f;
+
+    [Tooltip("Shift 사용 시 A/D 가속력 배율")]
     [SerializeField] private float swingBoostMultiplier = 2f;
 
+    [Tooltip("일반 상태의 최대 스윙 속도")]
+    [SerializeField] private float maxSwingSpeed = 25f;
 
-    [Header("Double Wire Pull")]
-    [Tooltip("Q + E 사용 시 목표 지점으로 이동하는 속도")]
-    [SerializeField] private float pullSpeed = 15f;
-
-    [Tooltip("Shift 사용 시 직선 이동 속도 배율")]
-    [SerializeField] private float pullBoostMultiplier = 2f;
-
-    [SerializeField] private float pullStopDistance = 0.5f;
+    [Tooltip("공기 저항. 작을수록 오래 속도를 유지")]
+    [SerializeField] private float swingDrag = 0.15f;
 
 
     // =========================================================
-    // 각각의 와이어 상태
+    // Q + E 당기기
+    // =========================================================
+
+    [Header("Double Wire Pull")]
+
+    [Tooltip("두 와이어 사용 시 가속력")]
+    [SerializeField] private float pullAcceleration = 35f;
+
+    [Tooltip("두 와이어 사용 시 최대 속도")]
+    [SerializeField] private float maxPullSpeed = 22f;
+
+    [Tooltip("Shift 사용 시 가속/최대속도 배율")]
+    [SerializeField] private float pullBoostMultiplier = 1.8f;
+
+    [SerializeField] private float pullStopDistance = 0.8f;
+
+
+    // =========================================================
+    // Runtime
+    // =========================================================
+
+    private Vector3 wireVelocity;
+
+    // 와이어를 걸기 직전 플레이어 속도 추정
+    private Vector3 freeMovementVelocity;
+
+    private Vector3 previousPosition;
+
+
+    // =========================================================
+    // 와이어 하나의 상태
     // =========================================================
 
     private class WireState
@@ -55,6 +93,9 @@ public class WireController : MonoBehaviour
         public Vector3 localAnchorPoint;
 
         public Vector3 fallbackWorldPoint;
+
+        // 와이어를 처음 걸었을 때 길이
+        public float ropeLength;
 
 
         public Vector3 GetAnchorPoint()
@@ -76,25 +117,25 @@ public class WireController : MonoBehaviour
 
 
     // =========================================================
-    // 외부 확인용
+    // 외부 접근
     // =========================================================
 
-    public bool IsQWireAttached => qWire.attached;
+    public bool IsQWireAttached =>
+        qWire.attached;
 
-    public bool IsEWireAttached => eWire.attached;
+    public bool IsEWireAttached =>
+        eWire.attached;
 
     public bool IsDoubleWire =>
         qWire.attached &&
         eWire.attached;
 
-
-    /*
-     * PlayerMovement가 이 값을 보고
-     * 일반 이동 / 대쉬를 중지한다.
-     */
     public bool IsControllingMovement =>
         qWire.attached ||
         eWire.attached;
+
+    public Vector3 CurrentWireVelocity =>
+        wireVelocity;
 
 
     private void Awake()
@@ -112,8 +153,19 @@ public class WireController : MonoBehaviour
         }
 
 
+        if (playerMovement == null)
+        {
+            playerMovement =
+                GetComponent<PlayerMovement>();
+        }
+
+
         PrepareLine(qWireLine);
         PrepareLine(eWireLine);
+
+
+        previousPosition =
+            transform.position;
     }
 
 
@@ -123,26 +175,66 @@ public class WireController : MonoBehaviour
             return;
 
 
+        bool hadWire =
+            IsControllingMovement;
+
+
         HandleWireInput();
 
 
-        // 두 와이어
-        if (qWire.attached &&
-            eWire.attached)
+        bool hasWire =
+            IsControllingMovement;
+
+
+        // =====================================================
+        // 와이어를 처음 건 순간
+        // =====================================================
+
+        if (!hadWire &&
+            hasWire)
         {
-            DoubleWireMove();
+            BeginWireMovement();
         }
 
-        // Q 와이어만
+
+        // =====================================================
+        // 모든 와이어를 놓은 순간
+        // =====================================================
+
+        if (hadWire &&
+            !hasWire)
+        {
+            EndWireMovement();
+
+            return;
+        }
+
+
+        if (!hasWire)
+            return;
+
+
+        // =====================================================
+        // Q + E
+        // =====================================================
+
+        if (IsDoubleWire)
+        {
+            DoubleWirePull();
+        }
+
+        // =====================================================
+        // 한쪽 와이어
+        // =====================================================
+
         else if (qWire.attached)
         {
-            SingleWireMove(qWire);
+            SingleWireSwing(qWire);
         }
 
-        // E 와이어만
         else if (eWire.attached)
         {
-            SingleWireMove(eWire);
+            SingleWireSwing(eWire);
         }
     }
 
@@ -161,6 +253,27 @@ public class WireController : MonoBehaviour
             eWireOrigin,
             eWireLine
         );
+
+
+        // =====================================================
+        // 와이어를 사용하지 않을 때
+        // 플레이어의 실제 이동 속도 추정
+        // =====================================================
+
+        if (!IsControllingMovement &&
+            Time.deltaTime > 0f)
+        {
+            freeMovementVelocity =
+                (
+                    transform.position -
+                    previousPosition
+                )
+                / Time.deltaTime;
+        }
+
+
+        previousPosition =
+            transform.position;
     }
 
 
@@ -177,7 +290,7 @@ public class WireController : MonoBehaviour
             Keyboard.current.eKey.isPressed;
 
 
-        // Q를 누르고 있는데 아직 연결되지 않았다면 연결 시도
+        // Q
         if (qHeld)
         {
             if (!qWire.attached)
@@ -219,7 +332,7 @@ public class WireController : MonoBehaviour
 
 
     // =========================================================
-    // 십자선 방향으로 와이어 발사
+    // 십자선 방향 와이어 발사
     // =========================================================
 
     private void TryAttachWire(
@@ -231,7 +344,6 @@ public class WireController : MonoBehaviour
             return;
 
 
-        // 화면 정확히 중앙
         Ray ray =
             playerCamera.ViewportPointToRay(
                 new Vector3(
@@ -260,23 +372,35 @@ public class WireController : MonoBehaviour
             );
 
 
-        // 너무 가까운 위치에는 와이어 사용 금지
-        if (distance < minWireDistance)
+        if (distance <
+            minWireDistance)
+        {
             return;
+        }
 
 
         wire.attached = true;
 
+
         wire.targetTransform =
             hit.collider.transform;
 
+
         wire.localAnchorPoint =
-            hit.collider.transform.InverseTransformPoint(
-                hit.point
-            );
+            hit.collider.transform
+                .InverseTransformPoint(
+                    hit.point
+                );
+
 
         wire.fallbackWorldPoint =
             hit.point;
+
+
+        // 중요:
+        // 이 길이보다 멀리 갈 수 없다.
+        wire.ropeLength =
+            distance;
 
 
         if (line != null)
@@ -312,19 +436,114 @@ public class WireController : MonoBehaviour
 
 
     // =========================================================
-    // 한쪽 와이어 이동
-    //
-    // A = 왼쪽 회전
-    // D = 오른쪽 회전
+    // 와이어를 처음 건 순간
     // =========================================================
 
-    private void SingleWireMove(
+    private void BeginWireMovement()
+    {
+        /*
+         * 기존에 달리거나 점프하던 속도를
+         * 그대로 와이어 속도로 가져온다.
+         *
+         * 이것 때문에 달리다가 와이어를 걸면
+         * 기존 관성이 사라지지 않는다.
+         */
+
+        wireVelocity =
+            freeMovementVelocity;
+
+
+        if (playerMovement != null)
+        {
+            playerMovement.ClearWireMomentum();
+        }
+    }
+
+
+    // =========================================================
+    // 모든 와이어를 놓은 순간
+    // =========================================================
+
+    private void EndWireMovement()
+    {
+        /*
+         * 스윙 중 얻은 속도를
+         * PlayerMovement에게 돌려준다.
+         *
+         * 그래서 와이어를 놓아도
+         * 갑자기 멈추지 않고 날아간다.
+         */
+
+        if (playerMovement != null)
+        {
+            playerMovement.ReceiveWireReleaseVelocity(
+                wireVelocity
+            );
+        }
+
+
+        wireVelocity =
+            Vector3.zero;
+    }
+
+
+    // =========================================================
+    // 한쪽 와이어
+    //
+    // 실제 진자형 스윙
+    // =========================================================
+
+    private void SingleWireSwing(
         WireState wire
     )
     {
         if (controller == null)
             return;
 
+
+        float deltaTime =
+            Time.deltaTime;
+
+
+        Vector3 anchorPoint =
+            wire.GetAnchorPoint();
+
+
+        Vector3 playerPosition =
+            transform.position;
+
+
+        Vector3 anchorToPlayer =
+            playerPosition -
+            anchorPoint;
+
+
+        float distance =
+            anchorToPlayer.magnitude;
+
+
+        if (distance <= 0.001f)
+            return;
+
+
+        Vector3 ropeDirection =
+            anchorToPlayer /
+            distance;
+
+
+        // =====================================================
+        // 1. 중력
+        // =====================================================
+
+        wireVelocity +=
+            Physics.gravity *
+            gravityScale *
+            deltaTime;
+
+
+        // =====================================================
+        // 2. A / D 입력
+        // =====================================================
 
         float horizontalInput = 0f;
 
@@ -341,82 +560,234 @@ public class WireController : MonoBehaviour
         }
 
 
-        // A/D 입력이 없다면 회전하지 않음
-        if (Mathf.Abs(horizontalInput) < 0.01f)
-            return;
+        if (Mathf.Abs(horizontalInput) >
+            0.01f)
+        {
+            bool shiftHeld =
+                Keyboard.current
+                    .leftShiftKey
+                    .isPressed
+                ||
+                Keyboard.current
+                    .rightShiftKey
+                    .isPressed;
 
 
-        bool shiftHeld =
-            Keyboard.current.leftShiftKey.isPressed ||
-            Keyboard.current.rightShiftKey.isPressed;
+            float boost =
+                shiftHeld
+                    ? swingBoostMultiplier
+                    : 1f;
 
 
-        float speedMultiplier =
-            shiftHeld
-                ? swingBoostMultiplier
-                : 1f;
+            /*
+             * 카메라의 오른쪽 방향을
+             * 로프 방향에 수직인 평면에 투영한다.
+             *
+             * 그래서 A/D가 실제 진자의
+             * 접선 방향 힘이 된다.
+             */
+
+            Vector3 desiredDirection =
+                playerCamera.transform.right *
+                horizontalInput;
 
 
-        Vector3 anchorPoint =
-            wire.GetAnchorPoint();
+            Vector3 tangentDirection =
+                Vector3.ProjectOnPlane(
+                    desiredDirection,
+                    ropeDirection
+                );
 
 
-        /*
-         * 고정 지점 → Player 벡터
-         *
-         * 이 벡터를 회전시켜서
-         * 와이어 길이를 그대로 유지한 상태로
-         * 원을 그리며 이동한다.
-         */
-        Vector3 fromAnchor =
+            if (tangentDirection.sqrMagnitude >
+                0.001f)
+            {
+                tangentDirection.Normalize();
+
+
+                wireVelocity +=
+                    tangentDirection *
+                    swingAcceleration *
+                    boost *
+                    deltaTime;
+            }
+        }
+
+
+        // =====================================================
+        // 3. 공기 저항
+        // =====================================================
+
+        float dragAmount =
+            1f /
+            (
+                1f +
+                swingDrag *
+                deltaTime
+            );
+
+
+        wireVelocity *=
+            dragAmount;
+
+
+        // =====================================================
+        // 4. 최고 속도 제한
+        // =====================================================
+
+        bool boosting =
+            Keyboard.current
+                .leftShiftKey
+                .isPressed
+            ||
+            Keyboard.current
+                .rightShiftKey
+                .isPressed;
+
+
+        float maxSpeed =
+            maxSwingSpeed;
+
+
+        if (boosting)
+        {
+            maxSpeed *=
+                swingBoostMultiplier;
+        }
+
+
+        if (wireVelocity.magnitude >
+            maxSpeed)
+        {
+            wireVelocity =
+                wireVelocity.normalized *
+                maxSpeed;
+        }
+
+
+        // =====================================================
+        // 5. 속도로 다음 위치 예측
+        // =====================================================
+
+        Vector3 predictedPosition =
+            playerPosition +
+            wireVelocity *
+            deltaTime;
+
+
+        Vector3 predictedFromAnchor =
+            predictedPosition -
+            anchorPoint;
+
+
+        float predictedDistance =
+            predictedFromAnchor.magnitude;
+
+
+        // =====================================================
+        // 6. 로프 길이 제한
+        //
+        // Player가 로프보다 멀리 나가려 하면
+        // 구 표면으로 되돌린다.
+        // =====================================================
+
+        if (predictedDistance >
+            wire.ropeLength)
+        {
+            Vector3 constrainedDirection =
+                predictedFromAnchor.normalized;
+
+
+            predictedPosition =
+                anchorPoint +
+                constrainedDirection *
+                wire.ropeLength;
+
+
+            /*
+             * 바깥쪽으로 빠져나가려는 속도 제거.
+             *
+             * 접선 속도는 남기기 때문에
+             * 진자 운동이 만들어진다.
+             */
+
+            float outwardVelocity =
+                Vector3.Dot(
+                    wireVelocity,
+                    constrainedDirection
+                );
+
+
+            if (outwardVelocity > 0f)
+            {
+                wireVelocity -=
+                    constrainedDirection *
+                    outwardVelocity;
+            }
+        }
+
+
+        // =====================================================
+        // 7. CharacterController 이동
+        // =====================================================
+
+        Vector3 movement =
+            predictedPosition -
+            playerPosition;
+
+
+        CollisionFlags flags =
+            controller.Move(
+                movement
+            );
+
+
+        // 땅에 충돌했다면
+        // 아래쪽 속도 제거
+        if ((flags & CollisionFlags.Below) != 0 &&
+            wireVelocity.y < 0f)
+        {
+            wireVelocity.y = 0f;
+        }
+
+
+        // =====================================================
+        // 8. 충돌 때문에 로프 밖으로 밀렸다면 재보정
+        // =====================================================
+
+        Vector3 actualFromAnchor =
             transform.position -
             anchorPoint;
 
 
-        float angle =
-            horizontalInput *
-            swingAngularSpeed *
-            speedMultiplier *
-            Time.deltaTime;
+        float actualDistance =
+            actualFromAnchor.magnitude;
 
 
-        /*
-         * A/D에 따라
-         * 월드 Y축을 중심으로 회전
-         */
-        Quaternion rotation =
-            Quaternion.AngleAxis(
-                angle,
-                Vector3.up
+        if (actualDistance >
+            wire.ropeLength + 0.01f)
+        {
+            Vector3 correctedPosition =
+                anchorPoint +
+                actualFromAnchor.normalized *
+                wire.ropeLength;
+
+
+            controller.Move(
+                correctedPosition -
+                transform.position
             );
-
-
-        Vector3 rotatedOffset =
-            rotation *
-            fromAnchor;
-
-
-        Vector3 targetPosition =
-            anchorPoint +
-            rotatedOffset;
-
-
-        Vector3 movement =
-            targetPosition -
-            transform.position;
-
-
-        controller.Move(movement);
+        }
     }
 
 
     // =========================================================
     // Q + E
     //
-    // 두 와이어 고정점 방향으로 직선 이동
+    // 두 와이어 고정점 방향으로 직접 가속
     // =========================================================
 
-    private void DoubleWireMove()
+    private void DoubleWirePull()
     {
         if (controller == null)
             return;
@@ -425,18 +796,17 @@ public class WireController : MonoBehaviour
         Vector3 qAnchor =
             qWire.GetAnchorPoint();
 
+
         Vector3 eAnchor =
             eWire.GetAnchorPoint();
 
 
-        /*
-         * 두 와이어가 다른 지점에 연결되어 있다면
-         * 두 지점의 중앙으로 이동
-         *
-         * 같은 지점이라면 그냥 그 지점으로 이동
-         */
         Vector3 targetPoint =
-            (qAnchor + eAnchor) * 0.5f;
+            (
+                qAnchor +
+                eAnchor
+            )
+            * 0.5f;
 
 
         Vector3 toTarget =
@@ -448,43 +818,92 @@ public class WireController : MonoBehaviour
             toTarget.magnitude;
 
 
-        if (distance <= pullStopDistance)
+        if (distance <=
+            pullStopDistance)
+        {
+            wireVelocity =
+                Vector3.zero;
+
             return;
-
-
-        bool shiftHeld =
-            Keyboard.current.leftShiftKey.isPressed ||
-            Keyboard.current.rightShiftKey.isPressed;
-
-
-        float speedMultiplier =
-            shiftHeld
-                ? pullBoostMultiplier
-                : 1f;
-
-
-        float speed =
-            pullSpeed *
-            speedMultiplier;
+        }
 
 
         Vector3 direction =
             toTarget.normalized;
 
 
+        bool shiftHeld =
+            Keyboard.current
+                .leftShiftKey
+                .isPressed
+            ||
+            Keyboard.current
+                .rightShiftKey
+                .isPressed;
+
+
+        float boost =
+            shiftHeld
+                ? pullBoostMultiplier
+                : 1f;
+
+
+        // 현재 목표 방향 속도
+        float currentForwardSpeed =
+            Vector3.Dot(
+                wireVelocity,
+                direction
+            );
+
+
+        currentForwardSpeed =
+            Mathf.Max(
+                0f,
+                currentForwardSpeed
+            );
+
+
+        // 순간 최고속도가 아니라
+        // 실제로 가속
+        currentForwardSpeed +=
+            pullAcceleration *
+            boost *
+            Time.deltaTime;
+
+
+        float maximumSpeed =
+            maxPullSpeed *
+            boost;
+
+
+        currentForwardSpeed =
+            Mathf.Min(
+                currentForwardSpeed,
+                maximumSpeed
+            );
+
+
         /*
-         * 목표 지점을 지나치지 않도록
-         * 이번 프레임 이동거리를 제한
+         * 두 와이어 모드는
+         * 사용자가 요구한 "직선 이동"을
+         * 유지하기 위해 목표 방향 속도만 사용한다.
          */
+
+        wireVelocity =
+            direction *
+            currentForwardSpeed;
+
+
         float moveDistance =
-            speed *
+            currentForwardSpeed *
             Time.deltaTime;
 
 
         moveDistance =
             Mathf.Min(
                 moveDistance,
-                distance - pullStopDistance
+                distance -
+                pullStopDistance
             );
 
 
@@ -500,7 +919,42 @@ public class WireController : MonoBehaviour
 
 
     // =========================================================
-    // Line Renderer 초기화
+    // CharacterController 벽 충돌
+    // =========================================================
+
+    private void OnControllerColliderHit(
+        ControllerColliderHit hit
+    )
+    {
+        if (!IsControllingMovement)
+            return;
+
+
+        /*
+         * 벽 안쪽을 향하는 속도 제거.
+         *
+         * 벽에 충돌했을 때 계속
+         * 벽을 뚫으려고 가속되는 현상 방지.
+         */
+
+        float intoSurface =
+            Vector3.Dot(
+                wireVelocity,
+                hit.normal
+            );
+
+
+        if (intoSurface < 0f)
+        {
+            wireVelocity -=
+                hit.normal *
+                intoSurface;
+        }
+    }
+
+
+    // =========================================================
+    // Line Renderer
     // =========================================================
 
     private void PrepareLine(
@@ -519,10 +973,6 @@ public class WireController : MonoBehaviour
     }
 
 
-    // =========================================================
-    // 실제 와이어 선 표시
-    // =========================================================
-
     private void UpdateWireLine(
         WireState wire,
         Transform origin,
@@ -536,6 +986,7 @@ public class WireController : MonoBehaviour
         if (!wire.attached)
         {
             line.enabled = false;
+
             return;
         }
 

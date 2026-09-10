@@ -165,7 +165,7 @@ GameObject:
   - component: {fileID: 50147435}
   m_Layer: 6
   m_Name: wall
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -401,8 +401,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: +
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 97f4b7282dcd18d47a3a652fe40465e2, type: 2}
+  m_sharedMaterial: {fileID: 3835187017429981860, guid: 97f4b7282dcd18d47a3a652fe40465e2, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -493,7 +493,7 @@ GameObject:
   - component: {fileID: 164790065}
   m_Layer: 6
   m_Name: wall (1)
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1527,7 +1527,7 @@ GameObject:
   - component: {fileID: 1240633915}
   m_Layer: 6
   m_Name: Cylinder
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1620,12 +1620,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1240633914}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15.2, y: 9.66, z: 16.7}
-  m_LocalScale: {x: 1, y: 11.37, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.3298337, y: 0.84514433, z: 1.4610674}
+  m_LocalScale: {x: 0.08748906, y: 0.9947506, z: 0.08748906}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1895085909}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1324745541
 GameObject:
@@ -1641,7 +1641,7 @@ GameObject:
   - component: {fileID: 1324745543}
   m_Layer: 6
   m_Name: wall (3)
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2090,6 +2090,9 @@ MonoBehaviour:
   dashSpeed: 18
   dashDuration: 0.18
   dashCooldown: 0.5
+  wireController: {fileID: 0}
+  wireAirDeceleration: 1.5
+  wireGroundDeceleration: 12
 --- !u!114 &1517141514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2146,6 +2149,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WireController
   playerCamera: {fileID: 330585545}
   controller: {fileID: 1517141510}
+  playerMovement: {fileID: 0}
   qWireOrigin: {fileID: 1605169650}
   eWireOrigin: {fileID: 403720324}
   qWireLine: {fileID: 1432049623}
@@ -2155,9 +2159,13 @@ MonoBehaviour:
     m_Bits: 64
   maxWireDistance: 50
   minWireDistance: 1
-  swingAngularSpeed: 90
+  gravityScale: 1
+  swingAcceleration: 18
   swingBoostMultiplier: 2
-  pullSpeed: 15
+  maxSwingSpeed: 25
+  swingDrag: 0.15
+  pullAcceleration: 35
+  maxPullSpeed: 22
   pullBoostMultiplier: 2
   pullStopDistance: 0.5
 --- !u!1 &1552717091
@@ -2174,7 +2182,7 @@ GameObject:
   - component: {fileID: 1552717093}
   m_Layer: 6
   m_Name: wall (2)
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2560,6 +2568,7 @@ Transform:
   - {fileID: 164790064}
   - {fileID: 1552717092}
   - {fileID: 1324745542}
+  - {fileID: 1240633918}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1923948385
@@ -2759,4 +2768,3 @@ SceneRoots:
   - {fileID: 1895085909}
   - {fileID: 1517141508}
   - {fileID: 1427676823}
-  - {fileID: 1240633918}

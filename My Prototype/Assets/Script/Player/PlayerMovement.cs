@@ -33,6 +33,12 @@ public class PlayerMovement : MonoBehaviour
     [Header("Wire")]
     [SerializeField] private WireController wireController;
 
+    [Header("Wire Release Momentum")]
+    [SerializeField] private float wireAirDeceleration = 1.5f;
+    [SerializeField] private float wireGroundDeceleration = 12f;
+
+    private Vector3 wireHorizontalVelocity;
+
     private bool isDashing;
     private float nextDashTime;
 
@@ -90,14 +96,8 @@ public class PlayerMovement : MonoBehaviour
         // ==========================================
 
         if (wireController != null &&
-            wireController.IsControllingMovement)
+        wireController.IsControllingMovement)
         {
-            /*
-             * 와이어 사용 중에는
-             * 기존 중력이 누적되지 않도록 초기화
-             */
-            verticalVelocity = 0f;
-
             return;
         }
 
@@ -117,6 +117,8 @@ public class PlayerMovement : MonoBehaviour
         Move();
 
         JumpAndGravity();
+
+        ApplyWireMomentum();
     }
 
 
@@ -454,6 +456,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void StartDash(Vector2 input)
     {
+        wireHorizontalVelocity =
+        Vector3.zero;
+
         if (cameraTransform == null)
             return;
 
@@ -511,5 +516,71 @@ public class PlayerMovement : MonoBehaviour
     private void EndDash()
     {
         isDashing = false;
+    }
+
+    public void ReceiveWireReleaseVelocity(
+    Vector3 releaseVelocity)
+    {
+        // 수평 속도
+        wireHorizontalVelocity =
+            new Vector3(
+                releaseVelocity.x,
+                0f,
+                releaseVelocity.z
+            );
+
+
+        // 수직 속도는 기존 점프/중력 시스템에 넘긴다.
+        verticalVelocity =
+            releaseVelocity.y;
+    }
+
+
+    public void ClearWireMomentum()
+    {
+        wireHorizontalVelocity =
+            Vector3.zero;
+    }
+
+    private void ApplyWireMomentum()
+    {
+        if (wireHorizontalVelocity.sqrMagnitude <
+            0.001f)
+        {
+            wireHorizontalVelocity =
+                Vector3.zero;
+
+            return;
+        }
+
+
+        controller.Move(
+            wireHorizontalVelocity *
+            Time.deltaTime
+        );
+
+
+        float deceleration;
+
+
+        if (isGrounded)
+        {
+            deceleration =
+                wireGroundDeceleration;
+        }
+        else
+        {
+            deceleration =
+                wireAirDeceleration;
+        }
+
+
+        wireHorizontalVelocity =
+            Vector3.MoveTowards(
+                wireHorizontalVelocity,
+                Vector3.zero,
+                deceleration *
+                Time.deltaTime
+            );
     }
 }
