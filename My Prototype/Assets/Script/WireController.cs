@@ -34,20 +34,23 @@ public class WireController : MonoBehaviour
 
     [Header("Pendulum Swing")]
 
-    [Tooltip("중력의 세기. 1 = 기본 중력")]
+    [Tooltip("중력 세기")]
     [SerializeField] private float gravityScale = 1f;
 
-    [Tooltip("A/D가 스윙에 추가하는 가속력")]
-    [SerializeField] private float swingAcceleration = 18f;
+    [Tooltip("W/S 앞뒤 스윙 가속력")]
+    [SerializeField] private float forwardSwingAcceleration = 24f;
 
-    [Tooltip("Shift 사용 시 A/D 가속력 배율")]
+    [Tooltip("A/D 좌우 스윙 가속력")]
+    [SerializeField] private float sideSwingAcceleration = 18f;
+
+    [Tooltip("Shift 사용 시 스윙 가속 배율")]
     [SerializeField] private float swingBoostMultiplier = 2f;
 
-    [Tooltip("일반 상태의 최대 스윙 속도")]
-    [SerializeField] private float maxSwingSpeed = 25f;
+    [Tooltip("최대 스윙 속도")]
+    [SerializeField] private float maxSwingSpeed = 30f;
 
-    [Tooltip("공기 저항. 작을수록 오래 속도를 유지")]
-    [SerializeField] private float swingDrag = 0.15f;
+    [Tooltip("공기 저항")]
+    [SerializeField] private float swingDrag = 0.08f;
 
 
     // =========================================================
@@ -493,26 +496,26 @@ public class WireController : MonoBehaviour
     // 실제 진자형 스윙
     // =========================================================
 
-    private void SingleWireSwing(
-        WireState wire
-    )
+    private void SingleWireSwing(WireState wire)
     {
         if (controller == null)
             return;
 
+        if (playerCamera == null)
+            return;
 
-        float deltaTime =
-            Time.deltaTime;
+
+        float deltaTime = Time.deltaTime;
 
 
         Vector3 anchorPoint =
             wire.GetAnchorPoint();
 
-
         Vector3 playerPosition =
             transform.position;
 
 
+        // Anchor → Player
         Vector3 anchorToPlayer =
             playerPosition -
             anchorPoint;
@@ -542,72 +545,105 @@ public class WireController : MonoBehaviour
 
 
         // =====================================================
-        // 2. A / D 입력
+        // 2. WASD 입력
         // =====================================================
 
         float horizontalInput = 0f;
+        float verticalInput = 0f;
 
 
+        // A / D
         if (Keyboard.current.aKey.isPressed)
-        {
             horizontalInput -= 1f;
-        }
-
 
         if (Keyboard.current.dKey.isPressed)
-        {
             horizontalInput += 1f;
-        }
 
 
-        if (Mathf.Abs(horizontalInput) >
-            0.01f)
+        // W / S
+        if (Keyboard.current.wKey.isPressed)
+            verticalInput += 1f;
+
+        if (Keyboard.current.sKey.isPressed)
+            verticalInput -= 1f;
+
+
+        // =====================================================
+        // 3. Shift 가속
+        // =====================================================
+
+        bool shiftHeld =
+            Keyboard.current.leftShiftKey.isPressed ||
+            Keyboard.current.rightShiftKey.isPressed;
+
+
+        float boost =
+            shiftHeld
+                ? swingBoostMultiplier
+                : 1f;
+
+
+        // =====================================================
+        // 4. 카메라 기준 앞/오른쪽 방향
+        // =====================================================
+
+        Vector3 cameraForward =
+            playerCamera.transform.forward;
+
+        Vector3 cameraRight =
+            playerCamera.transform.right;
+
+
+        /*
+         * 카메라가 위/아래를 바라본다고 해서
+         * W가 바로 위/아래 힘이 되지 않도록
+         * 먼저 수평 방향으로 만든다.
+         */
+
+        cameraForward.y = 0f;
+        cameraRight.y = 0f;
+
+
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+
+
+        // =====================================================
+        // 5. W/S 앞뒤 반동
+        // =====================================================
+
+        if (Mathf.Abs(verticalInput) > 0.01f)
         {
-            bool shiftHeld =
-                Keyboard.current
-                    .leftShiftKey
-                    .isPressed
-                ||
-                Keyboard.current
-                    .rightShiftKey
-                    .isPressed;
-
-
-            float boost =
-                shiftHeld
-                    ? swingBoostMultiplier
-                    : 1f;
+            Vector3 forwardDirection =
+                cameraForward *
+                verticalInput;
 
 
             /*
-             * 카메라의 오른쪽 방향을
-             * 로프 방향에 수직인 평면에 투영한다.
+             * 매우 중요
              *
-             * 그래서 A/D가 실제 진자의
-             * 접선 방향 힘이 된다.
+             * 로프 방향 힘을 제거한다.
+             *
+             * 그러면 플레이어가 로프를 늘리거나
+             * Anchor 쪽으로 억지로 이동하는 것이 아니라
+             * 진자의 접선 방향으로만 힘을 받는다.
              */
 
-            Vector3 desiredDirection =
-                playerCamera.transform.right *
-                horizontalInput;
-
-
-            Vector3 tangentDirection =
+            Vector3 forwardTangent =
                 Vector3.ProjectOnPlane(
-                    desiredDirection,
+                    forwardDirection,
                     ropeDirection
                 );
 
 
-            if (tangentDirection.sqrMagnitude >
-                0.001f)
+            if (forwardTangent.sqrMagnitude > 0.001f)
             {
-                tangentDirection.Normalize();
+                forwardTangent.Normalize();
 
 
                 wireVelocity +=
-                    tangentDirection *
-                    swingAcceleration *
+                    forwardTangent *
+                    forwardSwingAcceleration *
                     boost *
                     deltaTime;
             }
@@ -615,7 +651,39 @@ public class WireController : MonoBehaviour
 
 
         // =====================================================
-        // 3. 공기 저항
+        // 6. A/D 좌우 반동
+        // =====================================================
+
+        if (Mathf.Abs(horizontalInput) > 0.01f)
+        {
+            Vector3 sideDirection =
+                cameraRight *
+                horizontalInput;
+
+
+            Vector3 sideTangent =
+                Vector3.ProjectOnPlane(
+                    sideDirection,
+                    ropeDirection
+                );
+
+
+            if (sideTangent.sqrMagnitude > 0.001f)
+            {
+                sideTangent.Normalize();
+
+
+                wireVelocity +=
+                    sideTangent *
+                    sideSwingAcceleration *
+                    boost *
+                    deltaTime;
+            }
+        }
+
+
+        // =====================================================
+        // 7. 공기 저항
         // =====================================================
 
         float dragAmount =
@@ -627,46 +695,35 @@ public class WireController : MonoBehaviour
             );
 
 
-        wireVelocity *=
-            dragAmount;
+        wireVelocity *= dragAmount;
 
 
         // =====================================================
-        // 4. 최고 속도 제한
+        // 8. 최대 속도
         // =====================================================
 
-        bool boosting =
-            Keyboard.current
-                .leftShiftKey
-                .isPressed
-            ||
-            Keyboard.current
-                .rightShiftKey
-                .isPressed;
-
-
-        float maxSpeed =
+        float currentMaxSpeed =
             maxSwingSpeed;
 
 
-        if (boosting)
+        if (shiftHeld)
         {
-            maxSpeed *=
+            currentMaxSpeed *=
                 swingBoostMultiplier;
         }
 
 
         if (wireVelocity.magnitude >
-            maxSpeed)
+            currentMaxSpeed)
         {
             wireVelocity =
                 wireVelocity.normalized *
-                maxSpeed;
+                currentMaxSpeed;
         }
 
 
         // =====================================================
-        // 5. 속도로 다음 위치 예측
+        // 9. 다음 위치 예상
         // =====================================================
 
         Vector3 predictedPosition =
@@ -685,10 +742,7 @@ public class WireController : MonoBehaviour
 
 
         // =====================================================
-        // 6. 로프 길이 제한
-        //
-        // Player가 로프보다 멀리 나가려 하면
-        // 구 표면으로 되돌린다.
+        // 10. 로프 길이 제한
         // =====================================================
 
         if (predictedDistance >
@@ -705,10 +759,9 @@ public class WireController : MonoBehaviour
 
 
             /*
-             * 바깥쪽으로 빠져나가려는 속도 제거.
+             * 로프 바깥쪽으로 나가려는 속도만 제거.
              *
-             * 접선 속도는 남기기 때문에
-             * 진자 운동이 만들어진다.
+             * 접선 방향 속도는 그대로 남긴다.
              */
 
             float outwardVelocity =
@@ -728,7 +781,7 @@ public class WireController : MonoBehaviour
 
 
         // =====================================================
-        // 7. CharacterController 이동
+        // 11. 실제 이동
         // =====================================================
 
         Vector3 movement =
@@ -737,13 +790,10 @@ public class WireController : MonoBehaviour
 
 
         CollisionFlags flags =
-            controller.Move(
-                movement
-            );
+            controller.Move(movement);
 
 
-        // 땅에 충돌했다면
-        // 아래쪽 속도 제거
+        // 바닥 충돌
         if ((flags & CollisionFlags.Below) != 0 &&
             wireVelocity.y < 0f)
         {
@@ -752,7 +802,7 @@ public class WireController : MonoBehaviour
 
 
         // =====================================================
-        // 8. 충돌 때문에 로프 밖으로 밀렸다면 재보정
+        // 12. 충돌 때문에 로프 밖으로 나갔으면 보정
         // =====================================================
 
         Vector3 actualFromAnchor =
