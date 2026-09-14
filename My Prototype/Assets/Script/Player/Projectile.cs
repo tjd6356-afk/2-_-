@@ -37,16 +37,47 @@ public class Projectile : MonoBehaviour
     // =========================================================
 
     public void Launch(
-        Vector3 direction,
-        float projectileDamage,
-        GameObject projectileOwner
-    )
+    Vector3 direction,
+    float projectileDamage,
+    GameObject projectileOwner
+)
     {
         direction.Normalize();
 
-        damage = projectileDamage;
 
-        owner = projectileOwner;
+        damage =
+            projectileDamage;
+
+
+        owner =
+            projectileOwner;
+
+
+        // ==========================================
+        // 발사자와 총알의 충돌 자체를 무시
+        // ==========================================
+
+        Collider projectileCollider =
+            GetComponent<Collider>();
+
+
+        if (owner != null &&
+            projectileCollider != null)
+        {
+            Collider[] ownerColliders =
+                owner.GetComponentsInChildren<Collider>();
+
+
+            foreach (Collider ownerCollider in ownerColliders)
+            {
+                Physics.IgnoreCollision(
+                    projectileCollider,
+                    ownerCollider,
+                    true
+                );
+            }
+        }
+
 
         rb.linearVelocity =
             direction *

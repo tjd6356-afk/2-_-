@@ -2298,7 +2298,7 @@ MonoBehaviour:
   fireRate: 2
   reloadSpeed: 1
   attackPower: 10
-  moveSpeed: 3.5
+  moveSpeed: 6
 --- !u!136 &1427676825
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -2338,9 +2338,9 @@ MonoBehaviour:
   enemyShooter: {fileID: 1427676828}
   agent: {fileID: 1427676829}
   player: {fileID: 1517141508}
-  detectionRange: 20
-  attackRange: 10
-  targetHeight: 1.2
+  detectionRange: 40
+  attackRange: 25
+  targetHeight: 0.5
   rotationSpeed: 8
   sightMask:
     serializedVersion: 2

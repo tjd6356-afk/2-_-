@@ -157,10 +157,24 @@ public class EnemyAI : MonoBehaviour
 
         if (CanSeePlayer())
         {
-            Vector3 targetPosition =
-                player.position +
-                Vector3.up *
-                targetHeight;
+            Collider playerCollider =
+    player.GetComponentInChildren<Collider>();
+
+
+            Vector3 targetPosition;
+
+
+            if (playerCollider != null)
+            {
+                targetPosition =
+                    playerCollider.bounds.center;
+            }
+            else
+            {
+                targetPosition =
+                    player.position +
+                    Vector3.up * 0.5f;
+            }
 
 
             enemyShooter.TryShoot(
@@ -286,46 +300,153 @@ public class EnemyAI : MonoBehaviour
 
     private bool CanSeePlayer()
     {
-        Vector3 origin =
-            transform.position +
-            Vector3.up *
-            targetHeight;
+        if (player == null)
+            return false;
 
 
-        Vector3 target =
-            player.position +
-            Vector3.up *
-            targetHeight;
+        // ==========================================
+        // 1. Ray 시작 위치
+        // FirePoint가 있으면 총구에서 시작
+        // ==========================================
 
+        Vector3 origin;
+
+        if (enemyShooter != null)
+        {
+            // 우선 Enemy 중심 정도에서 시작
+            origin = transform.position + Vector3.up * 0.5f;
+        }
+        else
+        {
+            origin = transform.position + Vector3.up * 0.5f;
+        }
+
+
+        // ==========================================
+        // 2. Player의 실제 Collider 중심 찾기
+        // ==========================================
+
+        Collider playerCollider =
+            player.GetComponentInChildren<Collider>();
+
+
+        Vector3 target;
+
+
+        if (playerCollider != null)
+        {
+            // 실제 Collider 정중앙
+            target =
+                playerCollider.bounds.center;
+        }
+        else
+        {
+            // Collider가 없을 경우 예비값
+            target =
+                player.position +
+                Vector3.up * 0.5f;
+        }
+
+
+        // ==========================================
+        // 3. 방향 계산
+        // ==========================================
 
         Vector3 direction =
-            target -
-            origin;
+            target - origin;
 
 
         float distance =
             direction.magnitude;
 
 
+        if (distance <= 0.01f)
+            return true;
+
+
         direction.Normalize();
 
 
-        if (Physics.Raycast(
+        // ==========================================
+        // 4. RaycastAll
+        // ==========================================
+
+        RaycastHit[] hits =
+            Physics.RaycastAll(
                 origin,
                 direction,
-                out RaycastHit hit,
-                distance,
+                distance + 0.5f,
                 sightMask,
-                QueryTriggerInteraction.Ignore))
+                QueryTriggerInteraction.Ignore
+            );
+
+
+        // 가까운 순서로 정렬
+        System.Array.Sort(
+            hits,
+            (a, b) =>
+                a.distance.CompareTo(b.distance)
+        );
+
+
+        foreach (RaycastHit hit in hits)
         {
+            Transform hitTransform =
+                hit.collider.transform;
+
+
+            // ======================================
+            // Enemy 자기 자신은 무시
+            // ======================================
+
+            if (hitTransform == transform ||
+                hitTransform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+
+            // ======================================
+            // Player인지 검사
+            // ======================================
+
             PlayerStats hitPlayer =
                 hit.collider
                     .GetComponentInParent<PlayerStats>();
 
 
-            return hitPlayer != null;
+            if (hitPlayer != null)
+            {
+                Debug.DrawLine(
+                    origin,
+                    hit.point,
+                    Color.green
+                );
+
+                return true;
+            }
+
+
+            // ======================================
+            // Player보다 먼저 벽 등을 만남
+            // ======================================
+
+            Debug.DrawLine(
+                origin,
+                hit.point,
+                Color.red
+            );
+
+            return false;
         }
 
+
+        // 아무것도 안 맞음
+        Debug.DrawLine(
+            origin,
+            target,
+            Color.yellow
+        );
 
         return false;
     }
