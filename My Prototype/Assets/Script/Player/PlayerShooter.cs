@@ -246,8 +246,9 @@ public class PlayerShooter : MonoBehaviour
 
 
         projectile.Launch(
-            shootDirection,
-            damage
+        shootDirection,
+        damage,
+        gameObject
         );
 
 

@@ -10,7 +10,12 @@ public class Projectile : MonoBehaviour
 
     private float damage;
 
+    // 이 총알을 발사한 캐릭터
+    private GameObject owner;
+
+
     public float Damage => damage;
+
 
     private void Awake()
     {
@@ -20,28 +25,101 @@ public class Projectile : MonoBehaviour
 
     private void Start()
     {
-        // 일정 시간이 지나면 자동 삭제
-        Destroy(gameObject, lifeTime);
+        Destroy(
+            gameObject,
+            lifeTime
+        );
     }
 
 
+    // =========================================================
+    // 발사
+    // =========================================================
+
     public void Launch(
-    Vector3 direction,
-    float projectileDamage
-)
+        Vector3 direction,
+        float projectileDamage,
+        GameObject projectileOwner
+    )
     {
         direction.Normalize();
 
         damage = projectileDamage;
 
+        owner = projectileOwner;
+
         rb.linearVelocity =
-            direction * speed;
+            direction *
+            speed;
     }
 
 
-    private void OnCollisionEnter(Collision collision)
+    // =========================================================
+    // 충돌
+    // =========================================================
+
+    private void OnCollisionEnter(
+        Collision collision
+    )
     {
-        // 현재는 무엇인가에 부딪히면 총알 삭제
+        GameObject hitObject =
+            collision.gameObject;
+
+
+        // =====================================================
+        // 자기 자신을 쏘는 것 방지
+        // =====================================================
+
+        if (owner != null)
+        {
+            if (hitObject == owner ||
+                hitObject.transform.IsChildOf(owner.transform))
+            {
+                return;
+            }
+        }
+
+
+        // =====================================================
+        // Player가 쏜 총알
+        // =====================================================
+
+        if (owner != null &&
+            owner.GetComponent<PlayerStats>() != null)
+        {
+            EnemyStats enemyStats =
+                hitObject.GetComponentInParent<EnemyStats>();
+
+
+            if (enemyStats != null)
+            {
+                enemyStats.TakeDamage(
+                    damage
+                );
+            }
+        }
+
+
+        // =====================================================
+        // Enemy가 쏜 총알
+        // =====================================================
+
+        else if (owner != null &&
+                 owner.GetComponent<EnemyStats>() != null)
+        {
+            PlayerStats playerStats =
+                hitObject.GetComponentInParent<PlayerStats>();
+
+
+            if (playerStats != null)
+            {
+                playerStats.TakeDamage(
+                    damage
+                );
+            }
+        }
+
+
         Destroy(gameObject);
     }
 }

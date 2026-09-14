@@ -179,16 +179,15 @@ public class EnemyStats : MonoBehaviour
         if (isDead)
             return;
 
-
         isDead = true;
 
         currentHealth = 0f;
 
-
         Debug.Log($"{gameObject.name} Dead");
 
-
         OnDied?.Invoke();
+
+        Destroy(gameObject);
     }
 
 
