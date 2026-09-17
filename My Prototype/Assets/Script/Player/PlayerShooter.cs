@@ -371,4 +371,39 @@ public class PlayerShooter : MonoBehaviour
         baseReloadTime =
             Mathf.Max(0.01f, baseReloadTime);
     }
+
+    // =========================================================
+    // 예비 탄창 보급
+    // =========================================================
+
+    public void AddReserveMagazines(
+        int amount,
+        bool reloadIfEmpty = true
+    )
+    {
+        if (amount <= 0)
+            return;
+
+
+        reserveMagazines += amount;
+
+
+        Debug.Log(
+            $"탄창 {amount}개 보급! 현재 예비 탄창: {reserveMagazines}"
+        );
+
+
+        // UI 즉시 갱신
+        NotifyAmmoChanged();
+
+
+        // 현재 총알이 0발이라면
+        // 보급받자마자 자동 재장전
+        if (reloadIfEmpty &&
+            currentAmmo <= 0 &&
+            !isReloading)
+        {
+            TryReload();
+        }
+    }
 }
