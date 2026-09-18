@@ -1716,6 +1716,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7306682803856176399, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
   m_PrefabInstance: {fileID: 6205593675272007783}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1517141513 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_PrefabInstance: {fileID: 6205593675272007783}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d703df9df19a80b42bcc4bf28a6f46c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
 --- !u!114 &1517141514 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8365666764133539101, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
@@ -1727,6 +1738,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 809737b396c0d9c4b80a25d094173fa8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShooter
+--- !u!114 &1517141516 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5007453305914519943, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_PrefabInstance: {fileID: 6205593675272007783}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d3f1adea287e884097251e13d88f404, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WireController
+--- !u!114 &1517141517 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2995714770004380152, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_PrefabInstance: {fileID: 6205593675272007783}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7199fe4c45631a4fa3e4f51d757f901, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMeleeAttack
 --- !u!1 &1552717091
 GameObject:
   m_ObjectHideFlags: 0
@@ -2200,6 +2233,26 @@ PrefabInstance:
       propertyPath: playerCamera
       value: 
       objectReference: {fileID: 330585545}
+    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'gameplayBehaviours.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1517141513}
+    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'gameplayBehaviours.Array.data[1]'
+      value: 
+      objectReference: {fileID: 1517141514}
+    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'gameplayBehaviours.Array.data[2]'
+      value: 
+      objectReference: {fileID: 1517141517}
+    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'gameplayBehaviours.Array.data[3]'
+      value: 
+      objectReference: {fileID: 1517141516}
+    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'gameplayBehaviours.Array.data[4]'
+      value: 
+      objectReference: {fileID: 330585548}
     - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: cameraTransform
       value: 
