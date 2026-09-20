@@ -973,7 +973,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: 38f0f0ec2d127db469114f011be656b9, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: a0ba42f2d72099e4e86a13f0eb9abcb4, type: 2}
   m_BuildHeightMesh: 0
 --- !u!4 &1011521514
 Transform:
@@ -1867,6 +1867,14 @@ PrefabInstance:
       propertyPath: playerShooter
       value: 
       objectReference: {fileID: 1517141514}
+    - target: {fileID: 2205651098363324278, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_text
+      value: "\uC774\uB3D9\uD558\uAE30"
+      objectReference: {fileID: 0}
+    - target: {fileID: 5220121413394988564, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_text
+      value: "\uCDE8\uC18C"
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1924,10 +1932,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameScenePortal
       objectReference: {fileID: 0}
+    - target: {fileID: 7641538675188678779, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
       propertyPath: transitionPanel
       value: 
       objectReference: {fileID: 666979462}
+    - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+      propertyPath: destinationSceneName
+      value: LobbyScene
+      objectReference: {fileID: 0}
+    - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+      propertyPath: destinationDisplayName
+      value: "\uB85C\uBE44"
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1948,6 +1968,10 @@ PrefabInstance:
     - target: {fileID: 1287184418823599086, guid: 54fc00031419f814489931bde539f366, type: 3}
       propertyPath: m_Name
       value: Enemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287184418823599086, guid: 54fc00031419f814489931bde539f366, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4185843084510207993, guid: 54fc00031419f814489931bde539f366, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2005,6 +2029,10 @@ PrefabInstance:
     - target: {fileID: 1001626158897247550, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001626158897247550, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2995714770004380152, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: thirdPersonCamera

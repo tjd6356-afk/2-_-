@@ -6,12 +6,11 @@ public class ScenePortal : MonoBehaviour
 
     [Tooltip("실제 Unity Scene 이름")]
     [SerializeField]
-    private string destinationSceneName;
+    private string destinationSceneName = "GameScene";
 
-    [Tooltip("UI에 표시할 이름")]
+    [Tooltip("UI에 보여줄 장소 이름")]
     [SerializeField]
-    private string destinationDisplayName =
-        "게임";
+    private string destinationDisplayName = "전투 지역";
 
 
     [Header("References")]
@@ -25,16 +24,34 @@ public class ScenePortal : MonoBehaviour
     private bool playerInside;
 
 
+    private void Awake()
+    {
+        // 직접 연결하지 않았으면 자동 검색
+        if (transitionPanel == null)
+        {
+            transitionPanel =
+                FindFirstObjectByType<SceneTransitionPanelUI>();
+        }
+
+
+        if (transitionPanel == null)
+        {
+            Debug.LogError(
+                "[ScenePortal] SceneTransitionPanelUI를 찾을 수 없습니다."
+            );
+        }
+    }
+
+
     // =========================================================
     // Player 진입
     // =========================================================
 
-    private void OnTriggerEnter(
-        Collider other
-    )
+    private void OnTriggerEnter(Collider other)
     {
-        if (playerInside)
-            return;
+        Debug.Log(
+            $"[ScenePortal] Trigger Enter : {other.gameObject.name}"
+        );
 
 
         PlayerStats playerStats =
@@ -42,25 +59,46 @@ public class ScenePortal : MonoBehaviour
 
 
         if (playerStats == null)
+        {
+            Debug.Log(
+                "[ScenePortal] 들어온 오브젝트는 Player가 아닙니다."
+            );
+
             return;
+        }
+
+
+        if (playerInside)
+            return;
+
+
+        playerInside = true;
 
 
         playerControl =
             playerStats.GetComponent<PlayerGameplayControl>();
 
 
-        playerInside =
-            true;
+        Debug.Log(
+            "[ScenePortal] Player 감지 성공. UI를 엽니다."
+        );
 
 
-        if (transitionPanel != null)
+        if (transitionPanel == null)
         {
-            transitionPanel.Open(
-                destinationSceneName,
-                destinationDisplayName,
-                playerControl
+            Debug.LogError(
+                "[ScenePortal] Transition Panel이 없습니다."
             );
+
+            return;
         }
+
+
+        transitionPanel.Open(
+            destinationSceneName,
+            destinationDisplayName,
+            playerControl
+        );
     }
 
 
@@ -68,9 +106,7 @@ public class ScenePortal : MonoBehaviour
     // Player 퇴장
     // =========================================================
 
-    private void OnTriggerExit(
-        Collider other
-    )
+    private void OnTriggerExit(Collider other)
     {
         PlayerStats playerStats =
             other.GetComponentInParent<PlayerStats>();
@@ -80,8 +116,7 @@ public class ScenePortal : MonoBehaviour
             return;
 
 
-        playerInside =
-            false;
+        playerInside = false;
 
 
         if (transitionPanel != null &&
@@ -92,5 +127,10 @@ public class ScenePortal : MonoBehaviour
 
 
         playerControl = null;
+
+
+        Debug.Log(
+            "[ScenePortal] Player가 Portal에서 나갔습니다."
+        );
     }
 }

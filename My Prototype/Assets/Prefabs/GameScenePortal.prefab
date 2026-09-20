@@ -43,7 +43,6 @@ GameObject:
   - component: {fileID: 2593565180933631749}
   - component: {fileID: 3900807732244784317}
   - component: {fileID: 4876896090807393936}
-  - component: {fileID: 9117735145343928686}
   m_Layer: 0
   m_Name: ExPortalModel
   m_TagString: Untagged
@@ -123,27 +122,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &9117735145343928686
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6899757266812758102}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7641538675188678779
 GameObject:
   m_ObjectHideFlags: 0
@@ -154,6 +132,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2571987072048627992}
   - component: {fileID: 9208496542207522123}
+  - component: {fileID: 1569092083477198054}
+  - component: {fileID: 6894747360365666568}
   m_Layer: 0
   m_Name: GameScenePortal
   m_TagString: Untagged
@@ -189,6 +169,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bb9377ba5736544c9ee03fed49bed91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScenePortal
-  destinationSceneName: LobbyScene
-  destinationDisplayName: "\uC73C\uD5E4\uD5E4\uD5E4\uD5E4"
+  destinationSceneName: GameScene
+  destinationDisplayName: "\uC804\uD22C"
   transitionPanel: {fileID: 0}
+--- !u!65 &1569092083477198054
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7641538675188678779}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 1, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &6894747360365666568
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7641538675188678779}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 126
+  m_CollisionDetection: 0
