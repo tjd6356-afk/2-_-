@@ -35,6 +35,8 @@ public class ThirdPersonCamera : MonoBehaviour
     [SerializeField] private float minPitch = -30f;
     [SerializeField] private float maxPitch = 70f;
 
+    [SerializeField]
+    private PlayerWeaponManager weaponManager;
 
     private float yaw;
     private float pitch = 15f;
@@ -101,6 +103,15 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private void CheckAimInput()
     {
+        if (weaponManager != null &&
+        weaponManager.ActiveWeaponType ==
+            WeaponType.Melee)
+        {
+            isAiming = false;
+
+            return;
+        }
+
         if (Mouse.current == null)
         {
             isAiming = false;

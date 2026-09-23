@@ -27,6 +27,12 @@ public class WireController : MonoBehaviour
     [SerializeField] private float maxWireDistance = 50f;
     [SerializeField] private float minWireDistance = 1f;
 
+    // =========================================================
+    // E키 중복 작용 방지
+    // =========================================================
+
+    [SerializeField]
+    private PlayerWeaponManager weaponManager;
 
     // =========================================================
     // 진자 스윙
@@ -162,6 +168,12 @@ public class WireController : MonoBehaviour
                 GetComponent<PlayerMovement>();
         }
 
+        if (weaponManager == null)
+        {
+            weaponManager =
+                GetComponent<PlayerWeaponManager>();
+        }
+
 
         PrepareLine(qWireLine);
         PrepareLine(eWireLine);
@@ -289,7 +301,13 @@ public class WireController : MonoBehaviour
         bool qHeld =
             Keyboard.current.qKey.isPressed;
 
+        bool blockE =
+            weaponManager != null &&
+            weaponManager.HasNearbyPickup;
+
+
         bool eHeld =
+            !blockE &&
             Keyboard.current.eKey.isPressed;
 
 

@@ -14,6 +14,12 @@ public class PlayerStats : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
 
+    [Header("Melee")]
+    [SerializeField]
+    private float meleeAttackSpeed = 1f;
+
+    public float MeleeAttackSpeed =>
+        meleeAttackSpeed;
 
     // 현재 체력
     private float currentHealth;
@@ -194,5 +200,8 @@ public class PlayerStats : MonoBehaviour
 
         attackPower =
             Mathf.Max(0f, attackPower);
+
+        meleeAttackSpeed =
+            Mathf.Max(0.1f,meleeAttackSpeed);
     }
 }
