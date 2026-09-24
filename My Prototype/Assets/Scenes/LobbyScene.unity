@@ -372,34 +372,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 1001626158897247550, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 2995714770004380152, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: thirdPersonCamera
       value: 
       objectReference: {fileID: 1966443908}
-    - target: {fileID: 5007453305914519943, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: playerCamera
-      value: 
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: weapons.Array.size
+      value: 4
       objectReference: {fileID: 0}
-    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: 'gameplayBehaviours.Array.data[0]'
-      value: 
-      objectReference: {fileID: 466739317}
-    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: 'gameplayBehaviours.Array.data[1]'
-      value: 
-      objectReference: {fileID: 466739313}
-    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: 'gameplayBehaviours.Array.data[2]'
-      value: 
-      objectReference: {fileID: 466739316}
-    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: 'gameplayBehaviours.Array.data[3]'
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'weapons.Array.data[0]'
       value: 
       objectReference: {fileID: 466739315}
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'weapons.Array.data[1]'
+      value: 
+      objectReference: {fileID: 466739318}
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'weapons.Array.data[2]'
+      value: 
+      objectReference: {fileID: 466739317}
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'weapons.Array.data[3]'
+      value: 
+      objectReference: {fileID: 466739316}
     - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: 'gameplayBehaviours.Array.data[4]'
       value: 
@@ -483,37 +479,48 @@ Transform:
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &466739315 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5007453305914519943, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_CorrespondingSourceObject: {fileID: 1648526504011636663, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
   m_PrefabInstance: {fileID: 466739312}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d3f1adea287e884097251e13d88f404, type: 3}
+  m_Script: {fileID: 11500000, guid: 3e502c5c0a904cc41bfd5766a9e67ac0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WireController
+  m_EditorClassIdentifier: Assembly-CSharp::DeveloperWeapon
 --- !u!114 &466739316 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2995714770004380152, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_CorrespondingSourceObject: {fileID: 6158709202260593879, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
   m_PrefabInstance: {fileID: 466739312}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7199fe4c45631a4fa3e4f51d757f901, type: 3}
+  m_Script: {fileID: 11500000, guid: d48034b5fd18f9643a5d621d1814b0f8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMeleeAttack
+  m_EditorClassIdentifier: Assembly-CSharp::WireGunWeapon
 --- !u!114 &466739317 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_CorrespondingSourceObject: {fileID: 1336922466440480167, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
   m_PrefabInstance: {fileID: 466739312}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d703df9df19a80b42bcc4bf28a6f46c1, type: 3}
+  m_Script: {fileID: 11500000, guid: f8f7d3515e29dab4585182adf24d8803, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
+  m_EditorClassIdentifier: Assembly-CSharp::RangedGunWeapon
+--- !u!114 &466739318 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5615717980618810766, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_PrefabInstance: {fileID: 466739312}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a1d4279c423a544eb96708785b2ebb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeWeapon
 --- !u!1 &536044576
 GameObject:
   m_ObjectHideFlags: 0
@@ -1289,6 +1296,7 @@ MonoBehaviour:
   sensitivity: 0.15
   minPitch: -30
   maxPitch: 70
+  weaponManager: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

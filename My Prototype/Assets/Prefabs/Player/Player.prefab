@@ -47,6 +47,11 @@ GameObject:
   - component: {fileID: 5007453305914519943}
   - component: {fileID: 2995714770004380152}
   - component: {fileID: 5821247941830255217}
+  - component: {fileID: 4525119024753954002}
+  - component: {fileID: 1648526504011636663}
+  - component: {fileID: 5615717980618810766}
+  - component: {fileID: 1336922466440480167}
+  - component: {fileID: 6158709202260593879}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -69,6 +74,9 @@ Transform:
   m_Children:
   - {fileID: 5073353023078118861}
   - {fileID: 3606306033944554193}
+  - {fileID: 6167274610471278118}
+  - {fileID: 5230487861941735405}
+  - {fileID: 2802274807484392897}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &934635378258857864
@@ -165,6 +173,7 @@ MonoBehaviour:
   reloadSpeed: 1
   attackPower: 20
   moveSpeed: 5
+  meleeAttackSpeed: 1
 --- !u!114 &5007453305914519943
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,6 +198,7 @@ MonoBehaviour:
     m_Bits: 64
   maxWireDistance: 50
   minWireDistance: 1
+  weaponManager: {fileID: 0}
   gravityScale: 1
   forwardSwingAcceleration: 24
   sideSwingAcceleration: 18
@@ -233,11 +243,156 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerGameplayControl
   gameplayBehaviours:
+  - {fileID: 7132637885072722944}
+  - {fileID: 8365666764133539101}
+  - {fileID: 2995714770004380152}
+  - {fileID: 5007453305914519943}
   - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+--- !u!114 &4525119024753954002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfac9378709725c44b0c74b7688d6751, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponManager
+  weapons: []
+  startingWeapon: 0
+--- !u!114 &1648526504011636663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e502c5c0a904cc41bfd5766a9e67ac0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeveloperWeapon
+  weaponType: 0
+  weaponModel: {fileID: 0}
+  shooter: {fileID: 0}
+  meleeAttack: {fileID: 0}
+  wireController: {fileID: 0}
+--- !u!114 &5615717980618810766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a1d4279c423a544eb96708785b2ebb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeWeapon
+  weaponType: 0
+  weaponModel: {fileID: 0}
+  playerStats: {fileID: 0}
+  attackPoint: {fileID: 0}
+  attackRadius: 1.3
+  enemyMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  attack1Multiplier: 1
+  attack2Multiplier: 1.25
+  attack3Multiplier: 1.7
+  baseAttackInterval: 0.4
+  finalRecoveryTime: 1
+  comboResetTime: 1
+--- !u!114 &1336922466440480167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8f7d3515e29dab4585182adf24d8803, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RangedGunWeapon
+  weaponType: 0
+  weaponModel: {fileID: 0}
+  playerCamera: {fileID: 0}
+  firePoint: {fileID: 0}
+  projectilePrefab: {fileID: 0}
+  playerStats: {fileID: 0}
+  magazineSize: 5
+  maxReserveMagazines: 5
+  baseReloadTime: 2
+  refillEverythingOnReload: 0
+  maxAimDistance: 100
+  aimMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &6158709202260593879
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d48034b5fd18f9643a5d621d1814b0f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WireGunWeapon
+  weaponType: 0
+  weaponModel: {fileID: 0}
+  playerCamera: {fileID: 0}
+  controller: {fileID: 0}
+  playerStats: {fileID: 0}
+  wireOrigin: {fileID: 0}
+  wireLine: {fileID: 0}
+  maxWireDistance: 40
+  wireHitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  playerPullSpeed: 14
+  stopDistance: 1.5
+  enemyPullSpeed: 12
+  enemyHoldDistance: 2
+  enemyThrowSpeed: 20
+  wireDamageRadius: 0.25
+  wireDamageMultiplier: 0.5
+  wireDamageCooldown: 0.5
+--- !u!1 &1843020399423115473
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2802274807484392897}
+  m_Layer: 0
+  m_Name: WireOrigin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2802274807484392897
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1843020399423115473}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.652, y: -0.41999996, z: 0.803}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7306682803856176399}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2427827322759130377
 GameObject:
   m_ObjectHideFlags: 0
@@ -471,8 +626,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 5276099101828229914}
   - {fileID: 464796265899108183}
+  - {fileID: 5276099101828229914}
   - {fileID: 6162217898299412987}
   - {fileID: 3667408141665285492}
   - {fileID: 1595121127723018744}
@@ -834,6 +989,37 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7302149238338373317
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6167274610471278118}
+  m_Layer: 0
+  m_Name: WeaponModels
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6167274610471278118
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7302149238338373317}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7306682803856176399}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7974701342592086472
 GameObject:
   m_ObjectHideFlags: 0
@@ -925,6 +1111,37 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &8322087695385736302
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5230487861941735405}
+  m_Layer: 0
+  m_Name: GunFirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5230487861941735405
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8322087695385736302}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.652, y: -0.41999996, z: 0.803}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7306682803856176399}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &142409573874352316
 PrefabInstance:
   m_ObjectHideFlags: 0
