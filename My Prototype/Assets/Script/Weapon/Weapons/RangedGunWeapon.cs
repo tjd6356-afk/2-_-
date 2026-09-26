@@ -6,74 +6,67 @@ using UnityEngine.InputSystem;
 public class RangedGunWeapon : WeaponBase
 {
     [Header("References")]
-    [SerializeField]
-    private Camera playerCamera;
-
-    [SerializeField]
-    private Transform firePoint;
-
-    [SerializeField]
-    private Projectile projectilePrefab;
-
-    [SerializeField]
-    private PlayerStats playerStats;
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private Projectile projectilePrefab;
+    [SerializeField] private PlayerStats playerStats;
 
 
     [Header("Ammo")]
-    [SerializeField]
-    private int magazineSize = 5;
+    [Tooltip("현재 장전되는 총알 수")]
+    [SerializeField] private int magazineSize = 5;
 
-    [SerializeField]
-    private int maxReserveMagazines = 5;
+    [Tooltip("가지고 시작하는 예비 탄창 수")]
+    [SerializeField] private int maxReserveMagazines = 5;
 
-    [SerializeField]
-    private float baseReloadTime = 2f;
+    [Tooltip("모든 탄약을 소모한 뒤 전체 보급에 걸리는 기본 시간")]
+    [SerializeField] private float baseFullReloadTime = 2f;
 
-
-    [Tooltip(
-        "켜면 R 재장전 완료 시 탄약과 예비 탄창을 전부 최대치로 복구"
-    )]
-    [SerializeField]
-    private bool refillEverythingOnReload = false;
+    [Tooltip("모든 탄약을 소모하면 자동으로 전체 재장전")]
+    [SerializeField] private bool autoFullReloadWhenEmpty = true;
 
 
     [Header("Aim")]
-    [SerializeField]
-    private float maxAimDistance = 100f;
-
-    [SerializeField]
-    private LayerMask aimMask = ~0;
+    [SerializeField] private float maxAimDistance = 100f;
+    [SerializeField] private LayerMask aimMask = ~0;
 
 
     private int currentAmmo;
-
     private int reserveMagazines;
 
     private bool isReloading;
+    private bool initialized;
 
     private float nextFireTime;
 
 
-    public int CurrentAmmo =>
-        currentAmmo;
+    // =========================================================
+    // 외부 접근
+    // =========================================================
 
-    public int ReserveMagazines =>
-        reserveMagazines;
+    public int CurrentAmmo => currentAmmo;
 
-    public int MagazineSize =>
-        magazineSize;
+    public int MagazineSize => magazineSize;
+
+    public int ReserveMagazines => reserveMagazines;
+
+    public bool IsReloading => isReloading;
 
 
-    public event Action<int, int, int>
-        OnAmmoChanged;
+    // =========================================================
+    // UI Events
+    // =========================================================
+
+    public event Action<int, int, int> OnAmmoChanged;
+
+    public event Action<bool> OnReloadStateChanged;
 
 
     private void Awake()
     {
         if (playerCamera == null)
         {
-            playerCamera =
-                Camera.main;
+            playerCamera = Camera.main;
         }
 
 
@@ -84,11 +77,33 @@ public class RangedGunWeapon : WeaponBase
         }
 
 
+        InitializeAmmo();
+    }
+
+
+    private void InitializeAmmo()
+    {
+        if (initialized)
+            return;
+
+
+        initialized = true;
+
         currentAmmo =
             magazineSize;
 
         reserveMagazines =
             maxReserveMagazines;
+    }
+
+
+    public override void Equip()
+    {
+        InitializeAmmo();
+
+        base.Equip();
+
+        NotifyAmmoChanged();
     }
 
 
@@ -101,11 +116,17 @@ public class RangedGunWeapon : WeaponBase
         }
 
 
-        if (Keyboard.current
-            .rKey
-            .wasPressedThisFrame)
+        // ==========================================
+        // 전부 소모한 상태에서 R을 눌러도 전체 재장전 가능
+        // ==========================================
+
+        if (Keyboard.current.rKey.wasPressedThisFrame)
         {
-            TryReload();
+            if (currentAmmo <= 0 &&
+                reserveMagazines <= 0)
+            {
+                TryFullReload();
+            }
         }
 
 
@@ -113,31 +134,54 @@ public class RangedGunWeapon : WeaponBase
             return;
 
 
-        // 우클릭 중 + 좌클릭
-        if (Mouse.current
-                .rightButton
-                .isPressed &&
-            Mouse.current
-                .leftButton
-                .isPressed)
+        // ==========================================
+        // 우클릭 + 좌클릭
+        // ==========================================
+
+        if (Mouse.current.rightButton.isPressed &&
+            Mouse.current.leftButton.isPressed)
         {
             TryShoot();
         }
     }
 
 
+    // =========================================================
+    // 사격
+    // =========================================================
+
     private void TryShoot()
     {
-        if (Time.time <
-            nextFireTime)
-        {
+        if (Time.time < nextFireTime)
             return;
+
+
+        // 현재 5발을 다 썼다면
+        if (currentAmmo <= 0)
+        {
+            // 예비 탄창이 있으면 재장전 시간 없이
+            // 즉시 다음 탄창으로 교체
+            if (reserveMagazines > 0)
+            {
+                LoadNextMagazine();
+            }
+            else
+            {
+                if (autoFullReloadWhenEmpty)
+                {
+                    TryFullReload();
+                }
+
+                return;
+            }
         }
 
 
-        if (currentAmmo <= 0)
+        if (playerCamera == null ||
+            firePoint == null ||
+            projectilePrefab == null ||
+            playerStats == null)
         {
-            TryReload();
             return;
         }
 
@@ -156,6 +200,10 @@ public class RangedGunWeapon : WeaponBase
             );
     }
 
+
+    // =========================================================
+    // 실제 총알 발사
+    // =========================================================
 
     private void Shoot()
     {
@@ -215,93 +263,149 @@ public class RangedGunWeapon : WeaponBase
         );
 
 
+        // 한 발 소비
         currentAmmo--;
 
 
-        NotifyAmmo();
+        NotifyAmmoChanged();
+
+
+        // ==========================================
+        // 지금 쏜 게 마지막 총알
+        // ==========================================
+
+        if (currentAmmo <= 0)
+        {
+            // 예비 탄창이 있으면 즉시 다음 탄창 사용
+            if (reserveMagazines > 0)
+            {
+                LoadNextMagazine();
+            }
+
+            // 예비 탄창까지 전부 소모
+            else if (autoFullReloadWhenEmpty)
+            {
+                TryFullReload();
+            }
+        }
     }
 
 
-    private void TryReload()
+    // =========================================================
+    // 다음 탄창으로 즉시 교체
+    //
+    // 재장전 시간 없음
+    // =========================================================
+
+    private void LoadNextMagazine()
+    {
+        if (reserveMagazines <= 0)
+            return;
+
+
+        reserveMagazines--;
+
+
+        currentAmmo =
+            magazineSize;
+
+
+        Debug.Log(
+            $"다음 탄창 사용 / 탄창 {reserveMagazines} / 탄약 {currentAmmo}"
+        );
+
+
+        NotifyAmmoChanged();
+    }
+
+
+    // =========================================================
+    // 모든 탄약을 다 쓴 후 전체 재장전
+    // =========================================================
+
+    private void TryFullReload()
     {
         if (isReloading)
             return;
 
 
-        if (refillEverythingOnReload)
+        // 아직 사용할 탄약이 남아있다면 전체 재장전 불가
+        if (currentAmmo > 0 ||
+            reserveMagazines > 0)
         {
-            if (currentAmmo ==
-                    magazineSize &&
-                reserveMagazines ==
-                    maxReserveMagazines)
-            {
-                return;
-            }
-        }
-        else
-        {
-            if (currentAmmo >=
-                magazineSize)
-            {
-                return;
-            }
-
-
-            if (reserveMagazines <= 0)
-                return;
+            return;
         }
 
 
         StartCoroutine(
-            ReloadRoutine()
+            FullReloadRoutine()
         );
     }
 
 
-    private IEnumerator ReloadRoutine()
+    private IEnumerator FullReloadRoutine()
     {
         isReloading = true;
 
 
+        OnReloadStateChanged?.Invoke(
+            true
+        );
+
+
         float reloadTime =
-            playerStats.GetReloadTime(
-                baseReloadTime
-            );
+            baseFullReloadTime;
 
 
-        yield return
-            new WaitForSeconds(
-                reloadTime
-            );
-
-
-        if (refillEverythingOnReload)
+        if (playerStats != null)
         {
-            // 특수 모드
-            currentAmmo =
-                magazineSize;
-
-            reserveMagazines =
-                maxReserveMagazines;
+            reloadTime =
+                playerStats.GetReloadTime(
+                    baseFullReloadTime
+                );
         }
-        else
-        {
-            // 일반적인 탄창 교체
-            reserveMagazines--;
 
-            currentAmmo =
-                magazineSize;
-        }
+
+        Debug.Log(
+            $"원거리 무기 전체 재장전 시작 : {reloadTime:F2}초"
+        );
+
+
+        yield return new WaitForSeconds(
+            reloadTime
+        );
+
+
+        // ==========================================
+        // 탄창 + 총알 전부 최대치 복원
+        // ==========================================
+
+        reserveMagazines =
+            maxReserveMagazines;
+
+
+        currentAmmo =
+            magazineSize;
 
 
         isReloading = false;
 
 
-        NotifyAmmo();
+        NotifyAmmoChanged();
+
+
+        OnReloadStateChanged?.Invoke(
+            false
+        );
+
+
+        Debug.Log(
+            "원거리 무기 전체 재장전 완료"
+        );
     }
 
 
-    private void NotifyAmmo()
+    private void NotifyAmmoChanged()
     {
         OnAmmoChanged?.Invoke(
             currentAmmo,
@@ -313,10 +417,43 @@ public class RangedGunWeapon : WeaponBase
 
     public override void Unequip()
     {
-        StopAllCoroutines();
+        if (isReloading)
+        {
+            StopAllCoroutines();
 
-        isReloading = false;
+            isReloading = false;
+
+
+            OnReloadStateChanged?.Invoke(
+                false
+            );
+        }
+
 
         base.Unequip();
+    }
+
+
+    private void OnValidate()
+    {
+        magazineSize =
+            Mathf.Max(
+                1,
+                magazineSize
+            );
+
+
+        maxReserveMagazines =
+            Mathf.Max(
+                0,
+                maxReserveMagazines
+            );
+
+
+        baseFullReloadTime =
+            Mathf.Max(
+                0.01f,
+                baseFullReloadTime
+            );
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,6 +12,8 @@ public class PlayerWeaponManager : MonoBehaviour
     private WeaponType startingWeapon =
         WeaponType.Developer;
 
+    public event Action<WeaponType>
+    OnWeaponChanged;
 
     private WeaponBase currentWeapon;
 
@@ -60,8 +63,18 @@ public class PlayerWeaponManager : MonoBehaviour
     }
 
 
-    public void EquipWeapon(WeaponType type)
+    public void EquipWeapon(
+    WeaponType type
+)
     {
+        WeaponBase targetWeapon =
+            null;
+
+
+        // ==========================================
+        // 장착할 무기 찾기
+        // ==========================================
+
         foreach (WeaponBase weapon in weapons)
         {
             if (weapon == null)
@@ -70,19 +83,65 @@ public class PlayerWeaponManager : MonoBehaviour
 
             if (weapon.Type == type)
             {
-                currentWeapon = weapon;
+                targetWeapon =
+                    weapon;
 
-                weapon.Equip();
-
-                Debug.Log(
-                    $"Weapon Equipped : {type}"
-                );
-            }
-            else
-            {
-                weapon.Unequip();
+                break;
             }
         }
+
+
+        if (targetWeapon == null)
+        {
+            Debug.LogError(
+                $"Weapon을 찾을 수 없습니다 : {type}"
+            );
+
+            return;
+        }
+
+
+        // ==========================================
+        // 모든 무기 해제
+        // ==========================================
+
+        foreach (WeaponBase weapon in weapons)
+        {
+            if (weapon == null)
+                continue;
+
+
+            if (weapon == targetWeapon)
+                continue;
+
+
+            weapon.Unequip();
+        }
+
+
+        // ==========================================
+        // 새 무기 장착
+        // ==========================================
+
+        currentWeapon =
+            targetWeapon;
+
+
+        currentWeapon.Equip();
+
+
+        Debug.Log(
+            $"Weapon Equipped : {type}"
+        );
+
+
+        // ==========================================
+        // UI 등에 무기 변경 알림
+        // ==========================================
+
+        OnWeaponChanged?.Invoke(
+            type
+        );
     }
 
 
