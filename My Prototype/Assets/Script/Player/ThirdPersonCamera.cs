@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class ThirdPersonCamera : MonoBehaviour
@@ -32,7 +32,7 @@ public class ThirdPersonCamera : MonoBehaviour
     [Header("Rotation")]
     [SerializeField] private float sensitivity = 0.15f;
 
-    [SerializeField] private float minPitch = -30f;
+    [SerializeField] private float minPitch = -70f;
     [SerializeField] private float maxPitch = 70f;
 
     [SerializeField]
