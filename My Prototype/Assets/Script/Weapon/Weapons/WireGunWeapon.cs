@@ -22,6 +22,12 @@ public class WireGunWeapon : WeaponBase
     [SerializeField] private float liftSpeed = 15f;
     [SerializeField] private LayerMask groundMask = ~0;
     [SerializeField] private float lengthFixGracePeriod = 0.1f;
+    [SerializeField] private float swingRotationSpeed = 15f; // 스윙 중 부드러운 회전 속도
+
+    [Header("🔥 Wire Physics (Elasticity)")]
+    [SerializeField] private float wireSpringForce = 150f;
+    [SerializeField] private float wireSpringDamper = 15f;
+    [SerializeField] private float maxWireStretch = 2f;
 
     [Header("🔥 Swing Dash")]
     [SerializeField] private float swingDashForce = 15f;
@@ -189,18 +195,20 @@ public class WireGunWeapon : WeaponBase
     }
 
     // =========================================================
-    // 🌟 텐션 유지 로직 (느슨해진 줄 고정)
+    // 🌟 통합된 단일 Move() 스윙 물리 로직 (멈춤 현상 완전 해결)
     // =========================================================
     private void HandleSwinging()
     {
+        Vector3 frameMove = Vector3.zero;
+
+        // 1. 부드러운 상승(Lift) 처리
         if (remainingLiftHeight > 0f)
         {
             float liftStep = liftSpeed * Time.deltaTime;
             if (liftStep > remainingLiftHeight) liftStep = remainingLiftHeight;
 
-            controller.Move(Vector3.up * liftStep);
+            frameMove += Vector3.up * liftStep;
             remainingLiftHeight -= liftStep;
-
             swingVelocity.y = Mathf.Max(swingVelocity.y, 0f);
 
             if (remainingLiftHeight <= 0f)
@@ -210,11 +218,11 @@ public class WireGunWeapon : WeaponBase
         }
         else
         {
+            // 중력 적용
             swingVelocity.y -= swingGravity * Time.deltaTime;
 
             if (controller.isGrounded)
             {
-                // 1. 낙하 에너지를 수평 이동으로 전환 (마찰 방지)
                 float currentSpeed = swingVelocity.magnitude;
                 swingVelocity.y = Mathf.Max(swingVelocity.y, 0f);
 
@@ -224,18 +232,18 @@ public class WireGunWeapon : WeaponBase
                     swingVelocity = flatDir * currentSpeed;
                 }
 
-                // 2. 🌟 핵심: 억지로 줄이지 않고, 느슨해진(Slack) 길이만큼만 최대 길이를 갱신 (고정)
                 if (isWireLengthFixed)
                 {
                     float currentDistanceToAnchor = Vector3.Distance(transform.position, worldAnchor);
                     if (currentDistanceToAnchor < currentWireLength)
                     {
-                        currentWireLength = currentDistanceToAnchor; // 남는 줄 길이를 타이트하게 고정
+                        currentWireLength = currentDistanceToAnchor;
                     }
                 }
             }
         }
 
+        // 2. 스프링 장력 계산
         Vector3 expectedPosition = transform.position + (swingVelocity * Time.deltaTime);
         Vector3 offsetFromAnchor = expectedPosition - worldAnchor;
         float distance = offsetFromAnchor.magnitude;
@@ -245,17 +253,50 @@ public class WireGunWeapon : WeaponBase
             if (Time.time - wireAttachTime >= lengthFixGracePeriod && swingVelocity.y <= 0f)
             {
                 isWireLengthFixed = true;
-                currentWireLength = distance;
+                currentWireLength = Vector3.Distance(transform.position, worldAnchor);
             }
         }
 
         if (isWireLengthFixed && distance > currentWireLength)
         {
-            expectedPosition = worldAnchor + (offsetFromAnchor.normalized * currentWireLength);
-            swingVelocity = (expectedPosition - transform.position) / Time.deltaTime;
+            float stretch = distance - currentWireLength;
+            Vector3 ropeDir = offsetFromAnchor.normalized;
+
+            if (stretch > maxWireStretch)
+            {
+                expectedPosition = worldAnchor + (ropeDir * (currentWireLength + maxWireStretch));
+                swingVelocity = (expectedPosition - transform.position) / Time.deltaTime;
+            }
+            else
+            {
+                Vector3 springForce = -ropeDir * (stretch * wireSpringForce);
+                float radialVelocity = Vector3.Dot(swingVelocity, ropeDir);
+                Vector3 damperForce = -ropeDir * (radialVelocity * wireSpringDamper);
+
+                swingVelocity += (springForce + damperForce) * Time.deltaTime;
+            }
         }
 
-        controller.Move(swingVelocity * Time.deltaTime);
+        // 3. 속도 이동량 합산
+        frameMove += swingVelocity * Time.deltaTime;
+
+        // 🌟 단 한 번의 Move() 호출로 모든 충돌과 이동을 매끄럽게 처리
+        CollisionFlags flags = controller.Move(frameMove);
+
+        // 머리 충돌 시 추락
+        if ((flags & CollisionFlags.Above) != 0)
+        {
+            remainingLiftHeight = 0f;
+            if (swingVelocity.y > 0f) swingVelocity.y = -2f;
+        }
+
+        // 🌟 스윙 중 자연스러운 회전 (이동 방향을 부드럽게 바라봄)
+        Vector3 horizontalVelocity = new Vector3(swingVelocity.x, 0f, swingVelocity.z);
+        if (horizontalVelocity.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(horizontalVelocity);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, swingRotationSpeed * Time.deltaTime);
+        }
     }
 
     private void PullEnemy()
