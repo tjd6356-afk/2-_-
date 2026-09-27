@@ -1708,7 +1708,7 @@ MonoBehaviour:
   aimOffset: {x: 1.5, y: 0.5, z: 0}
   transitionSpeed: 10
   sensitivity: 0.15
-  minPitch: -70
+  minPitch: -30
   maxPitch: 70
   weaponManager: {fileID: 0}
 --- !u!120 &2096285960 stripped

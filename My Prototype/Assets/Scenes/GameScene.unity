@@ -737,8 +737,9 @@ MonoBehaviour:
   aimOffset: {x: 1.5, y: 0.5, z: 0}
   transitionSpeed: 10
   sensitivity: 0.15
-  minPitch: -30
+  minPitch: -70
   maxPitch: 70
+  weaponManager: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
