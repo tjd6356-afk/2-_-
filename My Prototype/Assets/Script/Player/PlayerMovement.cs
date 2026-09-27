@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
@@ -88,6 +88,7 @@ public class PlayerMovement : MonoBehaviour
         RotateWhileAiming();
     }
 
+    public bool isSwingingByWeapon;
 
     private void Update()
     {
@@ -101,6 +102,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        if (isSwingingByWeapon) return;
 
         CheckGround();
 
@@ -544,43 +546,34 @@ public class PlayerMovement : MonoBehaviour
 
     private void ApplyWireMomentum()
     {
-        if (wireHorizontalVelocity.sqrMagnitude <
-            0.001f)
+        if (wireHorizontalVelocity.sqrMagnitude < 0.001f)
         {
-            wireHorizontalVelocity =
-                Vector3.zero;
-
+            wireHorizontalVelocity = Vector3.zero;
             return;
         }
 
+        // 1. 관성으로 캐릭터 이동
+        controller.Move(wireHorizontalVelocity * Time.deltaTime);
 
-        controller.Move(
-            wireHorizontalVelocity *
-            Time.deltaTime
-        );
-
-
-        float deceleration;
-
-
+        // 2. 바닥인지 공중인지에 따라 다른 브레이크(마찰력) 방식 적용
         if (isGrounded)
         {
-            deceleration =
-                wireGroundDeceleration;
+            // 🌟 핵심 해결책: 땅에 닿았을 때는 Lerp(퍼센트 감속)를 사용!
+            // 초고속으로 날아와도 속도가 확 깎여서 얼음판처럼 미끄러지지 않습니다.
+            wireHorizontalVelocity = Vector3.Lerp(
+                wireHorizontalVelocity,
+                Vector3.zero,
+                wireGroundDeceleration * Time.deltaTime
+            );
         }
         else
         {
-            deceleration =
-                wireAirDeceleration;
-        }
-
-
-        wireHorizontalVelocity =
-            Vector3.MoveTowards(
+            // 공중에서는 기존 방식(MoveTowards) 유지 (천천히 자연스럽게 감속)
+            wireHorizontalVelocity = Vector3.MoveTowards(
                 wireHorizontalVelocity,
                 Vector3.zero,
-                deceleration *
-                Time.deltaTime
+                wireAirDeceleration * Time.deltaTime
             );
+        }
     }
 }
