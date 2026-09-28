@@ -1731,6 +1731,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: NPC-01
       objectReference: {fileID: 0}
+    - target: {fileID: 902463312601948281, guid: f553924073585ac46b6203c3ae23110b, type: 3}
+      propertyPath: m_Size.x
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 902463312601948281, guid: f553924073585ac46b6203c3ae23110b, type: 3}
+      propertyPath: m_Size.z
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 4337009582853947134, guid: f553924073585ac46b6203c3ae23110b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -10.6
