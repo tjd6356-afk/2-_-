@@ -1783,6 +1783,10 @@ PrefabInstance:
       propertyPath: dialogueManager
       value: 
       objectReference: {fileID: 58059975}
+    - target: {fileID: 5289103139993555833, guid: f553924073585ac46b6203c3ae23110b, type: 3}
+      propertyPath: interactionCamera
+      value: 
+      objectReference: {fileID: 1966443905}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
