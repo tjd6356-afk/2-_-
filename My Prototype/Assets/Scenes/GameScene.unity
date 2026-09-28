@@ -1380,6 +1380,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7199fe4c45631a4fa3e4f51d757f901, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMeleeAttack
+--- !u!114 &1517141518 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5351818697115213627, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_PrefabInstance: {fileID: 6205593675272007783}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8354316cc7351e343a892200cbd99ac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
 --- !u!1 &1552717091
 GameObject:
   m_ObjectHideFlags: 0
@@ -1864,18 +1875,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Canvas
       objectReference: {fileID: 0}
-    - target: {fileID: 2058256454321272534, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: playerShooter
+    - target: {fileID: 5121800506005227239, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: playerStats
       value: 
-      objectReference: {fileID: 1517141514}
-    - target: {fileID: 2205651098363324278, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: m_text
-      value: "\uC774\uB3D9\uD558\uAE30"
-      objectReference: {fileID: 0}
-    - target: {fileID: 5220121413394988564, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: m_text
-      value: "\uCDE8\uC18C"
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1517141518}
     - target: {fileID: 6644274869764759568, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: m_IsActive
       value: 0
