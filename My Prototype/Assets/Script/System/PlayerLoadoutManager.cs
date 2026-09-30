@@ -9,52 +9,47 @@ public class PlayerLoadoutManager : MonoBehaviour
     }
 
 
-    [Header("Saved Weapon")]
+    [Header("Current Weapon")]
 
     [SerializeField]
-    private WeaponType equippedWeapon =
-        WeaponType.Developer;
+    private string equippedWeaponId;
 
 
-    public WeaponType EquippedWeapon =>
-        equippedWeapon;
+    public string EquippedWeaponId =>
+        equippedWeaponId;
 
 
     private void Awake()
     {
-        // 이미 존재하면 중복 제거
         if (Instance != null &&
             Instance != this)
         {
             Destroy(gameObject);
+
             return;
         }
 
 
-        Instance = this;
+        Instance =
+            this;
 
 
-        // 씬을 이동해도 삭제되지 않음
         DontDestroyOnLoad(
             gameObject
         );
     }
 
 
-    // =========================================================
-    // 현재 장착 무기 저장
-    // =========================================================
-
     public void SaveWeapon(
-        WeaponType weaponType
+        string weaponId
     )
     {
-        equippedWeapon =
-            weaponType;
+        equippedWeaponId =
+            weaponId;
 
 
         Debug.Log(
-            $"[Loadout] Weapon Saved : {weaponType}"
+            $"Weapon Saved : {weaponId}"
         );
     }
 }

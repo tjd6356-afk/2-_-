@@ -2,11 +2,14 @@ using UnityEngine;
 
 public class WeaponPickup : MonoBehaviour
 {
-    [Header("Weapon")]
-    [SerializeField]
-    private WeaponType weaponType;
+    [Header("Weapon Prefab")]
 
-    [Tooltip("획득 후 오브젝트를 없앨 것인가")]
+    [Tooltip("Player가 실제로 장착할 무기 Prefab")]
+    [SerializeField]
+    private WeaponBase weaponPrefab;
+
+
+    [Tooltip("장착 후 맵의 Pickup을 없앨 것인가")]
     [SerializeField]
     private bool destroyAfterEquip = false;
 
@@ -16,15 +19,16 @@ public class WeaponPickup : MonoBehaviour
     )
     {
         PlayerWeaponManager manager =
-            other.GetComponentInParent
-            <PlayerWeaponManager>();
+            other.GetComponentInParent<PlayerWeaponManager>();
 
 
         if (manager == null)
             return;
 
 
-        manager.RegisterPickup(this);
+        manager.RegisterPickup(
+            this
+        );
     }
 
 
@@ -33,15 +37,16 @@ public class WeaponPickup : MonoBehaviour
     )
     {
         PlayerWeaponManager manager =
-            other.GetComponentInParent
-            <PlayerWeaponManager>();
+            other.GetComponentInParent<PlayerWeaponManager>();
 
 
         if (manager == null)
             return;
 
 
-        manager.UnregisterPickup(this);
+        manager.UnregisterPickup(
+            this
+        );
     }
 
 
@@ -49,16 +54,31 @@ public class WeaponPickup : MonoBehaviour
         PlayerWeaponManager manager
     )
     {
+        if (weaponPrefab == null)
+        {
+            Debug.LogError(
+                $"{gameObject.name} : Weapon Prefab이 없습니다."
+            );
+
+            return;
+        }
+
+
         manager.EquipWeapon(
-            weaponType
+            weaponPrefab
         );
 
 
         if (destroyAfterEquip)
         {
-            manager.UnregisterPickup(this);
+            manager.UnregisterPickup(
+                this
+            );
 
-            Destroy(gameObject);
+
+            Destroy(
+                gameObject
+            );
         }
     }
 }

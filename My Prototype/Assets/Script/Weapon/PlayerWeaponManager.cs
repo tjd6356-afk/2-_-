@@ -4,27 +4,26 @@ using UnityEngine.InputSystem;
 
 public class PlayerWeaponManager : MonoBehaviour
 {
-    [Header("Weapons")]
-    [SerializeField]
-    private WeaponBase[] weapons;
+    [Header("References")]
+    [SerializeField] private Transform weaponMount;
+
+    [SerializeField] private PlayerStats playerStats;
+
+    [SerializeField] private Camera playerCamera;
+
+    [SerializeField] private CharacterController characterController;
 
 
     [Header("Start Weapon")]
-    [SerializeField]
-    private WeaponType startingWeapon =
-        WeaponType.Developer;
+    [SerializeField] private WeaponBase startingWeaponPrefab;
 
 
-    // 현재 장착 무기
+    // 현재 생성되어 있는 실제 무기
     private WeaponBase currentWeapon;
 
-    // 현재 Player가 가까이 있는 무기 Pickup
+
+    // 현재 가까이에 있는 무기 Pickup
     private WeaponPickup nearbyPickup;
-
-
-    // =========================================================
-    // 외부 접근
-    // =========================================================
 
     public WeaponType ActiveWeaponType
     {
@@ -32,98 +31,90 @@ public class PlayerWeaponManager : MonoBehaviour
         {
             if (currentWeapon != null)
             {
-                return currentWeapon.Type;
+                return currentWeapon.WeaponType;
             }
 
             return WeaponType.Developer;
         }
     }
 
+    public WeaponBase CurrentWeapon =>
+        currentWeapon;
 
-    public bool HasNearbyPickup
+
+    public bool HasNearbyPickup =>
+        nearbyPickup != null;
+
+
+    // UI나 다른 시스템에서 사용
+    public event Action<WeaponBase> OnWeaponChanged;
+
+
+    private void Awake()
     {
-        get
+        if (playerStats == null)
         {
-            return nearbyPickup != null;
+            playerStats =
+                GetComponent<PlayerStats>();
+        }
+
+
+        if (characterController == null)
+        {
+            characterController =
+                GetComponent<CharacterController>();
+        }
+
+
+        if (playerCamera == null)
+        {
+            playerCamera =
+                Camera.main;
         }
     }
 
-
-    // =========================================================
-    // 무기 변경 이벤트
-    // AmmoUI 등이 사용
-    // =========================================================
-
-    public event Action<WeaponType> OnWeaponChanged;
-
-
-    // =========================================================
-    // 시작
-    // =========================================================
 
     private void Start()
     {
         // ==========================================
-        // 우선 모든 무기 해제
+        // 이전 Scene에서 저장된 무기가 있다면
+        // WeaponCatalog에서 찾아서 장착
         // ==========================================
 
-        foreach (WeaponBase weapon in weapons)
+        WeaponBase weaponToEquip =
+            startingWeaponPrefab;
+
+
+        if (PlayerLoadoutManager.Instance != null &&
+            WeaponCatalog.Instance != null)
         {
-            if (weapon == null)
-                continue;
-
-            weapon.Unequip();
-        }
-
-
-        // ==========================================
-        // 기본 시작 무기
-        // ==========================================
-
-        WeaponType weaponToEquip =
-            startingWeapon;
-
-
-        // ==========================================
-        // 이전 Scene에서 저장한 무기가 있다면
-        // 그 무기를 사용
-        // ==========================================
-
-        if (PlayerLoadoutManager.Instance != null)
-        {
-            weaponToEquip =
+            string savedWeaponId =
                 PlayerLoadoutManager
                     .Instance
-                    .EquippedWeapon;
+                    .EquippedWeaponId;
+
+
+            WeaponBase savedPrefab =
+                WeaponCatalog.Instance
+                    .GetWeapon(savedWeaponId);
+
+
+            if (savedPrefab != null)
+            {
+                weaponToEquip =
+                    savedPrefab;
+            }
         }
 
 
-        // ==========================================
-        // 저장된 무기를 장착할 수 있는지 확인
-        // ==========================================
-
-        if (!HasWeapon(weaponToEquip))
+        if (weaponToEquip != null)
         {
-            Debug.LogWarning(
-                $"저장된 무기 {weaponToEquip}가 현재 Player에 없습니다. " +
-                $"{startingWeapon}을 장착합니다."
+            EquipWeapon(
+                weaponToEquip
             );
-
-
-            weaponToEquip =
-                startingWeapon;
         }
-
-
-        EquipWeapon(
-            weaponToEquip
-        );
     }
 
-
-    // =========================================================
-    // Update
-    // =========================================================
 
     private void Update()
     {
@@ -132,7 +123,7 @@ public class PlayerWeaponManager : MonoBehaviour
 
 
         // ==========================================
-        // 무기 Pickup 가까이에서 E
+        // 무기 Pickup 근처에서 E
         // ==========================================
 
         if (nearbyPickup != null &&
@@ -146,176 +137,129 @@ public class PlayerWeaponManager : MonoBehaviour
 
 
     // =========================================================
-    // 무기 존재 확인
-    // =========================================================
-
-    private bool HasWeapon(
-        WeaponType type
-    )
-    {
-        foreach (WeaponBase weapon in weapons)
-        {
-            if (weapon == null)
-                continue;
-
-
-            if (weapon.Type == type)
-            {
-                return true;
-            }
-        }
-
-
-        return false;
-    }
-
-
-    // =========================================================
-    // 무기 장착
+    // 새로운 무기 장착
     // =========================================================
 
     public void EquipWeapon(
-        WeaponType type
+        WeaponBase weaponPrefab
     )
     {
-        WeaponBase targetWeapon =
-            null;
+        if (weaponPrefab == null)
+            return;
 
 
-        // ==========================================
-        // 장착할 무기 찾기
-        // ==========================================
-
-        foreach (WeaponBase weapon in weapons)
+        // 같은 무기라면 다시 만들지 않음
+        if (currentWeapon != null &&
+            currentWeapon.WeaponId ==
+            weaponPrefab.WeaponId)
         {
-            if (weapon == null)
-                continue;
-
-
-            if (weapon.Type == type)
-            {
-                targetWeapon =
-                    weapon;
-
-                break;
-            }
-        }
-
-
-        if (targetWeapon == null)
-        {
-            Debug.LogError(
-                $"Weapon을 찾을 수 없습니다 : {type}"
-            );
-
             return;
         }
 
 
         // ==========================================
-        // 다른 무기 모두 해제
+        // 기존 무기 제거
         // ==========================================
 
-        foreach (WeaponBase weapon in weapons)
+        if (currentWeapon != null)
         {
-            if (weapon == null)
-                continue;
+            currentWeapon.Unequip();
 
 
-            if (weapon ==
-                targetWeapon)
-            {
-                continue;
-            }
+            Destroy(
+                currentWeapon.gameObject
+            );
 
 
-            weapon.Unequip();
+            currentWeapon =
+                null;
         }
 
 
         // ==========================================
-        // 새 무기 장착
+        // 새로운 무기 Prefab 생성
         // ==========================================
 
+        WeaponBase newWeapon =
+            Instantiate(
+                weaponPrefab,
+                weaponMount
+            );
+
+
+        // Mount 기준으로 위치 초기화
+        newWeapon.transform.localPosition =
+            Vector3.zero;
+
+
+        newWeapon.transform.localRotation =
+            Quaternion.identity;
+
+
         currentWeapon =
-            targetWeapon;
+            newWeapon;
 
 
-        currentWeapon.Equip();
+        // ==========================================
+        // Player 정보 전달
+        // ==========================================
 
-
-        Debug.Log(
-            $"Weapon Equipped : {type}"
+        currentWeapon.Initialize(
+            this,
+            playerStats,
+            playerCamera,
+            characterController
         );
 
 
         // ==========================================
-        // Scene 전환용 무기 저장
+        // Scene 전환용 저장
         // ==========================================
 
         if (PlayerLoadoutManager.Instance != null)
         {
             PlayerLoadoutManager
                 .Instance
-                .SaveWeapon(type);
+                .SaveWeapon(
+                    currentWeapon.WeaponId
+                );
         }
 
 
-        // ==========================================
-        // UI 등에 무기 변경 알림
-        // ==========================================
+        Debug.Log(
+            $"Weapon Equipped : {currentWeapon.WeaponName}"
+        );
 
+
+        // UI 등에 알림
         OnWeaponChanged?.Invoke(
-            type
+            currentWeapon
         );
     }
 
 
     // =========================================================
-    // WeaponPickup이 Player 범위에 들어왔을 때 호출
+    // Pickup 등록
     // =========================================================
 
     public void RegisterPickup(
         WeaponPickup pickup
     )
     {
-        if (pickup == null)
-            return;
-
-
         nearbyPickup =
             pickup;
-
-
-        Debug.Log(
-            $"Weapon Pickup 등록 : {pickup.gameObject.name}"
-        );
     }
 
-
-    // =========================================================
-    // WeaponPickup 범위에서 나갔을 때 호출
-    // =========================================================
 
     public void UnregisterPickup(
         WeaponPickup pickup
     )
     {
-        if (pickup == null)
-            return;
-
-
-        // 현재 등록되어 있는 Pickup과
-        // 같은 오브젝트일 때만 제거
-        if (nearbyPickup == pickup)
+        if (nearbyPickup ==
+            pickup)
         {
             nearbyPickup =
                 null;
-
-
-            Debug.Log(
-                $"Weapon Pickup 해제 : {pickup.gameObject.name}"
-            );
         }
     }
 }

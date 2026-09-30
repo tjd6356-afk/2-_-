@@ -122,8 +122,7 @@ public class AmmoUI : MonoBehaviour
     // =========================================================
 
     private void HandleWeaponChanged(
-        WeaponType type
-    )
+    WeaponBase weapon)
     {
         RefreshUI();
     }
