@@ -13,11 +13,8 @@ GameObject:
   - component: {fileID: 7132637885072722944}
   - component: {fileID: 8365666764133539101}
   - component: {fileID: 5351818697115213627}
-  - component: {fileID: 5007453305914519943}
-  - component: {fileID: 2995714770004380152}
   - component: {fileID: 5821247941830255217}
   - component: {fileID: 4525119024753954002}
-  - component: {fileID: 1648526504011636663}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -91,7 +88,7 @@ MonoBehaviour:
   dashSpeed: 18
   dashDuration: 0.18
   dashCooldown: 0.5
-  wireController: {fileID: 5007453305914519943}
+  wireController: {fileID: 0}
   wireAirDeceleration: 1.5
   wireGroundDeceleration: 12
   isSwingingByWeapon: 0
@@ -138,62 +135,6 @@ MonoBehaviour:
   attackPower: 20
   moveSpeed: 5
   meleeAttackSpeed: 1
---- !u!114 &5007453305914519943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1001626158897247550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d3f1adea287e884097251e13d88f404, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WireController
-  playerCamera: {fileID: 0}
-  controller: {fileID: 934635378258857864}
-  playerMovement: {fileID: 7132637885072722944}
-  qWireOrigin: {fileID: 0}
-  eWireOrigin: {fileID: 0}
-  qWireLine: {fileID: 0}
-  eWireLine: {fileID: 0}
-  wireableMask:
-    serializedVersion: 2
-    m_Bits: 64
-  maxWireDistance: 50
-  minWireDistance: 1
-  weaponManager: {fileID: 4525119024753954002}
-  gravityScale: 1
-  forwardSwingAcceleration: 24
-  sideSwingAcceleration: 18
-  swingBoostMultiplier: 2
-  maxSwingSpeed: 25
-  swingDrag: 0.15
-  pullAcceleration: 35
-  maxPullSpeed: 22
-  pullBoostMultiplier: 2
-  pullStopDistance: 0.5
---- !u!114 &2995714770004380152
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1001626158897247550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7199fe4c45631a4fa3e4f51d757f901, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMeleeAttack
-  playerStats: {fileID: 5351818697115213627}
-  thirdPersonCamera: {fileID: 0}
-  meleePoint: {fileID: 0}
-  attackRadius: 1.2
-  meleeDamageMultiplier: 1
-  attackCooldown: 0.6
-  meleeLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!114 &5821247941830255217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209,8 +150,8 @@ MonoBehaviour:
   gameplayBehaviours:
   - {fileID: 7132637885072722944}
   - {fileID: 8365666764133539101}
-  - {fileID: 2995714770004380152}
-  - {fileID: 5007453305914519943}
+  - {fileID: 0}
+  - {fileID: 0}
   - {fileID: 0}
 --- !u!114 &4525119024753954002
 MonoBehaviour:
@@ -229,24 +170,6 @@ MonoBehaviour:
   playerCamera: {fileID: 0}
   characterController: {fileID: 934635378258857864}
   startingWeaponPrefab: {fileID: 5895482793363456999, guid: b1b431a2d3144be48bae817e07c2a640, type: 3}
---- !u!114 &1648526504011636663
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1001626158897247550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e502c5c0a904cc41bfd5766a9e67ac0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeveloperWeapon
-  weaponId: weapon_000
-  weaponName: Weapon
-  weaponType: 0
-  shooter: {fileID: 8365666764133539101}
-  meleeAttack: {fileID: 2995714770004380152}
-  wireController: {fileID: 5007453305914519943}
 --- !u!1 &1720790152774821821
 GameObject:
   m_ObjectHideFlags: 0
