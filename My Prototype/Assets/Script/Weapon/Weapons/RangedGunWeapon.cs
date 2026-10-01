@@ -2,140 +2,148 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static Readme;
 
-public class RangedGunWeapon : WeaponBase
+public class RangedGunWeapon : WeaponBase, IAmmoWeapon
 {
-    [Header("References")]
-    [SerializeField] private Camera playerCamera;
-    [SerializeField] private Transform firePoint;
-    [SerializeField] private Projectile projectilePrefab;
-    [SerializeField] private PlayerStats playerStats;
+    // =========================================================
+    // Prefab 내부 References
+    // =========================================================
 
+    [Header("Weapon References")]
+
+    [Tooltip("이 무기 Prefab 내부의 FirePoint")]
+    [SerializeField]
+    private Transform firePoint;
+
+    [Tooltip("발사할 총알 Prefab")]
+    [SerializeField]
+    private Projectile projectilePrefab;
+
+
+    // =========================================================
+    // Ammo
+    // =========================================================
 
     [Header("Ammo")]
-    [Tooltip("현재 장전되는 총알 수")]
-    [SerializeField] private int magazineSize = 5;
 
-    [Tooltip("가지고 시작하는 예비 탄창 수")]
-    [SerializeField] private int maxReserveMagazines = 5;
+    [SerializeField]
+    private int magazineSize = 5;
 
-    [Tooltip("모든 탄약을 소모한 뒤 전체 보급에 걸리는 기본 시간")]
-    [SerializeField] private float baseFullReloadTime = 2f;
+    [SerializeField]
+    private int maxReserveMagazines = 5;
 
-    [Tooltip("모든 탄약을 소모하면 자동으로 전체 재장전")]
-    [SerializeField] private bool autoFullReloadWhenEmpty = true;
+    [Tooltip("모든 탄약을 다 사용한 뒤 전체 회복 시간")]
+    [SerializeField]
+    private float baseFullReloadTime = 2f;
 
+    [SerializeField]
+    private bool autoFullReloadWhenEmpty = true;
+
+
+    // =========================================================
+    // Aim
+    // =========================================================
 
     [Header("Aim")]
-    [SerializeField] private float maxAimDistance = 100f;
-    [SerializeField] private LayerMask aimMask = ~0;
 
+    [SerializeField]
+    private float maxAimDistance = 100f;
+
+    [SerializeField]
+    private LayerMask aimMask = ~0;
+
+
+    // =========================================================
+    // Runtime
+    // =========================================================
 
     private int currentAmmo;
     private int reserveMagazines;
 
     private bool isReloading;
-    private bool initialized;
+    private bool ammoInitialized;
 
     private float nextFireTime;
 
 
     // =========================================================
-    // 외부 접근
+    // IAmmoWeapon
     // =========================================================
 
-    public int CurrentAmmo => currentAmmo;
+    public int CurrentAmmo =>
+        currentAmmo;
 
-    public int MagazineSize => magazineSize;
+    public int MagazineSize =>
+        magazineSize;
 
-    public int ReserveMagazines => reserveMagazines;
+    public int ReserveMagazines =>
+        reserveMagazines;
 
-    public bool IsReloading => isReloading;
+    public bool IsReloading =>
+        isReloading;
+
+
+    public event Action OnAmmoStateChanged;
 
 
     // =========================================================
-    // UI Events
+    // 장착
     // =========================================================
-
-    public event Action<int, int, int> OnAmmoChanged;
-
-    public event Action<bool> OnReloadStateChanged;
-
-
-    private void Awake()
-    {
-        if (playerCamera == null)
-        {
-            playerCamera = Camera.main;
-        }
-
-
-        if (playerStats == null)
-        {
-            playerStats =
-                GetComponent<PlayerStats>();
-        }
-
-
-        InitializeAmmo();
-    }
-
-
-    private void InitializeAmmo()
-    {
-        if (initialized)
-            return;
-
-
-        initialized = true;
-
-        currentAmmo =
-            magazineSize;
-
-        reserveMagazines =
-            maxReserveMagazines;
-    }
-
 
     public override void Equip()
     {
-        InitializeAmmo();
-
         base.Equip();
 
-        NotifyAmmoChanged();
+
+        // 처음 생성된 무기라면 탄약 초기화
+        if (!ammoInitialized)
+        {
+            currentAmmo =
+                magazineSize;
+
+            reserveMagazines =
+                maxReserveMagazines;
+
+            ammoInitialized =
+                true;
+        }
+
+
+        NotifyAmmo();
     }
 
 
     private void Update()
     {
-        if (Mouse.current == null ||
-            Keyboard.current == null)
+        /*
+         * 중요한 점:
+         *
+         * PlayerCamera와 PlayerStats는
+         * WeaponBase.Initialize()에서
+         * PlayerWeaponManager가 전달해준다.
+         *
+         * Prefab Inspector에서 연결할 필요 없음.
+         */
+
+        if (PlayerCamera == null ||
+            PlayerStats == null)
         {
             return;
         }
 
 
-        // ==========================================
-        // 전부 소모한 상태에서 R을 눌러도 전체 재장전 가능
-        // ==========================================
-
-        if (Keyboard.current.rKey.wasPressedThisFrame)
-        {
-            if (currentAmmo <= 0 &&
-                reserveMagazines <= 0)
-            {
-                TryFullReload();
-            }
-        }
+        if (Mouse.current == null)
+            return;
 
 
+        // 재장전 중에는 공격 불가
         if (isReloading)
             return;
 
 
         // ==========================================
-        // 우클릭 + 좌클릭
+        // RMB + LMB
         // ==========================================
 
         if (Mouse.current.rightButton.isPressed &&
@@ -147,41 +155,60 @@ public class RangedGunWeapon : WeaponBase
 
 
     // =========================================================
-    // 사격
+    // 발사 시도
     // =========================================================
 
     private void TryShoot()
     {
-        if (Time.time < nextFireTime)
+        if (Time.time <
+            nextFireTime)
+        {
             return;
+        }
 
 
-        // 현재 5발을 다 썼다면
+        // ==========================================
+        // 현재 5발을 다 사용함
+        // ==========================================
+
         if (currentAmmo <= 0)
         {
-            // 예비 탄창이 있으면 재장전 시간 없이
-            // 즉시 다음 탄창으로 교체
+            // 예비 탄창이 있다면
+            // 기다리지 않고 바로 다음 탄창 사용
             if (reserveMagazines > 0)
             {
                 LoadNextMagazine();
             }
             else
             {
+                // 예비 탄창까지 전부 소모
                 if (autoFullReloadWhenEmpty)
                 {
                     TryFullReload();
                 }
+
 
                 return;
             }
         }
 
 
-        if (playerCamera == null ||
-            firePoint == null ||
-            projectilePrefab == null ||
-            playerStats == null)
+        if (firePoint == null)
         {
+            Debug.LogError(
+                $"{WeaponName} : FirePoint가 없습니다."
+            );
+
+            return;
+        }
+
+
+        if (projectilePrefab == null)
+        {
+            Debug.LogError(
+                $"{WeaponName} : Projectile Prefab이 없습니다."
+            );
+
             return;
         }
 
@@ -195,7 +222,7 @@ public class RangedGunWeapon : WeaponBase
                 1f /
                 Mathf.Max(
                     0.01f,
-                    playerStats.FireRate
+                    PlayerStats.FireRate
                 )
             );
     }
@@ -207,8 +234,9 @@ public class RangedGunWeapon : WeaponBase
 
     private void Shoot()
     {
-        Ray ray =
-            playerCamera.ViewportPointToRay(
+        // 화면 중앙 십자선
+        Ray aimRay =
+            PlayerCamera.ViewportPointToRay(
                 new Vector3(
                     0.5f,
                     0.5f,
@@ -221,7 +249,7 @@ public class RangedGunWeapon : WeaponBase
 
 
         if (Physics.Raycast(
-                ray,
+                aimRay,
                 out RaycastHit hit,
                 maxAimDistance,
                 aimMask,
@@ -233,13 +261,17 @@ public class RangedGunWeapon : WeaponBase
         else
         {
             targetPoint =
-                ray.GetPoint(
+                aimRay.GetPoint(
                     maxAimDistance
                 );
         }
 
 
-        Vector3 direction =
+        // ==========================================
+        // Prefab 안의 FirePoint에서 발사
+        // ==========================================
+
+        Vector3 shootDirection =
             (
                 targetPoint -
                 firePoint.position
@@ -251,39 +283,42 @@ public class RangedGunWeapon : WeaponBase
                 projectilePrefab,
                 firePoint.position,
                 Quaternion.LookRotation(
-                    direction
+                    shootDirection
                 )
             );
 
 
+        /*
+         * Owner는 무기 Prefab이 아니라 Player여야 한다.
+         *
+         * WeaponManager가 Player에 붙어 있으므로
+         * WeaponManager.gameObject == Player
+         */
         projectile.Launch(
-            direction,
-            playerStats.AttackPower,
-            gameObject
+            shootDirection,
+            PlayerStats.AttackPower,
+            WeaponManager.gameObject
         );
 
 
-        // 한 발 소비
         currentAmmo--;
 
 
-        NotifyAmmoChanged();
+        NotifyAmmo();
 
 
         // ==========================================
-        // 지금 쏜 게 마지막 총알
+        // 방금 마지막 총알을 쐈음
         // ==========================================
 
         if (currentAmmo <= 0)
         {
-            // 예비 탄창이 있으면 즉시 다음 탄창 사용
             if (reserveMagazines > 0)
             {
                 LoadNextMagazine();
             }
-
-            // 예비 탄창까지 전부 소모
-            else if (autoFullReloadWhenEmpty)
+            else if (
+                autoFullReloadWhenEmpty)
             {
                 TryFullReload();
             }
@@ -292,9 +327,7 @@ public class RangedGunWeapon : WeaponBase
 
 
     // =========================================================
-    // 다음 탄창으로 즉시 교체
-    //
-    // 재장전 시간 없음
+    // 예비 탄창 즉시 사용
     // =========================================================
 
     private void LoadNextMagazine()
@@ -310,17 +343,19 @@ public class RangedGunWeapon : WeaponBase
             magazineSize;
 
 
+        NotifyAmmo();
+
+
         Debug.Log(
-            $"다음 탄창 사용 / 탄창 {reserveMagazines} / 탄약 {currentAmmo}"
+            $"{WeaponName} 다음 탄창 사용 " +
+            $"| 탄창 {reserveMagazines} " +
+            $"| 탄약 {currentAmmo}/{magazineSize}"
         );
-
-
-        NotifyAmmoChanged();
     }
 
 
     // =========================================================
-    // 모든 탄약을 다 쓴 후 전체 재장전
+    // 전부 소진 후 전체 재장전
     // =========================================================
 
     private void TryFullReload()
@@ -329,7 +364,7 @@ public class RangedGunWeapon : WeaponBase
             return;
 
 
-        // 아직 사용할 탄약이 남아있다면 전체 재장전 불가
+        // 아직 사용할 탄약이 있다면 실행하지 않음
         if (currentAmmo > 0 ||
             reserveMagazines > 0)
         {
@@ -345,89 +380,79 @@ public class RangedGunWeapon : WeaponBase
 
     private IEnumerator FullReloadRoutine()
     {
-        isReloading = true;
+        isReloading =
+            true;
 
 
-        OnReloadStateChanged?.Invoke(
-            true
-        );
+        NotifyAmmo();
 
 
         float reloadTime =
-            baseFullReloadTime;
-
-
-        if (playerStats != null)
-        {
-            reloadTime =
-                playerStats.GetReloadTime(
-                    baseFullReloadTime
-                );
-        }
+            PlayerStats.GetReloadTime(
+                baseFullReloadTime
+            );
 
 
         Debug.Log(
-            $"원거리 무기 전체 재장전 시작 : {reloadTime:F2}초"
+            $"{WeaponName} 전체 재장전 시작"
         );
 
 
-        yield return new WaitForSeconds(
-            reloadTime
-        );
+        yield return
+            new WaitForSeconds(
+                reloadTime
+            );
 
 
         // ==========================================
-        // 탄창 + 총알 전부 최대치 복원
+        // 완전히 최대치 회복
         // ==========================================
-
-        reserveMagazines =
-            maxReserveMagazines;
-
 
         currentAmmo =
             magazineSize;
 
 
-        isReloading = false;
+        reserveMagazines =
+            maxReserveMagazines;
 
 
-        NotifyAmmoChanged();
+        isReloading =
+            false;
 
 
-        OnReloadStateChanged?.Invoke(
-            false
-        );
+        NotifyAmmo();
 
 
         Debug.Log(
-            "원거리 무기 전체 재장전 완료"
+            $"{WeaponName} 전체 재장전 완료"
         );
     }
 
 
-    private void NotifyAmmoChanged()
+    // =========================================================
+    // UI 갱신
+    // =========================================================
+
+    private void NotifyAmmo()
     {
-        OnAmmoChanged?.Invoke(
-            currentAmmo,
-            magazineSize,
-            reserveMagazines
-        );
+        OnAmmoStateChanged?.Invoke();
     }
 
+
+    // =========================================================
+    // 무기 해제
+    // =========================================================
 
     public override void Unequip()
     {
-        if (isReloading)
-        {
-            StopAllCoroutines();
-
-            isReloading = false;
+        StopAllCoroutines();
 
 
-            OnReloadStateChanged?.Invoke(
-                false
-            );
-        }
+        isReloading =
+            false;
+
+
+        NotifyAmmo();
 
 
         base.Unequip();

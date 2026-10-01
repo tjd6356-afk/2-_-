@@ -3,26 +3,17 @@ using UnityEngine;
 
 public class AmmoUI : MonoBehaviour
 {
-    [Header("Weapon")]
+    [Header("References")]
+
     [SerializeField]
     private PlayerWeaponManager weaponManager;
 
-
-    [Header("Ammo Sources")]
-
-    [Tooltip("제작자 전용 무기의 총")]
-    [SerializeField]
-    private PlayerShooter developerShooter;
-
-
-    [Tooltip("일반 원거리 무기")]
-    [SerializeField]
-    private RangedGunWeapon rangedGunWeapon;
-
-
-    [Header("UI")]
     [SerializeField]
     private TMP_Text ammoText;
+
+
+    // 현재 연결되어 있는 탄약 무기
+    private IAmmoWeapon currentAmmoWeapon;
 
 
     private void Awake()
@@ -32,56 +23,46 @@ public class AmmoUI : MonoBehaviour
             ammoText =
                 GetComponent<TMP_Text>();
         }
+
+
+        if (weaponManager == null)
+        {
+            weaponManager =
+                FindFirstObjectByType
+                <PlayerWeaponManager>();
+        }
     }
 
 
     private void OnEnable()
     {
-        // ==========================================
-        // 무기 변경
-        // ==========================================
-
         if (weaponManager != null)
         {
             weaponManager.OnWeaponChanged +=
                 HandleWeaponChanged;
-        }
-
-
-        // ==========================================
-        // 제작자 무기 탄약
-        // ==========================================
-
-        if (developerShooter != null)
-        {
-            developerShooter.OnAmmoChanged +=
-                HandleDeveloperAmmoChanged;
-
-
-            developerShooter.OnReloadStateChanged +=
-                HandleDeveloperReloadChanged;
-        }
-
-
-        // ==========================================
-        // 원거리 무기 탄약
-        // ==========================================
-
-        if (rangedGunWeapon != null)
-        {
-            rangedGunWeapon.OnAmmoChanged +=
-                HandleRangedAmmoChanged;
-
-
-            rangedGunWeapon.OnReloadStateChanged +=
-                HandleRangedReloadChanged;
         }
     }
 
 
     private void Start()
     {
-        RefreshUI();
+        /*
+         * OnWeaponChanged를 놓친 경우를 대비.
+         *
+         * 예를 들어 UI의 Start 순서보다
+         * PlayerWeaponManager가 먼저 실행됐을 수도 있음.
+         */
+
+        if (weaponManager != null)
+        {
+            ConnectToWeapon(
+                weaponManager.CurrentWeapon
+            );
+        }
+        else
+        {
+            HideAmmoUI();
+        }
     }
 
 
@@ -94,202 +75,147 @@ public class AmmoUI : MonoBehaviour
         }
 
 
-        if (developerShooter != null)
-        {
-            developerShooter.OnAmmoChanged -=
-                HandleDeveloperAmmoChanged;
-
-
-            developerShooter.OnReloadStateChanged -=
-                HandleDeveloperReloadChanged;
-        }
-
-
-        if (rangedGunWeapon != null)
-        {
-            rangedGunWeapon.OnAmmoChanged -=
-                HandleRangedAmmoChanged;
-
-
-            rangedGunWeapon.OnReloadStateChanged -=
-                HandleRangedReloadChanged;
-        }
+        DisconnectCurrentWeapon();
     }
 
 
     // =========================================================
-    // 무기 변경
+    // 무기가 바뀜
     // =========================================================
 
     private void HandleWeaponChanged(
-    WeaponBase weapon)
+        WeaponBase weapon
+    )
     {
+        ConnectToWeapon(
+            weapon
+        );
+    }
+
+
+    // =========================================================
+    // 현재 무기와 UI 연결
+    // =========================================================
+
+    private void ConnectToWeapon(
+        WeaponBase weapon
+    )
+    {
+        // 이전 무기 이벤트 해제
+        DisconnectCurrentWeapon();
+
+
+        if (weapon == null)
+        {
+            HideAmmoUI();
+
+            return;
+        }
+
+
+        // ==========================================
+        // 현재 무기가 탄약을 사용하는 무기인가?
+        // ==========================================
+
+        currentAmmoWeapon =
+            weapon as IAmmoWeapon;
+
+
+        // 근접 / 와이어 등
+        if (currentAmmoWeapon == null)
+        {
+            HideAmmoUI();
+
+            return;
+        }
+
+
+        // ==========================================
+        // 탄약 무기
+        // ==========================================
+
+        currentAmmoWeapon.OnAmmoStateChanged +=
+            RefreshUI;
+
+
+        ShowAmmoUI();
+
+
         RefreshUI();
     }
 
 
     // =========================================================
-    // Developer
+    // 기존 무기 이벤트 연결 제거
     // =========================================================
 
-    private void HandleDeveloperAmmoChanged(
-        int currentAmmo,
-        int magazineSize,
-        int reserveMagazines
-    )
+    private void DisconnectCurrentWeapon()
     {
-        if (weaponManager.ActiveWeaponType ==
-            WeaponType.Developer)
-        {
-            RefreshUI();
-        }
-    }
+        if (currentAmmoWeapon == null)
+            return;
 
 
-    private void HandleDeveloperReloadChanged(
-        bool value
-    )
-    {
-        if (weaponManager.ActiveWeaponType ==
-            WeaponType.Developer)
-        {
-            RefreshUI();
-        }
+        currentAmmoWeapon.OnAmmoStateChanged -=
+            RefreshUI;
+
+
+        currentAmmoWeapon =
+            null;
     }
 
 
     // =========================================================
-    // Ranged Gun
-    // =========================================================
-
-    private void HandleRangedAmmoChanged(
-        int currentAmmo,
-        int magazineSize,
-        int reserveMagazines
-    )
-    {
-        if (weaponManager.ActiveWeaponType ==
-            WeaponType.RangedGun)
-        {
-            RefreshUI();
-        }
-    }
-
-
-    private void HandleRangedReloadChanged(
-        bool value
-    )
-    {
-        if (weaponManager.ActiveWeaponType ==
-            WeaponType.RangedGun)
-        {
-            RefreshUI();
-        }
-    }
-
-
-    // =========================================================
-    // 실제 UI
+    // UI 실제 갱신
     // =========================================================
 
     private void RefreshUI()
     {
-        if (ammoText == null ||
-            weaponManager == null)
+        if (ammoText == null)
+            return;
+
+
+        if (currentAmmoWeapon == null)
         {
+            HideAmmoUI();
+
             return;
         }
 
 
-        switch (
-            weaponManager.ActiveWeaponType
-        )
+        ammoText.enabled =
+            true;
+
+
+        ammoText.text =
+            $"탄창 {currentAmmoWeapon.ReserveMagazines}" +
+            $"\n탄약 {currentAmmoWeapon.CurrentAmmo} / " +
+            $"{currentAmmoWeapon.MagazineSize}";
+
+
+        if (currentAmmoWeapon.IsReloading)
         {
-            // ==========================================
-            // 제작자 무기
-            // ==========================================
-
-            case WeaponType.Developer:
-
-                if (developerShooter == null)
-                {
-                    HideAmmo();
-                    return;
-                }
-
-
-                ShowAmmo();
-
-
-                ammoText.text =
-                    $"탄창 {developerShooter.ReserveMagazines}" +
-                    $"\n탄약 {developerShooter.CurrentAmmo} / {developerShooter.MagazineSize}";
-
-
-                if (developerShooter.IsReloading)
-                {
-                    ammoText.text +=
-                        "\n재장전 중...";
-                }
-
-                break;
-
-
-            // ==========================================
-            // 원거리 총
-            // ==========================================
-
-            case WeaponType.RangedGun:
-
-                if (rangedGunWeapon == null)
-                {
-                    HideAmmo();
-                    return;
-                }
-
-
-                ShowAmmo();
-
-
-                ammoText.text =
-                    $"탄창 {rangedGunWeapon.ReserveMagazines}" +
-                    $"\n탄약 {rangedGunWeapon.CurrentAmmo} / {rangedGunWeapon.MagazineSize}";
-
-
-                if (rangedGunWeapon.IsReloading)
-                {
-                    ammoText.text +=
-                        "\n재장전 중...";
-                }
-
-                break;
-
-
-            // ==========================================
-            // 근접무기 / 와이어건
-            // 탄약 UI 필요 없음
-            // ==========================================
-
-            case WeaponType.Melee:
-            case WeaponType.WireGun:
-
-                HideAmmo();
-
-                break;
+            ammoText.text +=
+                "\n재장전 중...";
         }
     }
 
 
-    private void ShowAmmo()
+    private void ShowAmmoUI()
     {
-        ammoText.enabled =
-            true;
+        if (ammoText != null)
+        {
+            ammoText.enabled =
+                true;
+        }
     }
 
 
-    private void HideAmmo()
+    private void HideAmmoUI()
     {
-        ammoText.enabled =
-            false;
+        if (ammoText != null)
+        {
+            ammoText.enabled =
+                false;
+        }
     }
 }

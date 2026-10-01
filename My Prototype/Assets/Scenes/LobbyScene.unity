@@ -396,17 +396,13 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'gameplayBehaviours.Array.data[1]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: 'gameplayBehaviours.Array.data[2]'
       value: 
       objectReference: {fileID: 1966443908}
-    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: 'gameplayBehaviours.Array.data[3]'
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: 'gameplayBehaviours.Array.data[4]'
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: cameraTransform
       value: 
@@ -455,14 +451,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8365666764133539101, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: playerCamera
-      value: 
-      objectReference: {fileID: 1966443905}
-    - target: {fileID: 8365666764133539101, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-      propertyPath: thirdPersonCamera
-      value: 
-      objectReference: {fileID: 1966443908}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
