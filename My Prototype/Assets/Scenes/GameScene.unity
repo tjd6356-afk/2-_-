@@ -1347,39 +1347,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d703df9df19a80b42bcc4bf28a6f46c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
---- !u!114 &1517141514 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8365666764133539101, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-  m_PrefabInstance: {fileID: 6205593675272007783}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 809737b396c0d9c4b80a25d094173fa8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerShooter
---- !u!114 &1517141516 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5007453305914519943, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-  m_PrefabInstance: {fileID: 6205593675272007783}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d3f1adea287e884097251e13d88f404, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WireController
---- !u!114 &1517141517 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2995714770004380152, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
-  m_PrefabInstance: {fileID: 6205593675272007783}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7199fe4c45631a4fa3e4f51d757f901, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMeleeAttack
 --- !u!114 &1517141518 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5351818697115213627, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
@@ -1883,6 +1850,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7143989748955452196, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2057,15 +2028,15 @@ PrefabInstance:
     - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: 'gameplayBehaviours.Array.data[1]'
       value: 
-      objectReference: {fileID: 1517141514}
+      objectReference: {fileID: 0}
     - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: 'gameplayBehaviours.Array.data[2]'
       value: 
-      objectReference: {fileID: 1517141517}
+      objectReference: {fileID: 0}
     - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: 'gameplayBehaviours.Array.data[3]'
       value: 
-      objectReference: {fileID: 1517141516}
+      objectReference: {fileID: 0}
     - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: 'gameplayBehaviours.Array.data[4]'
       value: 
