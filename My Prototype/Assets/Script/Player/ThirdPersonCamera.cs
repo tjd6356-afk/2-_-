@@ -279,15 +279,44 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private void CursorControl()
     {
+        // =========================================================
+        // Scene 전환 UI가 열려있다면
+        // 마우스를 절대 다시 잠그지 않는다.
+        // =========================================================
+
+        if (SceneTransitionPanelUI.IsTransitionUIOpen)
+        {
+            Cursor.lockState =
+                CursorLockMode.None;
+
+            Cursor.visible =
+                true;
+
+            return;
+        }
+
+
+        // =========================================================
+        // ESC
+        // =========================================================
+
         if (Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             Cursor.lockState =
                 CursorLockMode.None;
 
-            Cursor.visible = true;
+            Cursor.visible =
+                true;
+
+            return;
         }
 
+
+        // =========================================================
+        // 일반 게임 상태에서만
+        // 좌클릭으로 마우스 다시 잠금
+        // =========================================================
 
         if (Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame &&
@@ -296,7 +325,8 @@ public class ThirdPersonCamera : MonoBehaviour
             Cursor.lockState =
                 CursorLockMode.Locked;
 
-            Cursor.visible = false;
+            Cursor.visible =
+                false;
         }
     }
 }

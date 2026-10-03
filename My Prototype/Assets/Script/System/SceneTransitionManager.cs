@@ -4,7 +4,12 @@ using UnityEngine.SceneManagement;
 
 public class SceneTransitionManager : MonoBehaviour
 {
-    public static SceneTransitionManager Instance { get; private set; }
+    public static SceneTransitionManager Instance
+    {
+        get;
+        private set;
+    }
+
 
     private bool isLoading;
 
@@ -13,6 +18,8 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void Awake()
     {
+        // 이미 Manager가 있다면
+        // 새 Scene의 중복 Manager는 제거
         if (Instance != null &&
             Instance != this)
         {
@@ -23,49 +30,94 @@ public class SceneTransitionManager : MonoBehaviour
 
         Instance = this;
 
-        DontDestroyOnLoad(gameObject);
+
+        DontDestroyOnLoad(
+            gameObject
+        );
+
+
+        // Scene이 로드되면
+        // Loading 상태를 확실하게 초기화
+        SceneManager.sceneLoaded +=
+            OnSceneLoaded;
+    }
+
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -=
+                OnSceneLoaded;
+        }
     }
 
 
     // =========================================================
-    // 씬 전환 요청
+    // Scene 로딩
     // =========================================================
 
-    public void LoadScene(string sceneName)
+    public void LoadScene(
+        string sceneName
+    )
     {
         if (isLoading)
-            return;
-
-
-        if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.LogError(
-                "이동할 Scene 이름이 설정되지 않았습니다."
+            Debug.LogWarning(
+                $"[SceneTransition] 이미 Scene을 로딩 중입니다. : {sceneName}"
             );
 
             return;
         }
 
 
+        if (string.IsNullOrWhiteSpace(
+                sceneName))
+        {
+            Debug.LogError(
+                "[SceneTransition] Scene 이름이 비어 있습니다."
+            );
+
+            return;
+        }
+
+
+        // Build Profile에 등록된 Scene인지 검사
+        if (!Application.CanStreamedLevelBeLoaded(
+                sceneName))
+        {
+            Debug.LogError(
+                $"[SceneTransition] Scene을 찾을 수 없습니다 : {sceneName}\n" +
+                "Build Profiles의 Scene List와 Scene 이름을 확인하세요."
+            );
+
+            return;
+        }
+
+
+        Debug.Log(
+            $"[SceneTransition] Load Start : {sceneName}"
+        );
+
+
         StartCoroutine(
-            LoadSceneRoutine(sceneName)
+            LoadSceneRoutine(
+                sceneName
+            )
         );
     }
 
-
-    // =========================================================
-    // 실제 씬 로딩
-    // =========================================================
 
     private IEnumerator LoadSceneRoutine(
         string sceneName
     )
     {
-        isLoading = true;
+        isLoading =
+            true;
 
 
-        // 혹시 이전 시스템에서 TimeScale을 건드렸을 경우
-        Time.timeScale = 1f;
+        Time.timeScale =
+            1f;
 
 
         AsyncOperation operation =
@@ -77,10 +129,12 @@ public class SceneTransitionManager : MonoBehaviour
         if (operation == null)
         {
             Debug.LogError(
-                $"Scene Load 실패 : {sceneName}"
+                $"[SceneTransition] LoadSceneAsync 실패 : {sceneName}"
             );
 
-            isLoading = false;
+            isLoading =
+                false;
+
             yield break;
         }
 
@@ -89,8 +143,24 @@ public class SceneTransitionManager : MonoBehaviour
         {
             yield return null;
         }
+    }
 
 
-        isLoading = false;
+    // =========================================================
+    // Scene 로딩 완료
+    // =========================================================
+
+    private void OnSceneLoaded(
+        Scene scene,
+        LoadSceneMode mode
+    )
+    {
+        isLoading =
+            false;
+
+
+        Debug.Log(
+            $"[SceneTransition] Load Complete : {scene.name}"
+        );
     }
 }

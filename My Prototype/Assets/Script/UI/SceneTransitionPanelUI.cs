@@ -25,30 +25,62 @@ public class SceneTransitionPanelUI : MonoBehaviour
     private bool isOpen;
 
 
-    public bool IsOpen => isOpen;
+    public bool IsOpen =>
+        isOpen;
 
+    public static bool IsTransitionUIOpen
+    {
+        get;
+        private set;
+    }
 
     private void Awake()
     {
+        // ==========================================
+        // 버튼 자동 연결
+        // ==========================================
+
         if (moveButton != null)
         {
+            moveButton.onClick.RemoveListener(
+                OnMoveButtonClicked
+            );
+
             moveButton.onClick.AddListener(
                 OnMoveButtonClicked
+            );
+        }
+        else
+        {
+            Debug.LogError(
+                "[SceneTransitionPanelUI] Move Button이 연결되지 않았습니다."
             );
         }
 
 
         if (cancelButton != null)
         {
+            cancelButton.onClick.RemoveListener(
+                OnCancelButtonClicked
+            );
+
             cancelButton.onClick.AddListener(
                 OnCancelButtonClicked
+            );
+        }
+        else
+        {
+            Debug.LogError(
+                "[SceneTransitionPanelUI] Cancel Button이 연결되지 않았습니다."
             );
         }
 
 
         if (panelRoot != null)
         {
-            panelRoot.SetActive(false);
+            panelRoot.SetActive(
+                false
+            );
         }
     }
 
@@ -63,12 +95,36 @@ public class SceneTransitionPanelUI : MonoBehaviour
         PlayerGameplayControl playerControl
     )
     {
-        targetSceneName =
-            sceneName;
+        targetSceneName = sceneName;
+
+        currentPlayerControl = playerControl;
+
+        isOpen = true;
+
+        IsTransitionUIOpen = true;
 
 
-        currentPlayerControl =
-            playerControl;
+        // ==========================================
+        // 다른 UI보다 가장 앞으로 가져오기
+        // ==========================================
+
+        if (panelRoot != null)
+        {
+            panelRoot.SetActive(true);
+
+            panelRoot.transform.SetAsLastSibling();
+        }
+
+
+        // ==========================================
+        // 반드시 마우스 잠금 해제
+        // ==========================================
+
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
 
 
         if (destinationText != null)
@@ -78,38 +134,50 @@ public class SceneTransitionPanelUI : MonoBehaviour
         }
 
 
-        if (panelRoot != null)
+        if (moveButton != null)
         {
-            panelRoot.SetActive(true);
+            moveButton.interactable =
+                true;
         }
 
 
-        isOpen = true;
+        if (cancelButton != null)
+        {
+            cancelButton.interactable =
+                true;
+        }
 
 
         if (currentPlayerControl != null)
         {
             currentPlayerControl.LockControls();
         }
-        else
-        {
-            Cursor.lockState =
-                CursorLockMode.None;
 
-            Cursor.visible = true;
-        }
+
+        Debug.Log(
+            $"[SceneTransitionPanel] Open : {targetSceneName}"
+        );
     }
 
 
     // =========================================================
-    // 이동하기
+    // 이동 버튼
     // =========================================================
 
-    private void OnMoveButtonClicked()
+    public void OnMoveButtonClicked()
     {
+        Debug.Log(
+            $"[SceneTransitionPanel] Move Click : {targetSceneName}"
+        );
+
+
         if (string.IsNullOrWhiteSpace(
                 targetSceneName))
         {
+            Debug.LogError(
+                "[SceneTransitionPanel] Target Scene이 없습니다."
+            );
+
             return;
         }
 
@@ -117,29 +185,60 @@ public class SceneTransitionPanelUI : MonoBehaviour
         if (SceneTransitionManager.Instance == null)
         {
             Debug.LogError(
-                "SceneTransitionManager가 없습니다."
+                "[SceneTransitionPanel] SceneTransitionManager가 없습니다."
             );
 
             return;
         }
 
 
-        moveButton.interactable =
+        // ==========================================
+        // UI를 즉시 숨긴다.
+        // ==========================================
+
+        isOpen =
             false;
 
+        IsTransitionUIOpen = false;
 
-        SceneTransitionManager.Instance.LoadScene(
-            targetSceneName
-        );
+        if (panelRoot != null)
+        {
+            panelRoot.SetActive(
+                false
+            );
+        }
+
+
+        if (moveButton != null)
+        {
+            moveButton.interactable =
+                false;
+        }
+
+
+        // ==========================================
+        // Scene 이동
+        // ==========================================
+
+        SceneTransitionManager
+            .Instance
+            .LoadScene(
+                targetSceneName
+            );
     }
 
 
     // =========================================================
-    // 취소
+    // 취소 버튼
     // =========================================================
 
-    private void OnCancelButtonClicked()
+    public void OnCancelButtonClicked()
     {
+        Debug.Log(
+            "[SceneTransitionPanel] Cancel Click"
+        );
+
+
         Close();
     }
 
@@ -154,12 +253,17 @@ public class SceneTransitionPanelUI : MonoBehaviour
             return;
 
 
-        isOpen = false;
+        isOpen =
+            false;
 
+        IsTransitionUIOpen =
+        false;
 
         if (panelRoot != null)
         {
-            panelRoot.SetActive(false);
+            panelRoot.SetActive(
+                false
+            );
         }
 
 
@@ -170,12 +274,21 @@ public class SceneTransitionPanelUI : MonoBehaviour
         }
 
 
-        if (currentPlayerControl != null)
+        if (cancelButton != null)
         {
-            currentPlayerControl.UnlockControls();
+            cancelButton.interactable =
+                true;
         }
 
 
-        currentPlayerControl = null;
+        if (currentPlayerControl != null)
+        {
+            currentPlayerControl
+                .UnlockControls();
+        }
+
+
+        currentPlayerControl =
+            null;
     }
 }
