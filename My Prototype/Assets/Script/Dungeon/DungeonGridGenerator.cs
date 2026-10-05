@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic; // List 사용을 위해 추가
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class DungeonGridGenerator : MonoBehaviour
@@ -10,174 +10,684 @@ public class DungeonGridGenerator : MonoBehaviour
     [SerializeField]
     private int gridHeight = 5;
 
+
     [Header("Generation Rules")]
-    [Tooltip("생성할 방의 총 개수 (그리드 최대치 초과 불가)")]
+
+    [Tooltip("생성할 방의 총 개수")]
     [SerializeField]
     private int numberOfRoomsToGenerate = 10;
 
-    [Header("Room Prefabs")]
-    [Tooltip("생성 시 랜덤으로 선택될 방 프리팹 리스트")]
+    [Tooltip("생성 시도 최대 횟수")]
     [SerializeField]
-    private GameObject[] roomPrefabs;
+    private int maxGenerationAttempts = 500;
+
+
+    [Header("Room Prefabs")]
+
+    [Tooltip("DungeonRoom이 붙어있는 방 Prefab들")]
+    [SerializeField]
+    private DungeonRoom[] roomPrefabs;
+
 
     [Header("Cell Size")]
-    [Tooltip("방 하나가 차지하는 X축 크기")]
-    [SerializeField]
-    private float cellSizeX = 20f;
 
-    [Tooltip("방 하나가 차지하는 Z축 크기")]
     [SerializeField]
-    private float cellSizeZ = 20f;
+    private float cellSizeX = 30f;
+
+    [SerializeField]
+    private float cellSizeZ = 30f;
+
 
     [Header("Room Position")]
+
     [SerializeField]
     private float roomY = 0f;
 
+
     [Header("Generation")]
-    [Tooltip("DungeonGenerator 위치를 전체 그리드의 중앙으로 사용할지")]
+
     [SerializeField]
     private bool centerGrid = true;
 
+
     [Header("Debug")]
+
     [SerializeField]
     private bool drawGrid = true;
 
+
     private Transform generatedRoomRoot;
+
+
+    // =========================================================
+    // 실제 생성된 방 정보
+    // =========================================================
+
+    private Dictionary<Vector2Int, DungeonRoom>
+        generatedRooms =
+            new Dictionary<Vector2Int, DungeonRoom>();
+
+
+    // 상하좌우
+    private readonly Vector2Int[] directions =
+    {
+        new Vector2Int(0, 1),   // North
+        new Vector2Int(0, -1),  // South
+        new Vector2Int(1, 0),   // East
+        new Vector2Int(-1, 0)   // West
+    };
+
 
     private void Start()
     {
         GenerateDungeon();
     }
 
+
     // =========================================================
     // Dungeon 생성
     // =========================================================
+
     public void GenerateDungeon()
     {
-        // 1. 예외 처리: 프리팹 리스트가 비어있는지 확인
-        if (roomPrefabs == null || roomPrefabs.Length == 0)
+        // ==========================================
+        // 기본 검사
+        // ==========================================
+
+        if (roomPrefabs == null ||
+            roomPrefabs.Length == 0)
         {
-            Debug.LogError("[DungeonGenerator] Room Prefab이 배열에 없습니다. 인스펙터를 확인해주세요.");
+            Debug.LogError(
+                "[DungeonGenerator] Room Prefab이 없습니다."
+            );
+
             return;
         }
 
-        // 2. 예외 처리: 설정한 방 개수가 전체 그리드 칸 수보다 많은지 확인
-        int maxGridCells = gridWidth * gridHeight;
-        int roomsToCreate = numberOfRoomsToGenerate;
 
-        if (roomsToCreate > maxGridCells)
+        foreach (DungeonRoom room in roomPrefabs)
         {
-            Debug.LogWarning($"[DungeonGenerator] 생성하려는 방의 개수({roomsToCreate})가 최대 그리드 칸({maxGridCells})을 초과했습니다. 최대치로 조정합니다.");
-            roomsToCreate = maxGridCells;
-        }
-
-        ClearDungeon();
-
-        GameObject root = new GameObject("GeneratedRooms");
-        root.transform.SetParent(transform);
-        root.transform.localPosition = Vector3.zero;
-        generatedRoomRoot = root.transform;
-
-        // 3. 생성 가능한 모든 그리드 좌표(X, Z)를 리스트에 담기
-        List<Vector2Int> availableCells = new List<Vector2Int>();
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int z = 0; z < gridHeight; z++)
+            if (room == null)
             {
-                availableCells.Add(new Vector2Int(x, z));
+                Debug.LogError(
+                    "[DungeonGenerator] Room Prefab 배열에 빈 값이 있습니다."
+                );
+
+                return;
             }
         }
 
-        // 4. 리스트 순서 섞기 (랜덤 좌표 추출을 위함)
-        for (int i = 0; i < availableCells.Count; i++)
+
+        int maxGridCells =
+            gridWidth *
+            gridHeight;
+
+
+        int targetRoomCount =
+            Mathf.Clamp(
+                numberOfRoomsToGenerate,
+                1,
+                maxGridCells
+            );
+
+
+        // ==========================================
+        // 기존 Dungeon 제거
+        // ==========================================
+
+        ClearDungeon();
+
+
+        generatedRooms.Clear();
+
+
+        GameObject root =
+            new GameObject(
+                "GeneratedRooms"
+            );
+
+
+        root.transform.SetParent(
+            transform
+        );
+
+
+        root.transform.localPosition =
+            Vector3.zero;
+
+
+        generatedRoomRoot =
+            root.transform;
+
+
+        // ==========================================
+        // 첫 번째 방
+        //
+        // Grid 중앙에서 시작
+        // ==========================================
+
+        Vector2Int startCell =
+            new Vector2Int(
+                gridWidth / 2,
+                gridHeight / 2
+            );
+
+
+        DungeonRoom firstPrefab =
+            roomPrefabs[
+                Random.Range(
+                    0,
+                    roomPrefabs.Length
+                )
+            ];
+
+
+        CreateRoom(
+            startCell,
+            firstPrefab
+        );
+
+
+        // ==========================================
+        // 두 번째 방부터
+        // 기존 방 옆으로 확장
+        // ==========================================
+
+        int attempts = 0;
+
+
+        while (generatedRooms.Count <
+               targetRoomCount &&
+               attempts <
+               maxGenerationAttempts)
         {
-            int randomIndex = Random.Range(i, availableCells.Count);
-            Vector2Int temp = availableCells[i];
-            availableCells[i] = availableCells[randomIndex];
-            availableCells[randomIndex] = temp;
+            attempts++;
+
+
+            // 현재 방들 주변의 빈 칸 목록
+            List<Vector2Int> frontier =
+                GetAvailableAdjacentCells();
+
+
+            // 더 이상 확장할 곳 없음
+            if (frontier.Count == 0)
+            {
+                Debug.LogWarning(
+                    "[DungeonGenerator] 더 이상 확장 가능한 Grid Cell이 없습니다."
+                );
+
+                break;
+            }
+
+
+            // 랜덤한 인접 칸 선택
+            Vector2Int cell =
+                frontier[
+                    Random.Range(
+                        0,
+                        frontier.Count
+                    )
+                ];
+
+
+            // 해당 위치와 연결 가능한 Room 검색
+            List<DungeonRoom> validRooms =
+                GetValidRoomsForCell(
+                    cell
+                );
+
+
+            // 들어갈 수 있는 방이 없다면
+            // 다른 위치를 다음 Loop에서 시도
+            if (validRooms.Count == 0)
+            {
+                continue;
+            }
+
+
+            DungeonRoom selectedPrefab =
+                validRooms[
+                    Random.Range(
+                        0,
+                        validRooms.Count
+                    )
+                ];
+
+
+            CreateRoom(
+                cell,
+                selectedPrefab
+            );
         }
 
-        // 5. 지정된 개수(roomsToCreate)만큼만 방 생성
-        for (int i = 0; i < roomsToCreate; i++)
+
+        Debug.Log(
+            $"Dungeon 생성 완료 : " +
+            $"{generatedRooms.Count}/{targetRoomCount} Rooms"
+        );
+
+
+        if (generatedRooms.Count <
+            targetRoomCount)
         {
-            Vector2Int cell = availableCells[i];
-            Vector3 position = GetCellCenter(cell.x, cell.y);
+            Debug.LogWarning(
+                $"목표는 {targetRoomCount}개였지만 " +
+                $"{generatedRooms.Count}개만 생성되었습니다. " +
+                "Room 통로 조합을 확인해주세요."
+            );
+        }
+    }
 
-            // 등록된 프리팹 중 무작위로 하나 선택
-            GameObject selectedPrefab = roomPrefabs[Random.Range(0, roomPrefabs.Length)];
 
-            GameObject room = Instantiate(
-                selectedPrefab,
+    // =========================================================
+    // 기존 Room에 붙어있는 빈 Cell 찾기
+    // =========================================================
+
+    private List<Vector2Int>
+        GetAvailableAdjacentCells()
+    {
+        HashSet<Vector2Int> result =
+            new HashSet<Vector2Int>();
+
+
+        foreach (
+            KeyValuePair<Vector2Int, DungeonRoom>
+            pair in generatedRooms)
+        {
+            Vector2Int roomCell =
+                pair.Key;
+
+
+            foreach (
+                Vector2Int direction in directions)
+            {
+                Vector2Int nextCell =
+                    roomCell +
+                    direction;
+
+
+                // Grid 바깥
+                if (!IsInsideGrid(
+                        nextCell))
+                {
+                    continue;
+                }
+
+
+                // 이미 Room 있음
+                if (generatedRooms.ContainsKey(
+                        nextCell))
+                {
+                    continue;
+                }
+
+
+                result.Add(
+                    nextCell
+                );
+            }
+        }
+
+
+        return new List<Vector2Int>(
+            result
+        );
+    }
+
+
+    // =========================================================
+    // 해당 Cell에 들어갈 수 있는 Room 검색
+    // =========================================================
+
+    private List<DungeonRoom>
+        GetValidRoomsForCell(
+            Vector2Int cell
+        )
+    {
+        List<DungeonRoom> validRooms =
+            new List<DungeonRoom>();
+
+
+        foreach (
+            DungeonRoom roomPrefab in roomPrefabs)
+        {
+            if (CanPlaceRoom(
+                    cell,
+                    roomPrefab))
+            {
+                validRooms.Add(
+                    roomPrefab
+                );
+            }
+        }
+
+
+        return validRooms;
+    }
+
+
+    // =========================================================
+    // Room 배치 가능 여부
+    //
+    // 핵심 연결 검사
+    // =========================================================
+
+    private bool CanPlaceRoom(
+        Vector2Int cell,
+        DungeonRoom candidate
+    )
+    {
+        bool hasConnectedNeighbor =
+            false;
+
+
+        // ==========================================
+        // North
+        // ==========================================
+
+        Vector2Int northCell =
+            cell +
+            Vector2Int.up;
+
+
+        if (generatedRooms.TryGetValue(
+                northCell,
+                out DungeonRoom northRoom))
+        {
+            /*
+             * Candidate의 North
+             * ↕
+             * North Room의 South
+             *
+             * 서로 모두 문이어야 함.
+             */
+
+            if (!candidate.North ||
+                !northRoom.South)
+            {
+                return false;
+            }
+
+
+            hasConnectedNeighbor =
+                true;
+        }
+
+
+        // ==========================================
+        // South
+        // ==========================================
+
+        Vector2Int southCell =
+            cell +
+            Vector2Int.down;
+
+
+        if (generatedRooms.TryGetValue(
+                southCell,
+                out DungeonRoom southRoom))
+        {
+            if (!candidate.South ||
+                !southRoom.North)
+            {
+                return false;
+            }
+
+
+            hasConnectedNeighbor =
+                true;
+        }
+
+
+        // ==========================================
+        // East
+        // ==========================================
+
+        Vector2Int eastCell =
+            cell +
+            Vector2Int.right;
+
+
+        if (generatedRooms.TryGetValue(
+                eastCell,
+                out DungeonRoom eastRoom))
+        {
+            if (!candidate.East ||
+                !eastRoom.West)
+            {
+                return false;
+            }
+
+
+            hasConnectedNeighbor =
+                true;
+        }
+
+
+        // ==========================================
+        // West
+        // ==========================================
+
+        Vector2Int westCell =
+            cell +
+            Vector2Int.left;
+
+
+        if (generatedRooms.TryGetValue(
+                westCell,
+                out DungeonRoom westRoom))
+        {
+            if (!candidate.West ||
+                !westRoom.East)
+            {
+                return false;
+            }
+
+
+            hasConnectedNeighbor =
+                true;
+        }
+
+
+        /*
+         * 최소 한 방향은 기존 Room과
+         * 통로로 연결되어 있어야 함.
+         */
+
+        return hasConnectedNeighbor;
+    }
+
+
+    // =========================================================
+    // Room 실제 생성
+    // =========================================================
+
+    private void CreateRoom(
+        Vector2Int cell,
+        DungeonRoom prefab
+    )
+    {
+        Vector3 position =
+            GetCellCenter(
+                cell.x,
+                cell.y
+            );
+
+
+        DungeonRoom room =
+            Instantiate(
+                prefab,
                 position,
-                selectedPrefab.transform.rotation,
+                prefab.transform.rotation,
                 generatedRoomRoot
             );
 
-            room.name = $"Room_{cell.x}_{cell.y}";
-        }
 
-        Debug.Log($"Dungeon 생성 완료 : 전체 {maxGridCells}칸 중 {roomsToCreate}개의 Room 생성됨");
+        room.name =
+            $"Room_{cell.x}_{cell.y}_{prefab.name}";
+
+
+        generatedRooms.Add(
+            cell,
+            room
+        );
     }
 
+
     // =========================================================
-    // 특정 Grid Cell의 중앙 위치
+    // Grid 안인지 확인
     // =========================================================
-    private Vector3 GetCellCenter(int x, int z)
+
+    private bool IsInsideGrid(
+        Vector2Int cell
+    )
+    {
+        return
+            cell.x >= 0 &&
+            cell.x < gridWidth &&
+            cell.y >= 0 &&
+            cell.y < gridHeight;
+    }
+
+
+    // =========================================================
+    // Cell 중앙
+    // =========================================================
+
+    private Vector3 GetCellCenter(
+        int x,
+        int z
+    )
     {
         float xPosition;
         float zPosition;
 
+
         if (centerGrid)
         {
-            float halfWidth = (gridWidth - 1) * cellSizeX * 0.5f;
-            float halfHeight = (gridHeight - 1) * cellSizeZ * 0.5f;
+            float halfWidth =
+                (gridWidth - 1) *
+                cellSizeX *
+                0.5f;
 
-            xPosition = x * cellSizeX - halfWidth;
-            zPosition = z * cellSizeZ - halfHeight;
+
+            float halfHeight =
+                (gridHeight - 1) *
+                cellSizeZ *
+                0.5f;
+
+
+            xPosition =
+                x *
+                cellSizeX -
+                halfWidth;
+
+
+            zPosition =
+                z *
+                cellSizeZ -
+                halfHeight;
         }
         else
         {
-            xPosition = x * cellSizeX;
-            zPosition = z * cellSizeZ;
+            xPosition =
+                x *
+                cellSizeX;
+
+
+            zPosition =
+                z *
+                cellSizeZ;
         }
 
-        return transform.position + new Vector3(xPosition, roomY, zPosition);
+
+        return
+            transform.position +
+            new Vector3(
+                xPosition,
+                roomY,
+                zPosition
+            );
     }
 
+
     // =========================================================
-    // 생성된 Dungeon 삭제
+    // 기존 Dungeon 삭제
     // =========================================================
+
     public void ClearDungeon()
     {
-        Transform oldRoot = transform.Find("GeneratedRooms");
-        if (oldRoot == null) return;
+        Transform oldRoot =
+            transform.Find(
+                "GeneratedRooms"
+            );
 
-        // 에디터에서 실행할 때와 플레이 모드에서 실행할 때를 구분하여 안전하게 삭제
+
+        if (oldRoot == null)
+            return;
+
+
         if (Application.isPlaying)
-            Destroy(oldRoot.gameObject);
+        {
+            Destroy(
+                oldRoot.gameObject
+            );
+        }
         else
-            DestroyImmediate(oldRoot.gameObject);
+        {
+            DestroyImmediate(
+                oldRoot.gameObject
+            );
+        }
 
-        generatedRoomRoot = null;
+
+        generatedRoomRoot =
+            null;
+
+
+        generatedRooms.Clear();
     }
 
+
     // =========================================================
-    // Scene에서 Grid 확인
+    // Grid Gizmo
     // =========================================================
+
     private void OnDrawGizmos()
     {
-        if (!drawGrid) return;
-        if (gridWidth <= 0 || gridHeight <= 0) return;
+        if (!drawGrid)
+            return;
 
-        for (int x = 0; x < gridWidth; x++)
+
+        if (gridWidth <= 0 ||
+            gridHeight <= 0)
         {
-            for (int z = 0; z < gridHeight; z++)
+            return;
+        }
+
+
+        for (int x = 0;
+             x < gridWidth;
+             x++)
+        {
+            for (int z = 0;
+                 z < gridHeight;
+                 z++)
             {
-                Vector3 center = GetCellCenter(x, z);
+                Vector3 center =
+                    GetCellCenter(
+                        x,
+                        z
+                    );
+
 
                 Gizmos.DrawWireCube(
                     center,
-                    new Vector3(cellSizeX, 0.1f, cellSizeZ)
+                    new Vector3(
+                        cellSizeX,
+                        0.1f,
+                        cellSizeZ
+                    )
                 );
             }
         }
