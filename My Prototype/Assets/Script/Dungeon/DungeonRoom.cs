@@ -1,24 +1,28 @@
 using UnityEngine;
 
+public enum RoomDirection
+{
+    North,
+    South,
+    East,
+    West
+}
+
 public class DungeonRoom : MonoBehaviour
 {
     [Header("Room Connections")]
 
-    [Tooltip("북쪽(+Z)에 통로가 있는가")]
-    [SerializeField]
-    private bool north;
+    [Tooltip("북쪽(+Z)이 뚫려 있는가")]
+    [SerializeField] private bool north;
 
-    [Tooltip("남쪽(-Z)에 통로가 있는가")]
-    [SerializeField]
-    private bool south;
+    [Tooltip("남쪽(-Z)이 뚫려 있는가")]
+    [SerializeField] private bool south;
 
-    [Tooltip("동쪽(+X)에 통로가 있는가")]
-    [SerializeField]
-    private bool east;
+    [Tooltip("동쪽(+X)이 뚫려 있는가")]
+    [SerializeField] private bool east;
 
-    [Tooltip("서쪽(-X)에 통로가 있는가")]
-    [SerializeField]
-    private bool west;
+    [Tooltip("서쪽(-X)이 뚫려 있는가")]
+    [SerializeField] private bool west;
 
 
     public bool North => north;
@@ -26,10 +30,6 @@ public class DungeonRoom : MonoBehaviour
     public bool East => east;
     public bool West => west;
 
-
-    // =========================================================
-    // 해당 방향에 문이 있는가?
-    // =========================================================
 
     public bool HasConnection(RoomDirection direction)
     {
@@ -50,13 +50,4 @@ public class DungeonRoom : MonoBehaviour
 
         return false;
     }
-
-    public enum RoomDirection // 룸 프리팹의 방향을 나타내는 상태
-    {
-        North,
-        South,
-        East,
-        West
-    }
-
 }

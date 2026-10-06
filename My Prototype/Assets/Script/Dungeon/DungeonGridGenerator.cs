@@ -1,89 +1,97 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using static DungeonRoom;
 
 public class DungeonGridGenerator : MonoBehaviour
 {
     [Header("Grid Size")]
-    [SerializeField]
-    private int gridWidth = 5;
-
-    [SerializeField]
-    private int gridHeight = 5;
+    [SerializeField] private int gridWidth = 5;
+    [SerializeField] private int gridHeight = 5;
 
 
     [Header("Generation Rules")]
+    [Tooltip("우선 생성할 방 개수")]
+    [SerializeField] private int numberOfRoomsToGenerate = 10;
 
-    [Tooltip("생성할 방의 총 개수")]
-    [SerializeField]
-    private int numberOfRoomsToGenerate = 10;
-
-    [Tooltip("생성 시도 최대 횟수")]
-    [SerializeField]
-    private int maxGenerationAttempts = 500;
+    [Tooltip("무한 시도 방지")]
+    [SerializeField] private int maxGenerationAttempts = 1000;
 
 
     [Header("Room Prefabs")]
-    [Tooltip("DungeonRoom 컴포넌트가 붙어 있는 Room Prefab")]
+    [Tooltip("DungeonRoom 컴포넌트가 붙어 있는 Prefab")]
     [SerializeField]
     private DungeonRoom[] roomDefinitions;
 
 
     [Header("Cell Size")]
-
-    [SerializeField]
-    private float cellSizeX = 30f;
-
-    [SerializeField]
-    private float cellSizeZ = 30f;
+    [SerializeField] private float cellSizeX = 30f;
+    [SerializeField] private float cellSizeZ = 30f;
 
 
     [Header("Room Position")]
-
-    [SerializeField]
-    private float roomY = 0f;
+    [SerializeField] private float roomY = 0f;
 
 
     [Header("Generation")]
-
-    [SerializeField]
-    private bool centerGrid = true;
+    [SerializeField] private bool centerGrid = true;
 
 
     [Header("Debug")]
-
-    [SerializeField]
-    private bool drawGrid = true;
+    [SerializeField] private bool drawGrid = true;
 
 
     private Transform generatedRoomRoot;
 
-    private readonly RoomDirection[] allDirections =
-    {
-    RoomDirection.North,
-    RoomDirection.South,
-    RoomDirection.East,
-    RoomDirection.West
-    };
-
 
     // =========================================================
-    // 실제 생성된 방 정보
+    // 현재 생성된 방
     // =========================================================
 
-    private Dictionary<Vector2Int, DungeonRoom>
+    private readonly Dictionary<Vector2Int, DungeonRoom>
         generatedRooms =
             new Dictionary<Vector2Int, DungeonRoom>();
 
 
-    // 상하좌우
-    private readonly Vector2Int[] directions =
+    // =========================================================
+    // 반드시 이어야 하는 열린 통로들
+    // =========================================================
+
+    private readonly List<OpenDoor>
+        openDoors =
+            new List<OpenDoor>();
+
+
+    private readonly RoomDirection[] allDirections =
     {
-        new Vector2Int(0, 1),   // North
-        new Vector2Int(0, -1),  // South
-        new Vector2Int(1, 0),   // East
-        new Vector2Int(-1, 0)   // West
+        RoomDirection.North,
+        RoomDirection.South,
+        RoomDirection.East,
+        RoomDirection.West
     };
+
+
+    // =========================================================
+    // 열린 통로 정보
+    // =========================================================
+
+    private struct OpenDoor
+    {
+        public Vector2Int sourceCell;
+
+        public RoomDirection direction;
+
+
+        public OpenDoor(
+            Vector2Int sourceCell,
+            RoomDirection direction
+        )
+        {
+            this.sourceCell =
+                sourceCell;
+
+            this.direction =
+                direction;
+        }
+    }
 
 
     private void Start()
@@ -98,15 +106,15 @@ public class DungeonGridGenerator : MonoBehaviour
 
     public void GenerateDungeon()
     {
-        // ==========================================
+        // -----------------------------------------------------
         // 기본 검사
-        // ==========================================
+        // -----------------------------------------------------
 
         if (roomDefinitions == null ||
             roomDefinitions.Length == 0)
         {
             Debug.LogError(
-                "[DungeonGenerator] Room Prefab이 없습니다."
+                "[DungeonGenerator] Room Definitions가 비어있습니다."
             );
 
             return;
@@ -118,7 +126,7 @@ public class DungeonGridGenerator : MonoBehaviour
             if (room == null)
             {
                 Debug.LogError(
-                    "[DungeonGenerator] Room Prefab 배열에 빈 값이 있습니다."
+                    "[DungeonGenerator] Room Definitions에 None이 있습니다."
                 );
 
                 return;
@@ -126,27 +134,28 @@ public class DungeonGridGenerator : MonoBehaviour
         }
 
 
-        int maxGridCells =
+        int maxCells =
             gridWidth *
             gridHeight;
 
 
-        int targetRoomCount =
+        int targetCount =
             Mathf.Clamp(
                 numberOfRoomsToGenerate,
                 1,
-                maxGridCells
+                maxCells
             );
 
 
-        // ==========================================
-        // 기존 Dungeon 제거
-        // ==========================================
+        // -----------------------------------------------------
+        // 초기화
+        // -----------------------------------------------------
 
         ClearDungeon();
 
-
         generatedRooms.Clear();
+
+        openDoors.Clear();
 
 
         GameObject root =
@@ -159,7 +168,6 @@ public class DungeonGridGenerator : MonoBehaviour
             transform
         );
 
-
         root.transform.localPosition =
             Vector3.zero;
 
@@ -168,11 +176,9 @@ public class DungeonGridGenerator : MonoBehaviour
             root.transform;
 
 
-        // ==========================================
+        // =====================================================
         // 첫 번째 방
-        //
-        // Grid 중앙에서 시작
-        // ==========================================
+        // =====================================================
 
         Vector2Int startCell =
             new Vector2Int(
@@ -181,305 +187,500 @@ public class DungeonGridGenerator : MonoBehaviour
             );
 
 
-        DungeonRoom firstPrefab =
-            roomDefinitions[
-                Random.Range(
-                    0,
-                    roomDefinitions.Length
-                )
-            ];
+        DungeonRoom startPrefab =
+            GetRandomValidStartRoom(
+                startCell
+            );
 
 
-        CreateRoom(
+        if (startPrefab == null)
+        {
+            Debug.LogError(
+                "[DungeonGenerator] 시작점에 배치 가능한 Room이 없습니다."
+            );
+
+            return;
+        }
+
+
+        DungeonRoom firstRoom =
+            CreateRoom(
+                startCell,
+                startPrefab
+            );
+
+
+        // 첫 방의 모든 열린 통로 등록
+        RegisterOpenDoors(
             startCell,
-            firstPrefab
+            firstRoom
         );
 
 
-        // ==========================================
-        // 두 번째 방부터
-        // 기존 방 옆으로 확장
-        // ==========================================
+        // =====================================================
+        // 열린 통로를 따라 방 확장
+        // =====================================================
 
         int attempts = 0;
 
 
         while (generatedRooms.Count <
-               targetRoomCount &&
+               targetCount &&
+               openDoors.Count > 0 &&
                attempts <
                maxGenerationAttempts)
         {
             attempts++;
 
 
-            // 현재 방들 주변의 빈 칸 목록
-            List<Vector2Int> frontier =
-                GetAvailableAdjacentCells();
-
-
-            // 더 이상 확장할 곳 없음
-            if (frontier.Count == 0)
-            {
-                Debug.LogWarning(
-                    "[DungeonGenerator] 더 이상 확장 가능한 Grid Cell이 없습니다."
-                );
-
-                break;
-            }
-
-
-            // 랜덤한 인접 칸 선택
-            Vector2Int cell =
-                frontier[
-                    Random.Range(
-                        0,
-                        frontier.Count
-                    )
-                ];
-
-
-            // 해당 위치와 연결 가능한 Room 검색
-            List<DungeonRoom> validRooms =
-                GetValidRoomsForCell(
-                    cell
+            int doorIndex =
+                Random.Range(
+                    0,
+                    openDoors.Count
                 );
 
 
-            // 들어갈 수 있는 방이 없다면
-            // 다른 위치를 다음 Loop에서 시도
-            if (validRooms.Count == 0)
+            OpenDoor request =
+                openDoors[doorIndex];
+
+
+            // 이 요청은 이번에 처리
+            openDoors.RemoveAt(
+                doorIndex
+            );
+
+
+            Vector2Int targetCell =
+                request.sourceCell +
+                DirectionToVector(
+                    request.direction
+                );
+
+
+            // Grid 밖
+            if (!IsInsideGrid(
+                    targetCell))
             {
                 continue;
             }
 
 
+            // =================================================
+            // 이미 방이 있는 경우
+            //
+            // 양쪽이 연결되어 있는지만 확인
+            // =================================================
+
+            if (generatedRooms.TryGetValue(
+                    targetCell,
+                    out DungeonRoom existingRoom))
+            {
+                DungeonRoom sourceRoom =
+                    generatedRooms[
+                        request.sourceCell
+                    ];
+
+
+                RoomDirection opposite =
+                    GetOppositeDirection(
+                        request.direction
+                    );
+
+
+                if (!sourceRoom.HasConnection(
+                        request.direction) ||
+                    !existingRoom.HasConnection(
+                        opposite))
+                {
+                    Debug.LogError(
+                        $"[Dungeon] 잘못된 연결 발견 : " +
+                        $"{request.sourceCell} → {targetCell}"
+                    );
+                }
+
+
+                continue;
+            }
+
+
+            // =================================================
+            // 이 통로에 연결될 수 있는 방 검색
+            // =================================================
+
+            List<DungeonRoom> candidates =
+                GetValidRoomsForDoor(
+                    targetCell,
+                    request.direction
+                );
+
+
+            if (candidates.Count == 0)
+            {
+                Debug.LogWarning(
+                    $"[Dungeon] {targetCell}에 " +
+                    $"{request.direction} 방향과 연결 가능한 Room이 없습니다."
+                );
+
+                continue;
+            }
+
+
             DungeonRoom selectedPrefab =
-                validRooms[
+                candidates[
                     Random.Range(
                         0,
-                        validRooms.Count
+                        candidates.Count
                     )
                 ];
 
 
-            CreateRoom(
-                cell,
-                selectedPrefab
+            DungeonRoom newRoom =
+                CreateRoom(
+                    targetCell,
+                    selectedPrefab
+                );
+
+
+            // =================================================
+            // 새 Room의 모든 출구를
+            // 다음 생성 요청으로 등록
+            // =================================================
+
+            RegisterOpenDoors(
+                targetCell,
+                newRoom
             );
         }
 
 
         Debug.Log(
             $"Dungeon 생성 완료 : " +
-            $"{generatedRooms.Count}/{targetRoomCount} Rooms"
-        );
-
-
-        if (generatedRooms.Count <
-            targetRoomCount)
-        {
-            Debug.LogWarning(
-                $"목표는 {targetRoomCount}개였지만 " +
-                $"{generatedRooms.Count}개만 생성되었습니다. " +
-                "Room 통로 조합을 확인해주세요."
-            );
-        }
-    }
-
-
-    // =========================================================
-    // 기존 Room에 붙어있는 빈 Cell 찾기
-    // =========================================================
-
-    private List<Vector2Int> GetAvailableAdjacentCells()
-    {
-        HashSet<Vector2Int> result =
-            new HashSet<Vector2Int>();
-
-
-        foreach (
-            KeyValuePair<Vector2Int, DungeonRoom>
-            pair in generatedRooms)
-        {
-            Vector2Int roomCell =
-                pair.Key;
-
-            DungeonRoom room =
-                pair.Value;
-
-
-            foreach (
-                RoomDirection direction in allDirections)
-            {
-                // =====================================
-                // 이 방향에 문이 없다면
-                // 새 방 생성 후보조차 만들지 않는다.
-                // =====================================
-
-                if (!room.HasConnection(direction))
-                    continue;
-
-
-                Vector2Int nextCell =
-                    roomCell +
-                    DirectionToVector(direction);
-
-
-                // Grid 밖
-                if (!IsInsideGrid(nextCell))
-                    continue;
-
-
-                // 이미 방이 있음
-                if (generatedRooms.ContainsKey(nextCell))
-                    continue;
-
-
-                result.Add(nextCell);
-            }
-        }
-
-
-        return new List<Vector2Int>(
-            result
+            $"{generatedRooms.Count}/{targetCount} Rooms"
         );
     }
 
 
     // =========================================================
-    // 해당 Cell에 들어갈 수 있는 Room 검색
+    // 특정 출구와 연결 가능한 Room들
     // =========================================================
 
-    private List<DungeonRoom>
-        GetValidRoomsForCell(
-            Vector2Int cell
-        )
+    private List<DungeonRoom> GetValidRoomsForDoor(
+        Vector2Int targetCell,
+        RoomDirection sourceDirection
+    )
     {
-        List<DungeonRoom> validRooms =
+        List<DungeonRoom> result =
             new List<DungeonRoom>();
 
 
-        foreach (
-            DungeonRoom roomPrefab in roomDefinitions)
+        /*
+         * 기존 방 East에서 넘어왔다면
+         * 새 방은 West가 필요하다.
+         */
+        RoomDirection requiredDirection =
+            GetOppositeDirection(
+                sourceDirection
+            );
+
+
+        foreach (DungeonRoom candidate in roomDefinitions)
         {
-            if (CanPlaceRoom(
-                    cell,
-                    roomPrefab))
-            {
-                validRooms.Add(
-                    roomPrefab
-                );
-            }
-        }
+            // =============================================
+            // 1. 들어오는 방향이 반드시 열려 있어야 함
+            // =============================================
 
-
-        return validRooms;
-    }
-
-
-    // =========================================================
-    // Room 배치 가능 여부
-    //
-    // 핵심 연결 검사
-    // =========================================================
-
-    private bool CanPlaceRoom(
-    Vector2Int cell,
-    DungeonRoom candidate
-)
-    {
-        bool connectedToAtLeastOneRoom =
-            false;
-
-
-        foreach (
-            RoomDirection direction in allDirections)
-        {
-            Vector2Int neighborCell =
-                cell +
-                DirectionToVector(direction);
-
-
-            // ==========================================
-            // 이 방향에 기존 방이 없는 경우
-            // ==========================================
-
-            if (!generatedRooms.TryGetValue(
-                    neighborCell,
-                    out DungeonRoom neighborRoom))
+            if (!candidate.HasConnection(
+                    requiredDirection))
             {
                 continue;
             }
 
 
-            /*
-             * Candidate 기준 direction 방향에
-             * Neighbor가 존재한다.
-             *
-             * 예:
-             *
-             * Candidate의 North
-             * ↕
-             * Neighbor의 South
-             */
+            // =============================================
+            // 2. 주변에 이미 존재하는 모든 Room과
+            //    문 ↔ 문이어야 함
+            // =============================================
+
+            if (!MatchesAllExistingNeighbors(
+                    targetCell,
+                    candidate))
+            {
+                continue;
+            }
 
 
-            bool candidateDoor =
+            // =============================================
+            // 3. Candidate의 열린 문이
+            //    Grid 바깥을 향하면 배치하지 않음
+            // =============================================
+
+            if (HasDoorOutsideGrid(
+                    targetCell,
+                    candidate))
+            {
+                continue;
+            }
+
+
+            result.Add(
+                candidate
+            );
+        }
+
+
+        return result;
+    }
+
+
+    // =========================================================
+    // 핵심 검사
+    //
+    // Candidate와 맞닿은 기존 방은
+    // 무조건 양쪽 모두 문이 있어야 한다.
+    // =========================================================
+
+    private bool MatchesAllExistingNeighbors(
+        Vector2Int cell,
+        DungeonRoom candidate
+    )
+    {
+        foreach (
+            RoomDirection direction in allDirections)
+        {
+            Vector2Int neighborCell =
+                cell +
+                DirectionToVector(
+                    direction
+                );
+
+
+            if (!generatedRooms.TryGetValue(
+                    neighborCell,
+                    out DungeonRoom neighbor))
+            {
+                continue;
+            }
+
+
+            bool candidateOpen =
                 candidate.HasConnection(
                     direction
                 );
 
 
-            RoomDirection opposite =
-                GetOppositeDirection(
-                    direction
-                );
-
-
-            bool neighborDoor =
-                neighborRoom.HasConnection(
-                    opposite
+            bool neighborOpen =
+                neighbor.HasConnection(
+                    GetOppositeDirection(
+                        direction
+                    )
                 );
 
 
             // ==========================================
-            // 핵심 조건
-            //
-            // 닿아 있다면
-            // 두 방 모두 반드시 뚫려 있어야 함.
+            // 닿아있는 방이라면
+            // 양쪽 모두 반드시 열림
             // ==========================================
 
-            if (!candidateDoor ||
-                !neighborDoor)
+            if (!candidateOpen ||
+                !neighborOpen)
             {
                 return false;
             }
-
-
-            // 양쪽 모두 통로가 있음
-            connectedToAtLeastOneRoom =
-                true;
         }
 
 
-        // ==========================================
-        // 최소 1개 기존 Room과 연결되어야 함
-        // ==========================================
-
-        return connectedToAtLeastOneRoom;
+        return true;
     }
 
 
     // =========================================================
-    // Room 실제 생성
+    // Room의 열린 방향을 모두 다음 생성 요청에 등록
     // =========================================================
 
-    private void CreateRoom(
+    private void RegisterOpenDoors(
+        Vector2Int cell,
+        DungeonRoom room
+    )
+    {
+        foreach (
+            RoomDirection direction in allDirections)
+        {
+            if (!room.HasConnection(
+                    direction))
+            {
+                continue;
+            }
+
+
+            Vector2Int targetCell =
+                cell +
+                DirectionToVector(
+                    direction
+                );
+
+
+            // Grid 바깥쪽 문은 등록하지 않음
+            if (!IsInsideGrid(
+                    targetCell))
+            {
+                continue;
+            }
+
+
+            // 이미 방이 있다면
+            // 연결 상태 검사만 하면 됨
+            if (generatedRooms.TryGetValue(
+                    targetCell,
+                    out DungeonRoom neighbor))
+            {
+                bool neighborOpen =
+                    neighbor.HasConnection(
+                        GetOppositeDirection(
+                            direction
+                        )
+                    );
+
+
+                if (!neighborOpen)
+                {
+                    Debug.LogError(
+                        $"[Dungeon] 문 ↔ 벽 충돌 : " +
+                        $"{cell} / {direction}"
+                    );
+                }
+
+
+                continue;
+            }
+
+
+            // 같은 출구를 중복 등록하지 않는다.
+            if (!ContainsOpenDoor(
+                    cell,
+                    direction))
+            {
+                openDoors.Add(
+                    new OpenDoor(
+                        cell,
+                        direction
+                    )
+                );
+            }
+        }
+    }
+
+
+    // =========================================================
+    // 중복 OpenDoor 확인
+    // =========================================================
+
+    private bool ContainsOpenDoor(
+        Vector2Int sourceCell,
+        RoomDirection direction
+    )
+    {
+        foreach (
+            OpenDoor door in openDoors)
+        {
+            if (door.sourceCell ==
+                    sourceCell &&
+                door.direction ==
+                    direction)
+            {
+                return true;
+            }
+        }
+
+
+        return false;
+    }
+
+
+    // =========================================================
+    // Grid 바깥을 향하는 문 검사
+    // =========================================================
+
+    private bool HasDoorOutsideGrid(
+        Vector2Int cell,
+        DungeonRoom room
+    )
+    {
+        foreach (
+            RoomDirection direction in allDirections)
+        {
+            if (!room.HasConnection(
+                    direction))
+            {
+                continue;
+            }
+
+
+            Vector2Int next =
+                cell +
+                DirectionToVector(
+                    direction
+                );
+
+
+            if (!IsInsideGrid(next))
+            {
+                return true;
+            }
+        }
+
+
+        return false;
+    }
+
+
+    // =========================================================
+    // 시작 방
+    // =========================================================
+
+    private DungeonRoom GetRandomValidStartRoom(
+        Vector2Int startCell
+    )
+    {
+        List<DungeonRoom> candidates =
+            new List<DungeonRoom>();
+
+
+        foreach (DungeonRoom room in roomDefinitions)
+        {
+            if (!HasDoorOutsideGrid(
+                    startCell,
+                    room))
+            {
+                candidates.Add(
+                    room
+                );
+            }
+        }
+
+
+        if (candidates.Count == 0)
+            return null;
+
+
+        return candidates[
+            Random.Range(
+                0,
+                candidates.Count
+            )
+        ];
+    }
+
+
+    // =========================================================
+    // 실제 Room 생성
+    // =========================================================
+
+    private DungeonRoom CreateRoom(
         Vector2Int cell,
         DungeonRoom prefab
     )
     {
-        Vector3 position =
+        Vector3 worldPosition =
             GetCellCenter(
                 cell.x,
                 cell.y
@@ -489,7 +690,7 @@ public class DungeonGridGenerator : MonoBehaviour
         DungeonRoom room =
             Instantiate(
                 prefab,
-                position,
+                worldPosition,
                 prefab.transform.rotation,
                 generatedRoomRoot
             );
@@ -503,11 +704,70 @@ public class DungeonGridGenerator : MonoBehaviour
             cell,
             room
         );
+
+
+        return room;
     }
 
 
     // =========================================================
-    // Grid 안인지 확인
+    // 방향 → Grid
+    // =========================================================
+
+    private Vector2Int DirectionToVector(
+        RoomDirection direction
+    )
+    {
+        switch (direction)
+        {
+            case RoomDirection.North:
+                return Vector2Int.up;
+
+            case RoomDirection.South:
+                return Vector2Int.down;
+
+            case RoomDirection.East:
+                return Vector2Int.right;
+
+            case RoomDirection.West:
+                return Vector2Int.left;
+        }
+
+
+        return Vector2Int.zero;
+    }
+
+
+    // =========================================================
+    // 반대 방향
+    // =========================================================
+
+    private RoomDirection GetOppositeDirection(
+        RoomDirection direction
+    )
+    {
+        switch (direction)
+        {
+            case RoomDirection.North:
+                return RoomDirection.South;
+
+            case RoomDirection.South:
+                return RoomDirection.North;
+
+            case RoomDirection.East:
+                return RoomDirection.West;
+
+            case RoomDirection.West:
+                return RoomDirection.East;
+        }
+
+
+        return RoomDirection.North;
+    }
+
+
+    // =========================================================
+    // Grid 내부 검사
     // =========================================================
 
     private bool IsInsideGrid(
@@ -523,7 +783,7 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
     // =========================================================
-    // Cell 중앙
+    // Cell World Position
     // =========================================================
 
     private Vector3 GetCellCenter(
@@ -584,7 +844,7 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
     // =========================================================
-    // 기존 Dungeon 삭제
+    // 삭제
     // =========================================================
 
     public void ClearDungeon()
@@ -595,29 +855,29 @@ public class DungeonGridGenerator : MonoBehaviour
             );
 
 
-        if (oldRoot == null)
-            return;
-
-
-        if (Application.isPlaying)
+        if (oldRoot != null)
         {
-            Destroy(
-                oldRoot.gameObject
-            );
+            if (Application.isPlaying)
+            {
+                Destroy(
+                    oldRoot.gameObject
+                );
+            }
+            else
+            {
+                DestroyImmediate(
+                    oldRoot.gameObject
+                );
+            }
         }
-        else
-        {
-            DestroyImmediate(
-                oldRoot.gameObject
-            );
-        }
-
-
-        generatedRoomRoot =
-            null;
 
 
         generatedRooms.Clear();
+
+        openDoors.Clear();
+
+        generatedRoomRoot =
+            null;
     }
 
 
@@ -664,58 +924,4 @@ public class DungeonGridGenerator : MonoBehaviour
             }
         }
     }
-
-    // =========================================================
-    // Direction → Grid 이동값
-    // =========================================================
-
-    private Vector2Int DirectionToVector(
-        RoomDirection direction
-    )
-    {
-        switch (direction)
-        {
-            case RoomDirection.North:
-                return Vector2Int.up;
-
-            case RoomDirection.South:
-                return Vector2Int.down;
-
-            case RoomDirection.East:
-                return Vector2Int.right;
-
-            case RoomDirection.West:
-                return Vector2Int.left;
-        }
-
-        return Vector2Int.zero;
-    }
-
-
-    // =========================================================
-    // 반대 방향
-    // =========================================================
-
-    private RoomDirection GetOppositeDirection(
-        RoomDirection direction
-    )
-    {
-        switch (direction)
-        {
-            case RoomDirection.North:
-                return RoomDirection.South;
-
-            case RoomDirection.South:
-                return RoomDirection.North;
-
-            case RoomDirection.East:
-                return RoomDirection.West;
-
-            case RoomDirection.West:
-                return RoomDirection.East;
-        }
-
-        return RoomDirection.North;
-    }
-
 }

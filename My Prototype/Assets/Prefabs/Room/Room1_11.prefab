@@ -47,8 +47,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DungeonRoom
   north: 1
   south: 1
-  east: 1
-  west: 0
+  east: 0
+  west: 1
 --- !u!1001 &5414548073916010514
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbad28f0d98097f41b76ef2e6ecb89b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonRoom
-  north: 1
-  south: 0
+  north: 0
+  south: 1
   east: 1
   west: 1
 --- !u!1001 &5423761036602317203

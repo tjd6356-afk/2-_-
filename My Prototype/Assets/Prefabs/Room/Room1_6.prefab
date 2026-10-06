@@ -45,10 +45,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbad28f0d98097f41b76ef2e6ecb89b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonRoom
-  north: 0
-  south: 1
-  east: 0
-  west: 1
+  north: 1
+  south: 0
+  east: 1
+  west: 0
 --- !u!1001 &4842023740104129278
 PrefabInstance:
   m_ObjectHideFlags: 0
