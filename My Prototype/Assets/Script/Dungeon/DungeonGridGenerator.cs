@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using static DungeonRoom;
 
 public class DungeonGridGenerator : MonoBehaviour
 {
@@ -56,6 +57,14 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
     private Transform generatedRoomRoot;
+
+    private readonly RoomDirection[] allDirections =
+    {
+    RoomDirection.North,
+    RoomDirection.South,
+    RoomDirection.East,
+    RoomDirection.West
+    };
 
 
     // =========================================================
@@ -282,8 +291,7 @@ public class DungeonGridGenerator : MonoBehaviour
     // 기존 Room에 붙어있는 빈 Cell 찾기
     // =========================================================
 
-    private List<Vector2Int>
-        GetAvailableAdjacentCells()
+    private List<Vector2Int> GetAvailableAdjacentCells()
     {
         HashSet<Vector2Int> result =
             new HashSet<Vector2Int>();
@@ -296,34 +304,38 @@ public class DungeonGridGenerator : MonoBehaviour
             Vector2Int roomCell =
                 pair.Key;
 
+            DungeonRoom room =
+                pair.Value;
+
 
             foreach (
-                Vector2Int direction in directions)
+                RoomDirection direction in allDirections)
             {
+                // =====================================
+                // 이 방향에 문이 없다면
+                // 새 방 생성 후보조차 만들지 않는다.
+                // =====================================
+
+                if (!room.HasConnection(direction))
+                    continue;
+
+
                 Vector2Int nextCell =
                     roomCell +
-                    direction;
+                    DirectionToVector(direction);
 
 
-                // Grid 바깥
-                if (!IsInsideGrid(
-                        nextCell))
-                {
+                // Grid 밖
+                if (!IsInsideGrid(nextCell))
                     continue;
-                }
 
 
-                // 이미 Room 있음
-                if (generatedRooms.ContainsKey(
-                        nextCell))
-                {
+                // 이미 방이 있음
+                if (generatedRooms.ContainsKey(nextCell))
                     continue;
-                }
 
 
-                result.Add(
-                    nextCell
-                );
+                result.Add(nextCell);
             }
         }
 
@@ -372,128 +384,89 @@ public class DungeonGridGenerator : MonoBehaviour
     // =========================================================
 
     private bool CanPlaceRoom(
-        Vector2Int cell,
-        DungeonRoom candidate
-    )
+    Vector2Int cell,
+    DungeonRoom candidate
+)
     {
-        bool hasConnectedNeighbor =
+        bool connectedToAtLeastOneRoom =
             false;
 
 
-        // ==========================================
-        // North
-        // ==========================================
-
-        Vector2Int northCell =
-            cell +
-            Vector2Int.up;
-
-
-        if (generatedRooms.TryGetValue(
-                northCell,
-                out DungeonRoom northRoom))
+        foreach (
+            RoomDirection direction in allDirections)
         {
+            Vector2Int neighborCell =
+                cell +
+                DirectionToVector(direction);
+
+
+            // ==========================================
+            // 이 방향에 기존 방이 없는 경우
+            // ==========================================
+
+            if (!generatedRooms.TryGetValue(
+                    neighborCell,
+                    out DungeonRoom neighborRoom))
+            {
+                continue;
+            }
+
+
             /*
+             * Candidate 기준 direction 방향에
+             * Neighbor가 존재한다.
+             *
+             * 예:
+             *
              * Candidate의 North
              * ↕
-             * North Room의 South
-             *
-             * 서로 모두 문이어야 함.
+             * Neighbor의 South
              */
 
-            if (!candidate.North ||
-                !northRoom.South)
+
+            bool candidateDoor =
+                candidate.HasConnection(
+                    direction
+                );
+
+
+            RoomDirection opposite =
+                GetOppositeDirection(
+                    direction
+                );
+
+
+            bool neighborDoor =
+                neighborRoom.HasConnection(
+                    opposite
+                );
+
+
+            // ==========================================
+            // 핵심 조건
+            //
+            // 닿아 있다면
+            // 두 방 모두 반드시 뚫려 있어야 함.
+            // ==========================================
+
+            if (!candidateDoor ||
+                !neighborDoor)
             {
                 return false;
             }
 
 
-            hasConnectedNeighbor =
+            // 양쪽 모두 통로가 있음
+            connectedToAtLeastOneRoom =
                 true;
         }
 
 
         // ==========================================
-        // South
+        // 최소 1개 기존 Room과 연결되어야 함
         // ==========================================
 
-        Vector2Int southCell =
-            cell +
-            Vector2Int.down;
-
-
-        if (generatedRooms.TryGetValue(
-                southCell,
-                out DungeonRoom southRoom))
-        {
-            if (!candidate.South ||
-                !southRoom.North)
-            {
-                return false;
-            }
-
-
-            hasConnectedNeighbor =
-                true;
-        }
-
-
-        // ==========================================
-        // East
-        // ==========================================
-
-        Vector2Int eastCell =
-            cell +
-            Vector2Int.right;
-
-
-        if (generatedRooms.TryGetValue(
-                eastCell,
-                out DungeonRoom eastRoom))
-        {
-            if (!candidate.East ||
-                !eastRoom.West)
-            {
-                return false;
-            }
-
-
-            hasConnectedNeighbor =
-                true;
-        }
-
-
-        // ==========================================
-        // West
-        // ==========================================
-
-        Vector2Int westCell =
-            cell +
-            Vector2Int.left;
-
-
-        if (generatedRooms.TryGetValue(
-                westCell,
-                out DungeonRoom westRoom))
-        {
-            if (!candidate.West ||
-                !westRoom.East)
-            {
-                return false;
-            }
-
-
-            hasConnectedNeighbor =
-                true;
-        }
-
-
-        /*
-         * 최소 한 방향은 기존 Room과
-         * 통로로 연결되어 있어야 함.
-         */
-
-        return hasConnectedNeighbor;
+        return connectedToAtLeastOneRoom;
     }
 
 
@@ -691,4 +664,58 @@ public class DungeonGridGenerator : MonoBehaviour
             }
         }
     }
+
+    // =========================================================
+    // Direction → Grid 이동값
+    // =========================================================
+
+    private Vector2Int DirectionToVector(
+        RoomDirection direction
+    )
+    {
+        switch (direction)
+        {
+            case RoomDirection.North:
+                return Vector2Int.up;
+
+            case RoomDirection.South:
+                return Vector2Int.down;
+
+            case RoomDirection.East:
+                return Vector2Int.right;
+
+            case RoomDirection.West:
+                return Vector2Int.left;
+        }
+
+        return Vector2Int.zero;
+    }
+
+
+    // =========================================================
+    // 반대 방향
+    // =========================================================
+
+    private RoomDirection GetOppositeDirection(
+        RoomDirection direction
+    )
+    {
+        switch (direction)
+        {
+            case RoomDirection.North:
+                return RoomDirection.South;
+
+            case RoomDirection.South:
+                return RoomDirection.North;
+
+            case RoomDirection.East:
+                return RoomDirection.West;
+
+            case RoomDirection.West:
+                return RoomDirection.East;
+        }
+
+        return RoomDirection.North;
+    }
+
 }
