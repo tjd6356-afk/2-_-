@@ -166,11 +166,12 @@ MonoBehaviour:
   gridWidth: 5
   gridHeight: 5
   numberOfRoomsToGenerate: 10
-  roomPrefabs:
-  - {fileID: 505533644087573173, guid: af4ad0ff72acd7c42976728706143644, type: 3}
-  - {fileID: 386259047635288398, guid: 08fa223031ae143469eea8782f3e3457, type: 3}
-  - {fileID: 226270401949610534, guid: 50e6f3e324e540e45b857579206b9891, type: 3}
-  - {fileID: 904481788483790879, guid: 27e9611549a8fb84095f7ae6d0fefa02, type: 3}
+  maxGenerationAttempts: 500
+  roomDefinitions:
+  - {fileID: 8666412037985303626, guid: af4ad0ff72acd7c42976728706143644, type: 3}
+  - {fileID: 2615082665257933387, guid: 08fa223031ae143469eea8782f3e3457, type: 3}
+  - {fileID: 4300123160116823308, guid: 50e6f3e324e540e45b857579206b9891, type: 3}
+  - {fileID: 7615804765545669547, guid: 27e9611549a8fb84095f7ae6d0fefa02, type: 3}
   cellSizeX: 30
   cellSizeZ: 30
   roomY: 0

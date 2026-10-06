@@ -23,10 +23,9 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
     [Header("Room Prefabs")]
-
-    [Tooltip("DungeonRoom이 붙어있는 방 Prefab들")]
+    [Tooltip("DungeonRoom 컴포넌트가 붙어 있는 Room Prefab")]
     [SerializeField]
-    private DungeonRoom[] roomPrefabs;
+    private DungeonRoom[] roomDefinitions;
 
 
     [Header("Cell Size")]
@@ -94,8 +93,8 @@ public class DungeonGridGenerator : MonoBehaviour
         // 기본 검사
         // ==========================================
 
-        if (roomPrefabs == null ||
-            roomPrefabs.Length == 0)
+        if (roomDefinitions == null ||
+            roomDefinitions.Length == 0)
         {
             Debug.LogError(
                 "[DungeonGenerator] Room Prefab이 없습니다."
@@ -105,7 +104,7 @@ public class DungeonGridGenerator : MonoBehaviour
         }
 
 
-        foreach (DungeonRoom room in roomPrefabs)
+        foreach (DungeonRoom room in roomDefinitions)
         {
             if (room == null)
             {
@@ -174,10 +173,10 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
         DungeonRoom firstPrefab =
-            roomPrefabs[
+            roomDefinitions[
                 Random.Range(
                     0,
-                    roomPrefabs.Length
+                    roomDefinitions.Length
                 )
             ];
 
@@ -349,7 +348,7 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
         foreach (
-            DungeonRoom roomPrefab in roomPrefabs)
+            DungeonRoom roomPrefab in roomDefinitions)
         {
             if (CanPlaceRoom(
                     cell,

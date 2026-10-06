@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2928414061936693901}
+  - component: {fileID: 8666412037985303626}
   m_Layer: 0
   m_Name: Room1_1
   m_TagString: Untagged
@@ -32,6 +33,22 @@ Transform:
   - {fileID: 8237966174457838500}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8666412037985303626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 505533644087573173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbad28f0d98097f41b76ef2e6ecb89b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonRoom
+  north: 1
+  south: 1
+  east: 0
+  west: 0
 --- !u!1001 &8491990008998353999
 PrefabInstance:
   m_ObjectHideFlags: 0
