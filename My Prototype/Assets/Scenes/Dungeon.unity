@@ -184,6 +184,13 @@ MonoBehaviour:
   roomY: 0
   centerGrid: 1
   drawGrid: 1
+  closureRoomDefinitions:
+  - {fileID: 8446348217701319962, guid: c5ccbc3a4af52c24995deb98bd23b952, type: 3}
+  - {fileID: 2615621575889241256, guid: 74a3a51ac0824244a98f0099620afadb, type: 3}
+  - {fileID: 1757102975577652059, guid: bf7c8e0421db5fb4d8339c491b8d5182, type: 3}
+  - {fileID: 854817242993276895, guid: 4f6ccf9f68cb3d4489001db253a5e381, type: 3}
+  - {fileID: 1735781069213116681, guid: 23df001b6ecbc9d41a8ece00e7e3187d, type: 3}
+  - {fileID: 1074197689681098465, guid: 345dce59e0d57b841ac435083f48cae2, type: 3}
 --- !u!1 &1817718637
 GameObject:
   m_ObjectHideFlags: 0
