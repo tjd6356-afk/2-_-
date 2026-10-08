@@ -51,7 +51,7 @@ MonoBehaviour:
   east: 1
   west: 0
   placementPoint: {fileID: 2248103486577136859}
-  allowStartEndPlacement: 1
+  allowStartEndPlacement: 0
 --- !u!1 &8285568681125829121
 GameObject:
   m_ObjectHideFlags: 0

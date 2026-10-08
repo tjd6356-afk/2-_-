@@ -165,7 +165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DungeonGridGenerator
   gridWidth: 5
   gridHeight: 5
-  numberOfRoomsToGenerate: 3
+  numberOfRoomsToGenerate: 10
   maxGenerationAttempts: 500
   roomDefinitions:
   - {fileID: 8666412037985303626, guid: af4ad0ff72acd7c42976728706143644, type: 3}

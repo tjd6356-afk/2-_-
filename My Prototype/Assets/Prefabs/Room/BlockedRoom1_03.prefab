@@ -82,7 +82,7 @@ MonoBehaviour:
   east: 0
   west: 0
   placementPoint: {fileID: 3652197429211906445}
-  allowStartEndPlacement: 1
+  allowStartEndPlacement: 0
 --- !u!1001 &1034015663753219442
 PrefabInstance:
   m_ObjectHideFlags: 0

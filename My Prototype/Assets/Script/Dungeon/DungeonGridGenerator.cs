@@ -386,6 +386,8 @@ public class DungeonGridGenerator : MonoBehaviour
 
         FillRemainingOpenings();
 
+        PlacePlayerAndStageExit();
+
         Debug.Log(
             $"Dungeon 생성 완료 : " +
             $"{generatedRooms.Count}/{targetCount} Rooms"
@@ -1330,6 +1332,97 @@ public class DungeonGridGenerator : MonoBehaviour
         ];
     }
 
+
+    // =========================================================
+    // 연결된 이웃 Room 검색
+    // =========================================================
+    // Room 하고 Room 사이에 문이 열려 있어야 연결된 것으로 간주함
+    private List<Vector2Int> GetConnectedNeighbors(
+    Vector2Int cell
+)
+    {
+        List<Vector2Int> result =
+            new List<Vector2Int>();
+
+
+        if (!generatedRooms.TryGetValue(
+                cell,
+                out DungeonRoom room))
+        {
+            return result;
+        }
+
+
+        foreach (RoomDirection direction in allDirections)
+        {
+            // 현재 Room에 이 방향 통로가 없으면 제외
+            if (!room.HasConnection(direction))
+                continue;
+
+
+            Vector2Int nextCell =
+                cell +
+                DirectionToVector(direction);
+
+
+            // 옆에 실제 Room이 없음
+            if (!generatedRooms.TryGetValue(
+                    nextCell,
+                    out DungeonRoom neighbor))
+            {
+                continue;
+            }
+
+
+            // 옆 Room도 반대편 통로가 열려 있어야
+            // 실제 연결로 인정
+            RoomDirection opposite =
+                GetOppositeDirection(direction);
+
+
+            if (!neighbor.HasConnection(opposite))
+                continue;
+
+
+            result.Add(nextCell);
+        }
+
+
+        return result;
+    }
+
+    // 중복 생성 방지 시스템
+    private void ClearSpawnedGameplayObjects()
+    {
+        Transform oldRoot =
+            transform.Find(
+                "GeneratedGameplay"
+            );
+
+
+        if (oldRoot != null)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(
+                    oldRoot.gameObject
+                );
+            }
+            else
+            {
+                DestroyImmediate(
+                    oldRoot.gameObject
+                );
+            }
+        }
+
+
+        spawnedPlayer =
+            null;
+
+        spawnedStageExit =
+            null;
+    }
     private void FillRemainingOpenings()
     {
         List<ClosureRequest> requests =
@@ -1482,311 +1575,22 @@ public class DungeonGridGenerator : MonoBehaviour
         );
     }
 
-    // =========================================================
-    // 연결된 이웃 Room 검색
-    // =========================================================
-    // Room 하고 Room 사이에 문이 열려 있어야 연결된 것으로 간주함
-    private List<Vector2Int> GetConnectedNeighbors(
-    Vector2Int cell
-)
-    {
-        List<Vector2Int> result =
-            new List<Vector2Int>();
-
-
-        if (!generatedRooms.TryGetValue(
-                cell,
-                out DungeonRoom room))
-        {
-            return result;
-        }
-
-
-        foreach (RoomDirection direction in allDirections)
-        {
-            // 현재 Room에 이 방향 통로가 없으면 제외
-            if (!room.HasConnection(direction))
-                continue;
-
-
-            Vector2Int nextCell =
-                cell +
-                DirectionToVector(direction);
-
-
-            // 옆에 실제 Room이 없음
-            if (!generatedRooms.TryGetValue(
-                    nextCell,
-                    out DungeonRoom neighbor))
-            {
-                continue;
-            }
-
-
-            // 옆 Room도 반대편 통로가 열려 있어야
-            // 실제 연결로 인정
-            RoomDirection opposite =
-                GetOppositeDirection(direction);
-
-
-            if (!neighbor.HasConnection(opposite))
-                continue;
-
-
-            result.Add(nextCell);
-        }
-
-
-        return result;
-    }
-
-
-    // =========================================================
-    // 시작점으로부터 모든 Room까지의 거리 계산
-    // =========================================================
-    // 플레이어와 Stage Exit를 배치 할때 서로 가까이 있지 않도록 하기 위한 거리 계산 시스템
-    private Dictionary<Vector2Int, int>
-    CalculateRoomDistances(
-        Vector2Int startCell
-    )
-    {
-        Dictionary<Vector2Int, int> distances =
-            new Dictionary<Vector2Int, int>();
-
-
-        Queue<Vector2Int> queue =
-            new Queue<Vector2Int>();
-
-
-        distances[startCell] =
-            0;
-
-
-        queue.Enqueue(
-            startCell
-        );
-
-
-        while (queue.Count > 0)
-        {
-            Vector2Int current =
-                queue.Dequeue();
-
-
-            int currentDistance =
-                distances[current];
-
-
-            List<Vector2Int> neighbors =
-                GetConnectedNeighbors(
-                    current
-                );
-
-
-            foreach (Vector2Int next in neighbors)
-            {
-                if (distances.ContainsKey(next))
-                    continue;
-
-
-                distances[next] =
-                    currentDistance + 1;
-
-
-                queue.Enqueue(
-                    next
-                );
-            }
-        }
-
-
-        return distances;
-    }
-
-    // 멀리 떨어진 방들을 Exit 후보로 선정하는 시스템
-    private List<Vector2Int> GetEndRoomCandidates()
-    {
-        List<Vector2Int> result =
-            new List<Vector2Int>();
-
-
-        foreach (
-            KeyValuePair<Vector2Int, DungeonRoom>
-            pair in generatedRooms)
-        {
-            DungeonRoom room =
-                pair.Value;
-
-
-            // 이 방에는 Start/Exit 생성 금지
-            if (!room.AllowStartEndPlacement)
-                continue;
-
-
-            List<Vector2Int> neighbors =
-                GetConnectedNeighbors(
-                    pair.Key
-                );
-
-
-            // 연결된 방이 1개 이하
-            // = 던전 끝
-            if (neighbors.Count <= 1)
-            {
-                result.Add(
-                    pair.Key
-                );
-            }
-        }
-
-
-        return result;
-    }
-
-    private bool FindFarthestRoomPair(
-    out Vector2Int startCell,
-    out Vector2Int endCell
-)
-    {
-        startCell =
-            default;
-
-        endCell =
-            default;
-
-
-        // 우선 던전 끝 방들만 후보로 사용
-        List<Vector2Int> candidates =
-            GetEndRoomCandidates();
-
-
-        // 끝방이 2개 미만이라면
-        // 일반 Room 전체를 후보로 사용
-        if (candidates.Count < 2)
-        {
-            candidates.Clear();
-
-
-            foreach (
-                KeyValuePair<Vector2Int, DungeonRoom>
-                pair in generatedRooms)
-            {
-                if (!pair.Value.AllowStartEndPlacement)
-                    continue;
-
-
-                candidates.Add(
-                    pair.Key
-                );
-            }
-        }
-
-
-        if (candidates.Count < 2)
-        {
-            Debug.LogError(
-                "[Dungeon] Player와 Exit를 배치할 Room이 부족합니다."
-            );
-
-            return false;
-        }
-
-
-        int bestDistance =
-            -1;
-
-
-        Vector2Int bestStart =
-            candidates[0];
-
-        Vector2Int bestEnd =
-            candidates[1];
-
-
-        // ==========================================
-        // 모든 후보 쌍의 실제 통로 거리 계산
-        // ==========================================
-
-        for (int i = 0;
-             i < candidates.Count;
-             i++)
-        {
-            Vector2Int candidateStart =
-                candidates[i];
-
-
-            Dictionary<Vector2Int, int> distances =
-                CalculateRoomDistances(
-                    candidateStart
-                );
-
-
-            for (int j = i + 1;
-                 j < candidates.Count;
-                 j++)
-            {
-                Vector2Int candidateEnd =
-                    candidates[j];
-
-
-                // 서로 연결되지 않은 경우
-                if (!distances.TryGetValue(
-                        candidateEnd,
-                        out int distance))
-                {
-                    continue;
-                }
-
-
-                if (distance >
-                    bestDistance)
-                {
-                    bestDistance =
-                        distance;
-
-                    bestStart =
-                        candidateStart;
-
-                    bestEnd =
-                        candidateEnd;
-                }
-            }
-        }
-
-        
-        if (bestDistance < 0)
-        {
-            Debug.LogError(
-                "[Dungeon] 서로 연결된 Start / End Room을 찾을 수 없습니다."
-            );
-
-            return false;
-        }
-
-
-        startCell =
-            bestStart;
-
-        endCell =
-            bestEnd;
-
-
-        Debug.Log(
-            $"[Dungeon] 가장 먼 두 Room : " +
-            $"{startCell} ↔ {endCell} / 거리 {bestDistance}"
-        );
-
-
-        return true;
-    }
-
     // 플레이어와 스테이지 출구를 배치하는 시스템
     private void PlacePlayerAndStageExit()
     {
+        Debug.Log(
+            "[Dungeon Spawn] Player / Exit 배치 시작"
+        );
+
+
+        // ==========================================
+        // Prefab 검사
+        // ==========================================
+
         if (playerPrefab == null)
         {
             Debug.LogError(
-                "[Dungeon] Player Prefab이 없습니다."
+                "[Dungeon Spawn] Player Prefab이 없습니다."
             );
 
             return;
@@ -1796,27 +1600,128 @@ public class DungeonGridGenerator : MonoBehaviour
         if (stageExitPrefab == null)
         {
             Debug.LogError(
-                "[Dungeon] Stage Exit Prefab이 없습니다."
+                "[Dungeon Spawn] Stage Exit Prefab이 없습니다."
             );
 
             return;
         }
 
 
-        // 혹시 이전 생성물이 남아있으면 제거
+        // ==========================================
+        // 이전 생성물 제거
+        // ==========================================
+
         ClearSpawnedGameplayObjects();
 
 
-        if (!FindFarthestRoomPair(
-                out Vector2Int playerCell,
-                out Vector2Int exitCell))
+        // ==========================================
+        // Start / Exit로 사용할 수 있는 Room 수집
+        // ==========================================
+
+        List<Vector2Int> candidates =
+            new List<Vector2Int>();
+
+
+        foreach (
+            KeyValuePair<Vector2Int, DungeonRoom> pair
+            in generatedRooms)
         {
+            if (pair.Value == null)
+                continue;
+
+
+            if (!pair.Value.AllowStartEndPlacement)
+                continue;
+
+
+            candidates.Add(
+                pair.Key
+            );
+        }
+
+
+        Debug.Log(
+            $"[Dungeon Spawn] 배치 가능한 Room 수 : {candidates.Count}"
+        );
+
+
+        if (candidates.Count < 2)
+        {
+            Debug.LogError(
+                "[Dungeon Spawn] Player와 Exit를 배치하려면 " +
+                "Allow Start End Placement가 체크된 Room이 최소 2개 필요합니다."
+            );
+
             return;
         }
 
 
         // ==========================================
-        // 어느 끝에 Player를 놓을지 랜덤
+        // 가장 멀리 떨어진 두 Room 찾기
+        //
+        // 우선 Grid 거리 기준으로 단순하게 계산
+        // ==========================================
+
+        Vector2Int playerCell =
+            candidates[0];
+
+        Vector2Int exitCell =
+            candidates[1];
+
+
+        int farthestDistance =
+            -1;
+
+
+        for (int i = 0;
+             i < candidates.Count;
+             i++)
+        {
+            for (int j = i + 1;
+                 j < candidates.Count;
+                 j++)
+            {
+                Vector2Int a =
+                    candidates[i];
+
+                Vector2Int b =
+                    candidates[j];
+
+
+                // Grid Manhattan 거리
+                int distance =
+                    Mathf.Abs(
+                        a.x - b.x
+                    ) +
+                    Mathf.Abs(
+                        a.y - b.y
+                    );
+
+
+                if (distance >
+                    farthestDistance)
+                {
+                    farthestDistance =
+                        distance;
+
+                    playerCell =
+                        a;
+
+                    exitCell =
+                        b;
+                }
+            }
+        }
+
+
+        Debug.Log(
+            $"[Dungeon Spawn] 가장 먼 Room 발견 : " +
+            $"{playerCell} ↔ {exitCell} / 거리 {farthestDistance}"
+        );
+
+
+        // ==========================================
+        // 시작/끝 랜덤 교환
         // ==========================================
 
         if (randomizeStartEnd &&
@@ -1833,16 +1738,16 @@ public class DungeonGridGenerator : MonoBehaviour
         }
 
 
+        // ==========================================
+        // Room 가져오기
+        // ==========================================
+
         DungeonRoom playerRoom =
-            generatedRooms[
-                playerCell
-            ];
+            generatedRooms[playerCell];
 
 
         DungeonRoom exitRoom =
-            generatedRooms[
-                exitCell
-            ];
+            generatedRooms[exitCell];
 
 
         Vector3 playerPosition =
@@ -1853,45 +1758,63 @@ public class DungeonGridGenerator : MonoBehaviour
             exitRoom.GetPlacementPosition();
 
 
+        Debug.Log(
+            $"[Dungeon Spawn] Player Position : {playerPosition}"
+        );
+
+
+        Debug.Log(
+            $"[Dungeon Spawn] Exit Position : {exitPosition}"
+        );
+
+
         // ==========================================
-        // Player 딱 1개
+        // 생성물 부모
+        // ==========================================
+
+        GameObject gameplayRoot =
+            new GameObject(
+                "GeneratedGameplay"
+            );
+
+
+        gameplayRoot.transform.SetParent(
+            transform
+        );
+
+
+        // ==========================================
+        // Player 정확히 1개 생성
         // ==========================================
 
         spawnedPlayer =
             Instantiate(
                 playerPrefab,
                 playerPosition,
-                Quaternion.identity
+                Quaternion.identity,
+                gameplayRoot.transform
             );
 
 
         spawnedPlayer.name =
             "GeneratedPlayer";
 
-        // =========================================================
-        // 생성된 Player를 카메라 Target으로 지정
-        // =========================================================
 
-        ThirdPersonCamera cameraController =
-        FindFirstObjectByType<ThirdPersonCamera>();
+        Debug.Log(
+            "[Dungeon Spawn] Player 생성 성공"
+        );
 
-
-        if (cameraController != null)
-        {
-            cameraController.SetTarget(
-                spawnedPlayer.transform
-            );
-        }
 
         // ==========================================
-        // Stage Exit 딱 1개
+        // Stage Exit 정확히 1개 생성
         // ==========================================
 
         spawnedStageExit =
             Instantiate(
                 stageExitPrefab,
                 exitPosition,
-                Quaternion.identity
+                Quaternion.identity,
+                gameplayRoot.transform
             );
 
 
@@ -1900,57 +1823,34 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
         Debug.Log(
-            $"[Dungeon] Player 생성 : {playerCell}"
+            "[Dungeon Spawn] Stage Exit 생성 성공"
         );
 
 
-        Debug.Log(
-            $"[Dungeon] Stage Exit 생성 : {exitCell}"
-        );
-    }
+        // ==========================================
+        // Camera Target 연결
+        // ==========================================
 
-    // 중복 생성 방지 시스템
-    private void ClearSpawnedGameplayObjects()
-    {
-        if (spawnedPlayer != null)
+        ThirdPersonCamera cameraController =
+            FindFirstObjectByType<ThirdPersonCamera>();
+
+
+        if (cameraController != null)
         {
-            if (Application.isPlaying)
-            {
-                Destroy(
-                    spawnedPlayer
-                );
-            }
-            else
-            {
-                DestroyImmediate(
-                    spawnedPlayer
-                );
-            }
+            cameraController.SetTarget(
+                spawnedPlayer.transform
+            );
 
 
-            spawnedPlayer =
-                null;
+            Debug.Log(
+                "[Dungeon Spawn] Camera Target 연결 성공"
+            );
         }
-
-
-        if (spawnedStageExit != null)
+        else
         {
-            if (Application.isPlaying)
-            {
-                Destroy(
-                    spawnedStageExit
-                );
-            }
-            else
-            {
-                DestroyImmediate(
-                    spawnedStageExit
-                );
-            }
-
-
-            spawnedStageExit =
-                null;
+            Debug.LogWarning(
+                "[Dungeon Spawn] ThirdPersonCamera를 찾지 못했습니다."
+            );
         }
     }
 }
