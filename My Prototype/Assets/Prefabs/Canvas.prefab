@@ -1095,8 +1095,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AmmoUI
   weaponManager: {fileID: 0}
-  developerShooter: {fileID: 0}
-  rangedGunWeapon: {fileID: 0}
   ammoText: {fileID: 6540027461683875522}
 --- !u!1 &5349999723171236818
 GameObject:
@@ -1423,7 +1421,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &979403668884648425
 RectTransform:
   m_ObjectHideFlags: 0
