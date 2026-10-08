@@ -1,19 +1,25 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 
 public class AmmoUI : MonoBehaviour
 {
-    [Header("References")]
-
-    [SerializeField]
-    private PlayerWeaponManager weaponManager;
-
+    [Header("UI")]
     [SerializeField]
     private TMP_Text ammoText;
 
+    [Tooltip("탄약 UI 전체를 숨기고 싶다면 지정. 비워도 됨.")]
+    [SerializeField]
+    private GameObject ammoUIRoot;
 
-    // 현재 연결되어 있는 탄약 무기
+
+    // 런타임에 생성된 Player에서 가져옴
+    private PlayerWeaponManager weaponManager;
+
+    // 현재 장착된 탄약 무기
     private IAmmoWeapon currentAmmoWeapon;
+
+    private Coroutine findPlayerRoutine;
 
 
     private void Awake()
@@ -23,51 +29,169 @@ public class AmmoUI : MonoBehaviour
             ammoText =
                 GetComponent<TMP_Text>();
         }
-
-
-        if (weaponManager == null)
-        {
-            weaponManager =
-                FindFirstObjectByType
-                <PlayerWeaponManager>();
-        }
-    }
-
-
-    private void OnEnable()
-    {
-        if (weaponManager != null)
-        {
-            weaponManager.OnWeaponChanged +=
-                HandleWeaponChanged;
-        }
     }
 
 
     private void Start()
     {
-        /*
-         * OnWeaponChanged를 놓친 경우를 대비.
-         *
-         * 예를 들어 UI의 Start 순서보다
-         * PlayerWeaponManager가 먼저 실행됐을 수도 있음.
-         */
-
-        if (weaponManager != null)
-        {
-            ConnectToWeapon(
-                weaponManager.CurrentWeapon
-            );
-        }
-        else
-        {
-            HideAmmoUI();
-        }
+        // Player가 DungeonGenerator에 의해
+        // 나중에 생성될 수 있으므로 기다리면서 검색
+        BeginFindPlayer();
     }
 
 
     private void OnDisable()
     {
+        DisconnectWeaponManager();
+
+        if (findPlayerRoutine != null)
+        {
+            StopCoroutine(
+                findPlayerRoutine
+            );
+
+            findPlayerRoutine = null;
+        }
+    }
+
+
+    // =========================================================
+    // Player 찾기 시작
+    // =========================================================
+
+    private void BeginFindPlayer()
+    {
+        if (findPlayerRoutine != null)
+        {
+            StopCoroutine(
+                findPlayerRoutine
+            );
+        }
+
+
+        findPlayerRoutine =
+            StartCoroutine(
+                FindPlayerRoutine()
+            );
+    }
+
+
+    // =========================================================
+    // 런타임 생성 Player 기다리기
+    // =========================================================
+
+    private IEnumerator FindPlayerRoutine()
+    {
+        HideAmmoUI();
+
+
+        while (weaponManager == null)
+        {
+            weaponManager =
+                FindFirstObjectByType<PlayerWeaponManager>();
+
+
+            if (weaponManager == null)
+            {
+                yield return null;
+            }
+        }
+
+
+        BindWeaponManager(
+            weaponManager
+        );
+
+
+        findPlayerRoutine =
+            null;
+    }
+
+
+    // =========================================================
+    // 외부에서 생성된 Player를 직접 전달할 수도 있음
+    // =========================================================
+
+    public void SetPlayer(
+        GameObject player
+    )
+    {
+        if (player == null)
+            return;
+
+
+        PlayerWeaponManager newManager =
+            player.GetComponent<PlayerWeaponManager>();
+
+
+        if (newManager == null)
+        {
+            newManager =
+                player.GetComponentInChildren<PlayerWeaponManager>();
+        }
+
+
+        if (newManager == null)
+        {
+            Debug.LogWarning(
+                "[AmmoUI] 생성된 Player에서 PlayerWeaponManager를 찾지 못했습니다."
+            );
+
+            return;
+        }
+
+
+        BindWeaponManager(
+            newManager
+        );
+    }
+
+
+    // =========================================================
+    // PlayerWeaponManager와 연결
+    // =========================================================
+
+    private void BindWeaponManager(
+        PlayerWeaponManager newManager
+    )
+    {
+        if (newManager == null)
+            return;
+
+
+        // 기존 연결 해제
+        DisconnectWeaponManager();
+
+
+        weaponManager =
+            newManager;
+
+
+        weaponManager.OnWeaponChanged +=
+            HandleWeaponChanged;
+
+
+        Debug.Log(
+            $"[AmmoUI] Player 연결 성공 : {weaponManager.gameObject.name}"
+        );
+
+
+        // 이미 무기를 장착한 상태일 수도 있으므로 즉시 확인
+        ConnectToWeapon(
+            weaponManager.CurrentWeapon
+        );
+    }
+
+
+    // =========================================================
+    // PlayerWeaponManager 연결 해제
+    // =========================================================
+
+    private void DisconnectWeaponManager()
+    {
+        DisconnectCurrentWeapon();
+
+
         if (weaponManager != null)
         {
             weaponManager.OnWeaponChanged -=
@@ -75,12 +199,13 @@ public class AmmoUI : MonoBehaviour
         }
 
 
-        DisconnectCurrentWeapon();
+        weaponManager =
+            null;
     }
 
 
     // =========================================================
-    // 무기가 바뀜
+    // 무기 변경
     // =========================================================
 
     private void HandleWeaponChanged(
@@ -94,14 +219,13 @@ public class AmmoUI : MonoBehaviour
 
 
     // =========================================================
-    // 현재 무기와 UI 연결
+    // 현재 무기 연결
     // =========================================================
 
     private void ConnectToWeapon(
         WeaponBase weapon
     )
     {
-        // 이전 무기 이벤트 해제
         DisconnectCurrentWeapon();
 
 
@@ -113,15 +237,12 @@ public class AmmoUI : MonoBehaviour
         }
 
 
-        // ==========================================
-        // 현재 무기가 탄약을 사용하는 무기인가?
-        // ==========================================
-
+        // 현재 무기가 탄약을 사용하는 무기인지 확인
         currentAmmoWeapon =
             weapon as IAmmoWeapon;
 
 
-        // 근접 / 와이어 등
+        // 근접무기 / 와이어건 등
         if (currentAmmoWeapon == null)
         {
             HideAmmoUI();
@@ -130,23 +251,18 @@ public class AmmoUI : MonoBehaviour
         }
 
 
-        // ==========================================
-        // 탄약 무기
-        // ==========================================
-
         currentAmmoWeapon.OnAmmoStateChanged +=
             RefreshUI;
 
 
         ShowAmmoUI();
 
-
         RefreshUI();
     }
 
 
     // =========================================================
-    // 기존 무기 이벤트 연결 제거
+    // 기존 탄약 무기 연결 해제
     // =========================================================
 
     private void DisconnectCurrentWeapon()
@@ -165,7 +281,7 @@ public class AmmoUI : MonoBehaviour
 
 
     // =========================================================
-    // UI 실제 갱신
+    // UI 갱신
     // =========================================================
 
     private void RefreshUI()
@@ -182,10 +298,6 @@ public class AmmoUI : MonoBehaviour
         }
 
 
-        ammoText.enabled =
-            true;
-
-
         ammoText.text =
             $"탄창 {currentAmmoWeapon.ReserveMagazines}" +
             $"\n탄약 {currentAmmoWeapon.CurrentAmmo} / " +
@@ -200,8 +312,20 @@ public class AmmoUI : MonoBehaviour
     }
 
 
+    // =========================================================
+    // UI 표시
+    // =========================================================
+
     private void ShowAmmoUI()
     {
+        if (ammoUIRoot != null)
+        {
+            ammoUIRoot.SetActive(
+                true
+            );
+        }
+
+
         if (ammoText != null)
         {
             ammoText.enabled =
@@ -210,8 +334,26 @@ public class AmmoUI : MonoBehaviour
     }
 
 
+    // =========================================================
+    // UI 숨김
+    // =========================================================
+
     private void HideAmmoUI()
     {
+        if (ammoUIRoot != null)
+        {
+            // AmmoUI 스크립트가 ammoUIRoot에 붙어있다면
+            // 자기 자신을 꺼버리면 다시 찾지 못하므로
+            // 그 경우에는 Root를 끄지 않는다.
+            if (ammoUIRoot != gameObject)
+            {
+                ammoUIRoot.SetActive(
+                    false
+                );
+            }
+        }
+
+
         if (ammoText != null)
         {
             ammoText.enabled =

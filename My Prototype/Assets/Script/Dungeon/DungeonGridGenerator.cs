@@ -960,187 +960,6 @@ public class DungeonGridGenerator : MonoBehaviour
         }
     }
 
-    private void GetRequiredOpeningsForEmptyCell(
-    Vector2Int cell,
-    out bool north,
-    out bool south,
-    out bool east,
-    out bool west
-)
-    {
-        north = false;
-        south = false;
-        east = false;
-        west = false;
-
-        // 위쪽에 방이 있고, 그 방이 South로 열려 있으면
-        // 현재 빈 칸은 North가 필요
-        if (generatedRooms.TryGetValue(cell + Vector2Int.up, out DungeonRoom northNeighbor))
-        {
-            if (northNeighbor.South)
-                north = true;
-        }
-
-        // 아래쪽에 방이 있고, 그 방이 North로 열려 있으면
-        // 현재 빈 칸은 South가 필요
-        if (generatedRooms.TryGetValue(cell + Vector2Int.down, out DungeonRoom southNeighbor))
-        {
-            if (southNeighbor.North)
-                south = true;
-        }
-
-        // 오른쪽에 방이 있고, 그 방이 West로 열려 있으면
-        // 현재 빈 칸은 East가 필요
-        if (generatedRooms.TryGetValue(cell + Vector2Int.right, out DungeonRoom eastNeighbor))
-        {
-            if (eastNeighbor.West)
-                east = true;
-        }
-
-        // 왼쪽에 방이 있고, 그 방이 East로 열려 있으면
-        // 현재 빈 칸은 West가 필요
-        if (generatedRooms.TryGetValue(cell + Vector2Int.left, out DungeonRoom westNeighbor))
-        {
-            if (westNeighbor.East)
-                west = true;
-        }
-    }
-
-    private DungeonRoom FindExactClosureRoom(
-    bool north,
-    bool south,
-    bool east,
-    bool west
-)
-    {
-        if (closureRoomDefinitions == null ||
-            closureRoomDefinitions.Length == 0)
-        {
-            return null;
-        }
-
-        List<DungeonRoom> matches =
-            new List<DungeonRoom>();
-
-        foreach (DungeonRoom room in closureRoomDefinitions)
-        {
-            if (room == null)
-                continue;
-
-            if (room.North == north &&
-                room.South == south &&
-                room.East == east &&
-                room.West == west)
-            {
-                matches.Add(room);
-            }
-        }
-
-        if (matches.Count == 0)
-            return null;
-
-        return matches[Random.Range(0, matches.Count)];
-    }
-
-    private int CountOpenings(
-    bool north,
-    bool south,
-    bool east,
-    bool west
-)
-    {
-        int count = 0;
-
-        if (north) count++;
-        if (south) count++;
-        if (east) count++;
-        if (west) count++;
-
-        return count;
-    }
-
-    private void FillRemainingOpenSpaces()
-    {
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int z = 0; z < gridHeight; z++)
-            {
-                Vector2Int cell =
-                    new Vector2Int(x, z);
-
-                // 이미 방이 있으면 넘어감
-                if (generatedRooms.ContainsKey(cell))
-                    continue;
-
-                GetRequiredOpeningsForEmptyCell(
-                    cell,
-                    out bool north,
-                    out bool south,
-                    out bool east,
-                    out bool west
-                );
-
-                int openingCount =
-                    CountOpenings(
-                        north,
-                        south,
-                        east,
-                        west
-                    );
-
-                // 주변에서 요구하는 연결이 없으면 패스
-                if (openingCount == 0)
-                    continue;
-
-                bool shouldFill = false;
-
-                // 1개 열림 -> 막힌 방 배치
-                if (openingCount == 1)
-                {
-                    shouldFill = true;
-                }
-                // 2개 열림인데 서로 마주보는 경우만 직선 통로 배치
-                else if (openingCount == 2)
-                {
-                    bool eastWest =
-                        east && west &&
-                        !north && !south;
-
-                    bool northSouth =
-                        north && south &&
-                        !east && !west;
-
-                    if (eastWest || northSouth)
-                    {
-                        shouldFill = true;
-                    }
-                }
-
-                if (!shouldFill)
-                    continue;
-
-                DungeonRoom closurePrefab =
-                    FindExactClosureRoom(
-                        north,
-                        south,
-                        east,
-                        west
-                    );
-
-                if (closurePrefab == null)
-                {
-                    Debug.LogWarning(
-                        $"[Dungeon] 마감용 프리팹 없음 : " +
-                        $"Cell={cell}, N={north}, S={south}, E={east}, W={west}"
-                    );
-
-                    continue;
-                }
-
-                CreateRoom(cell, closurePrefab);
-            }
-        }
-    }
     private struct ClosureRequest
     {
         public Vector2Int cell;
@@ -1850,6 +1669,25 @@ public class DungeonGridGenerator : MonoBehaviour
         {
             Debug.LogWarning(
                 "[Dungeon Spawn] ThirdPersonCamera를 찾지 못했습니다."
+            );
+        }
+        // ==========================================
+        // Ammo UI에 생성된 Player 전달
+        // ==========================================
+
+        AmmoUI ammoUI =
+            FindFirstObjectByType<AmmoUI>();
+
+
+        if (ammoUI != null)
+        {
+            ammoUI.SetPlayer(
+                spawnedPlayer
+            );
+
+
+            Debug.Log(
+                "[Dungeon Spawn] AmmoUI Player 연결 성공"
             );
         }
     }
