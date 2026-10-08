@@ -1317,8 +1317,7 @@ public class DungeonGridGenerator : MonoBehaviour
 
         // =========================================================
         // 1단계
-        // 현재 메인 Dungeon 상태만 보고
-        // 필요한 Closure들을 기록
+        // 모든 빈 Cell 조사
         // =========================================================
 
         for (int x = 0;
@@ -1336,7 +1335,7 @@ public class DungeonGridGenerator : MonoBehaviour
                     );
 
 
-                // 이미 Room이 있는 Cell
+                // 이미 방이 있으면 무시
                 if (generatedRooms.ContainsKey(
                         cell))
                 {
@@ -1344,6 +1343,8 @@ public class DungeonGridGenerator : MonoBehaviour
                 }
 
 
+                // 주변 방들이 현재 빈 Cell에
+                // 어떤 방향의 연결을 요구하는지 조사
                 GetRequiredOpenings(
                     cell,
                     out bool north,
@@ -1362,67 +1363,23 @@ public class DungeonGridGenerator : MonoBehaviour
                     );
 
 
-                // 연결 요구가 없음
+                // 주변에 열린 통로가 하나도 없음
                 if (openingCount == 0)
-                    continue;
-
-
-                bool validClosurePattern =
-                    false;
-
-
-                // =====================================
-                // 한 방향
-                //
-                // 막힌 방 생성
-                // =====================================
-
-                if (openingCount == 1)
                 {
-                    validClosurePattern =
-                        true;
-                }
-
-
-                // =====================================
-                // 두 방향
-                //
-                // 서로 정반대일 때만 직선방 생성
-                // =====================================
-
-                else if (openingCount == 2)
-                {
-                    bool eastWest =
-                        east &&
-                        west &&
-                        !north &&
-                        !south;
-
-
-                    bool northSouth =
-                        north &&
-                        south &&
-                        !east &&
-                        !west;
-
-
-                    validClosurePattern =
-                        eastWest ||
-                        northSouth;
-                }
-
-
-                if (!validClosurePattern)
-                {
-                    Debug.LogWarning(
-                        $"[Dungeon Closure] 현재 지원하지 않는 출구 형태 : " +
-                        $"{cell} | " +
-                        $"N:{north} S:{south} E:{east} W:{west}"
-                    );
-
                     continue;
                 }
 
+
+                // =================================================
+                // 이제 방향 개수에 제한을 두지 않는다.
+                //
+                // 1방향
+                // 2방향
+                // 3방향
+                // 4방향
+                //
+                // 전부 처리 가능
+                // =================================================
 
                 requests.Add(
                     new ClosureRequest(
@@ -1439,13 +1396,15 @@ public class DungeonGridGenerator : MonoBehaviour
 
         // =========================================================
         // 2단계
-        // 기록된 위치에 실제 Closure Room 생성
+        // 필요한 모양과 정확히 같은 Closure Room 찾기
         // =========================================================
+
+        int createdCount = 0;
+
 
         foreach (
             ClosureRequest request in requests)
         {
-            // 혹시 이미 방이 들어갔다면 무시
             if (generatedRooms.ContainsKey(
                     request.cell))
             {
@@ -1462,16 +1421,21 @@ public class DungeonGridGenerator : MonoBehaviour
                 );
 
 
+            // =====================================================
+            // 맞는 프리팹이 없는 경우
+            // =====================================================
+
             if (closurePrefab == null)
             {
                 Debug.LogWarning(
-                    $"[Dungeon Closure] 일치하는 Prefab 없음 : " +
-                    $"{request.cell} | " +
-                    $"N:{request.north} " +
-                    $"S:{request.south} " +
-                    $"E:{request.east} " +
-                    $"W:{request.west}"
+                    $"[Dungeon Closure] 필요한 마감 Room이 없습니다.\n" +
+                    $"Cell : {request.cell}\n" +
+                    $"North : {request.north}\n" +
+                    $"South : {request.south}\n" +
+                    $"East : {request.east}\n" +
+                    $"West : {request.west}"
                 );
+
 
                 continue;
             }
@@ -1486,11 +1450,14 @@ public class DungeonGridGenerator : MonoBehaviour
 
             room.name =
                 $"Closure_{request.cell.x}_{request.cell.y}_{closurePrefab.name}";
+
+
+            createdCount++;
         }
 
 
         Debug.Log(
-            $"[Dungeon Closure] 후처리 완료 : {requests.Count}개 후보"
+            $"[Dungeon Closure] 후처리 완료 : {createdCount}개 Room 생성"
         );
     }
 }
