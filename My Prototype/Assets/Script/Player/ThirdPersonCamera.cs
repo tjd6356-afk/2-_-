@@ -329,4 +329,12 @@ public class ThirdPersonCamera : MonoBehaviour
                 false;
         }
     }
+    public void SetTarget(
+    Transform newTarget
+)
+    {
+        target =
+            newTarget;
+    }
+
 }
