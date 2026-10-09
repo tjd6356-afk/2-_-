@@ -1,7 +1,8 @@
-public enum WeaponType
+﻿public enum WeaponType
 {
     Developer,
     Melee,
     RangedGun,
-    WireGun
+    WireGun,
+    Launcher
 }
