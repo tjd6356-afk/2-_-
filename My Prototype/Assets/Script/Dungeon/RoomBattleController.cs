@@ -20,6 +20,7 @@ public class RoomBattleController : MonoBehaviour
     [SerializeField]
     private int monstersToSpawn = 3;
 
+    private bool battleDisabled;
 
     // =========================================================
     // Spawn Area
@@ -90,6 +91,44 @@ public class RoomBattleController : MonoBehaviour
 
 
     // =========================================================
+    // 이 Room의 전투 시스템 완전 비활성화
+    // Player 시작방 / StageExit 방에서 사용
+    // =========================================================
+
+    public void DisableBattleRoom()
+    {
+        battleDisabled = true;
+
+        // 혹시 실행 중인 감시 Coroutine이 있으면 종료
+        if (monsterCheckRoutine != null)
+        {
+            StopCoroutine(monsterCheckRoutine);
+            monsterCheckRoutine = null;
+        }
+
+        // 같은 오브젝트에 붙어있는 Trigger Collider 비활성화
+        Collider[] colliders =
+            GetComponents<Collider>();
+
+        foreach (Collider col in colliders)
+        {
+            if (col != null &&
+                col.isTrigger)
+            {
+                col.enabled = false;
+            }
+        }
+
+        Debug.Log(
+            $"[RoomBattle] Battle 비활성화 : {transform.root.name}"
+        );
+
+        // RoomBattleController 자체도 더 이상 Update/Trigger 처리 안 함
+        enabled = false;
+    }
+
+
+    // =========================================================
     // Runtime
     // =========================================================
 
@@ -127,6 +166,9 @@ public class RoomBattleController : MonoBehaviour
         Collider other
     )
     {
+        if (battleDisabled)
+            return;
+
         // 이미 진행했거나 완료한 방
         if (battleStarted ||
             battleCompleted)
