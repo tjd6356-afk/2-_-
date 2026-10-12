@@ -1568,6 +1568,12 @@ public class DungeonGridGenerator : MonoBehaviour
         DungeonRoom exitRoom =
             generatedRooms[exitCell];
 
+        // =========================================================
+        // Player 시작방 / StageExit 방은 Monster Battle 제거
+        // =========================================================
+
+        DisableBattleInRoom(playerRoom);
+        DisableBattleInRoom(exitRoom);
 
         Vector3 playerPosition =
             playerRoom.GetPlacementPosition();
@@ -1618,6 +1624,20 @@ public class DungeonGridGenerator : MonoBehaviour
         spawnedPlayer.name =
             "GeneratedPlayer";
 
+        // =========================================================
+        // HP UI 연결
+        // =========================================================
+
+        PlayerHealthUI healthUI =
+            FindFirstObjectByType<PlayerHealthUI>();
+
+
+        if (healthUI != null)
+        {
+            healthUI.SetPlayer(
+                spawnedPlayer
+            );
+        }
 
         Debug.Log(
             "[Dungeon Spawn] Player 생성 성공"
@@ -1689,6 +1709,32 @@ public class DungeonGridGenerator : MonoBehaviour
             Debug.Log(
                 "[Dungeon Spawn] AmmoUI Player 연결 성공"
             );
+        }
+    }
+
+    private void DisableBattleInRoom(
+    DungeonRoom room
+)
+    {
+        if (room == null)
+            return;
+
+
+        RoomBattleController[] battleControllers =
+            room.GetComponentsInChildren<RoomBattleController>(
+                true
+            );
+
+
+        foreach (
+            RoomBattleController battle
+            in battleControllers)
+        {
+            if (battle == null)
+                continue;
+
+
+            battle.DisableBattleRoom();
         }
     }
 }
