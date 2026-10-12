@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 5351818697115213627}
   - component: {fileID: 5821247941830255217}
   - component: {fileID: 4525119024753954002}
+  - component: {fileID: 8235560101869539188}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -142,6 +143,24 @@ MonoBehaviour:
   playerCamera: {fileID: 0}
   characterController: {fileID: 934635378258857864}
   startingWeaponPrefab: {fileID: 5895482793363456999, guid: b1b431a2d3144be48bae817e07c2a640, type: 3}
+--- !u!114 &8235560101869539188
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 497d19535d648b840a46cda0e0b1cd46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerModelFader
+  visualRoot: {fileID: 5073353023078118861}
+  fadeStartDistance: 1.7
+  firstPersonDistance: 0.35
+  minimumAlpha: 0.05
+  fadeSpeed: 8
+  forceTransparentMaterials: 1
 --- !u!1 &1720790152774821821
 GameObject:
   m_ObjectHideFlags: 0
