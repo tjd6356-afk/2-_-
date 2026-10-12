@@ -46,6 +46,11 @@ public class DungeonGridGenerator : MonoBehaviour
 
     private Transform generatedRoomRoot;
 
+    [Header("Runtime NavMesh")]
+
+    [SerializeField]
+    private RuntimeNavMeshBuilder runtimeNavMeshBuilder;
+
     // 플레이어 및 Stage Exit 생성 관련 변수
 
     [Header("Player / Stage Exit")]
@@ -380,17 +385,46 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
         // =====================================================
-        // 메인 Dungeon 생성 완료
-        // 남아있는 열린 입구 마감
+        // 1. Dungeon의 남은 열린 입구 후처리
         // =====================================================
 
         FillRemainingOpenings();
 
+
+        // =====================================================
+        // 2. 완성된 Dungeon 기준으로 NavMesh 생성
+        // =====================================================
+
+        if (runtimeNavMeshBuilder != null)
+        {
+            Debug.Log(
+                "[DungeonGenerator] Runtime NavMesh 생성 요청"
+            );
+
+            runtimeNavMeshBuilder.BuildNavMesh();
+        }
+        else
+        {
+            Debug.LogError(
+                "[DungeonGenerator] RuntimeNavMeshBuilder가 연결되지 않았습니다."
+            );
+        }
+
+
+        // =====================================================
+        // 3. NavMesh 생성 후 Player / Stage Exit 배치
+        // =====================================================
+
         PlacePlayerAndStageExit();
+
+
+        // =====================================================
+        // 4. Dungeon 생성 완료
+        // =====================================================
 
         Debug.Log(
             $"Dungeon 생성 완료 : " +
-            $"{generatedRooms.Count}/{targetCount} Rooms"
+            $"최종 {generatedRooms.Count} Rooms"
         );
     }
 

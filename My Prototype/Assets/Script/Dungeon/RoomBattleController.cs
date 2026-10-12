@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class RoomBattleController : MonoBehaviour
 {
@@ -482,15 +483,31 @@ public class RoomBattleController : MonoBehaviour
             }
 
 
-            // ==========================================
-            // 기존 Monster와 너무 가까운지 확인
-            // ==========================================
+            // =========================================================
+            // NavMesh 위의 가장 가까운 위치 검색
+            // =========================================================
 
+            if (!NavMesh.SamplePosition(
+                    worldPosition,
+                    out NavMeshHit navHit,
+                    3f,
+                    NavMesh.AllAreas))
+            {
+                // 주변 3m 안에 NavMesh가 없음
+                continue;
+            }
+
+
+            Vector3 navMeshPosition =
+                navHit.position;
+
+
+            // 다른 Monster와 너무 가까운지 확인
             if (!IsTooCloseToOtherMonster(
-                    worldPosition))
+                    navMeshPosition))
             {
                 result =
-                    worldPosition;
+                    navMeshPosition;
 
                 return true;
             }

@@ -88,8 +88,8 @@ MonoBehaviour:
   enemyShooter: {fileID: 9096280380810927270}
   agent: {fileID: 4175748206305615774}
   player: {fileID: 0}
-  detectionRange: 40
-  attackRange: 25
+  detectionRange: 60
+  attackRange: 15
   targetHeight: 0.5
   rotationSpeed: 8
   sightMask:
