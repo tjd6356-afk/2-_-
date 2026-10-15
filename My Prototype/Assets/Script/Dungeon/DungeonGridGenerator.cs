@@ -1694,6 +1694,51 @@ public class DungeonGridGenerator : MonoBehaviour
         spawnedStageExit.name =
             "GeneratedStageExit";
 
+        // =========================================================
+        // 생성된 StageExit에 StageExitPanelUI 연결
+        // =========================================================
+
+        StageExitTrigger exitTrigger =
+            spawnedStageExit.GetComponentInChildren<StageExitTrigger>(
+                true
+            );
+
+
+        StageExitPanelUI exitPanel =
+            FindFirstObjectByType<StageExitPanelUI>(
+                FindObjectsInactive.Include
+            );
+
+
+        if (exitTrigger != null &&
+            exitPanel != null)
+        {
+            exitTrigger.SetStageExitPanel(
+                exitPanel
+            );
+
+
+            Debug.Log(
+                "[Dungeon Spawn] StageExit → StageExitPanelUI 연결 성공"
+            );
+        }
+        else
+        {
+            if (exitTrigger == null)
+            {
+                Debug.LogError(
+                    "[Dungeon Spawn] StageExitTrigger가 StageExit Prefab에 없습니다."
+                );
+            }
+
+
+            if (exitPanel == null)
+            {
+                Debug.LogError(
+                    "[Dungeon Spawn] StageExitPanelUI를 찾을 수 없습니다."
+                );
+            }
+        }
 
         Debug.Log(
             "[Dungeon Spawn] Stage Exit 생성 성공"
@@ -1710,19 +1755,27 @@ public class DungeonGridGenerator : MonoBehaviour
 
         if (cameraController != null)
         {
+            // Camera가 새 Player 추적
             cameraController.SetTarget(
                 spawnedPlayer.transform
             );
 
 
+            // PlayerGameplayControl에도 Camera 등록
+            PlayerGameplayControl gameplayControl =
+                spawnedPlayer.GetComponent<PlayerGameplayControl>();
+
+
+            if (gameplayControl != null)
+            {
+                gameplayControl.SetCamera(
+                    cameraController
+                );
+            }
+
+
             Debug.Log(
-                "[Dungeon Spawn] Camera Target 연결 성공"
-            );
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[Dungeon Spawn] ThirdPersonCamera를 찾지 못했습니다."
+                "[Dungeon Spawn] Camera 연결 완료"
             );
         }
         // ==========================================

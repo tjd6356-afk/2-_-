@@ -285,6 +285,8 @@ public class ThirdPersonCamera : MonoBehaviour
     }
 
 
+
+
     // =========================================================
     // Aim
     // =========================================================
@@ -619,6 +621,23 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private void CursorControl()
     {
+
+        // ==========================================
+        // UI 때문에 Gameplay 자체가 잠긴 상태
+        // ==========================================
+
+        if (PlayerGameplayControl.GameplayLocked)
+        {
+            Cursor.lockState =
+                CursorLockMode.None;
+
+            Cursor.visible =
+                true;
+
+            return;
+        }
+
+
         // Scene 이동 UI가 열려있다면
         if (SceneTransitionPanelUI.IsTransitionUIOpen)
         {
@@ -673,4 +692,7 @@ public class ThirdPersonCamera : MonoBehaviour
             collisionRadius
         );
     }
+
+
+
 }

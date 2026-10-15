@@ -124,8 +124,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerGameplayControl
   gameplayBehaviours:
   - {fileID: 7132637885072722944}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 4525119024753954002}
+  thirdPersonCamera: {fileID: 0}
 --- !u!114 &4525119024753954002
 MonoBehaviour:
   m_ObjectHideFlags: 0

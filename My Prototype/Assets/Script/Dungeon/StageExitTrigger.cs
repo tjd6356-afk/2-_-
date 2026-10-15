@@ -2,33 +2,155 @@ using UnityEngine;
 
 public class StageExitTrigger : MonoBehaviour
 {
-    [Header("UI")]
+    [Header("Runtime UI")]
 
     [SerializeField]
     private StageExitPanelUI stageExitPanel;
 
 
+    private bool playerInside;
+
+
     private void Start()
     {
-        // Prefab은 Scene의 Canvas를 미리 참조할 수 없으므로
-        // 런타임에 찾는다.
-        if (stageExitPanel == null)
+        FindStageExitPanel();
+    }
+
+
+    // =========================================================
+    // StageExitPanel 자동 탐색
+    // =========================================================
+
+    private void FindStageExitPanel()
+    {
+        // 1순위: Instance
+        if (StageExitPanelUI.Instance != null)
         {
             stageExitPanel =
-                FindFirstObjectByType<StageExitPanelUI>();
+                StageExitPanelUI.Instance;
+
+
+            Debug.Log(
+                "[StageExitTrigger] StageExitPanelUI 자동 연결 성공"
+            );
+
+            return;
+        }
+
+
+        // ==========================================
+        // 혹시 비활성화된 오브젝트에 붙어있더라도 검색
+        // ==========================================
+
+        stageExitPanel =
+            FindFirstObjectByType<StageExitPanelUI>(
+                FindObjectsInactive.Include
+            );
+
+
+        if (stageExitPanel != null)
+        {
+            Debug.Log(
+                "[StageExitTrigger] 비활성 UI까지 검색해서 연결 성공"
+            );
+        }
+        else
+        {
+            Debug.LogError(
+                "[StageExitTrigger] StageExitPanelUI를 찾지 못했습니다."
+            );
+        }
+    }
+
+
+    // =========================================================
+    // DungeonGenerator에서 직접 전달할 수도 있음
+    // =========================================================
+
+    public void SetStageExitPanel(
+        StageExitPanelUI panel
+    )
+    {
+        stageExitPanel =
+            panel;
+
+
+        if (stageExitPanel != null)
+        {
+            Debug.Log(
+                "[StageExitTrigger] StageExitPanelUI 직접 등록 성공"
+            );
+        }
+    }
+
+
+    // =========================================================
+    // Player 진입
+    // =========================================================
+
+    private void OnTriggerEnter(
+    Collider other
+)
+    {
+        if (playerInside)
+            return;
+
+
+        PlayerStats playerStats =
+            other.GetComponentInParent<PlayerStats>();
+
+
+        if (playerStats == null)
+            return;
+
+
+        playerInside =
+            true;
+
+
+        if (stageExitPanel == null)
+        {
+            FindStageExitPanel();
         }
 
 
         if (stageExitPanel == null)
         {
             Debug.LogError(
-                "[StageExitTrigger] StageExitPanelUI를 찾을 수 없습니다."
+                "[StageExitTrigger] StageExitPanelUI가 없습니다."
             );
+
+            return;
         }
+
+
+        // ==========================================
+        // Player 조작 관리자 찾기
+        // ==========================================
+
+        PlayerGameplayControl gameplayControl =
+            playerStats.GetComponent<PlayerGameplayControl>();
+
+
+        if (gameplayControl == null)
+        {
+            gameplayControl =
+                playerStats.GetComponentInParent<PlayerGameplayControl>();
+        }
+
+
+        Debug.Log(
+            "[StageExitTrigger] Stage Exit Panel Open"
+        );
+
+
+        stageExitPanel.Open(
+            gameplayControl
+        );
     }
 
 
-    private void OnTriggerEnter(
+    private void OnTriggerExit(
         Collider other
     )
     {
@@ -40,15 +162,7 @@ public class StageExitTrigger : MonoBehaviour
             return;
 
 
-        if (stageExitPanel == null)
-            return;
-
-
-        Debug.Log(
-            "[StageExitTrigger] Player 도착"
-        );
-
-
-        stageExitPanel.Open();
+        playerInside =
+            false;
     }
 }

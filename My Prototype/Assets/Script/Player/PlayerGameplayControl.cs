@@ -1,83 +1,215 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerGameplayControl : MonoBehaviour
 {
-    [Header("게임 조작 중지 대상")]
-    [SerializeField]
-    private MonoBehaviour[] gameplayBehaviours;
+    // =========================================================
+    // Global State
+    // =========================================================
 
-
-    private bool isLocked;
-
-    public bool IsLocked => isLocked;
+    public static bool GameplayLocked
+    {
+        get;
+        private set;
+    }
 
 
     // =========================================================
-    // 조작 잠금
+    // Gameplay Scripts
+    // =========================================================
+
+    [Header("게임 조작 중지 대상")]
+
+    [Tooltip(
+        "UI가 열렸을 때 비활성화할 플레이어 조작 스크립트들"
+    )]
+    [SerializeField]
+    private List<MonoBehaviour> gameplayBehaviours =
+        new List<MonoBehaviour>();
+
+
+    // =========================================================
+    // Camera
+    // =========================================================
+
+    [Header("Camera")]
+
+    [Tooltip(
+        "UI가 열렸을 때 회전 입력을 막을 ThirdPersonCamera"
+    )]
+    [SerializeField]
+    private ThirdPersonCamera thirdPersonCamera;
+
+
+    // =========================================================
+    // Runtime
+    // =========================================================
+
+    private bool controlsLocked;
+
+
+    public bool ControlsLocked =>
+        controlsLocked;
+
+
+    // =========================================================
+    // Lock
     // =========================================================
 
     public void LockControls()
     {
-        if (isLocked)
+        if (controlsLocked)
             return;
 
 
-        isLocked = true;
+        controlsLocked =
+            true;
 
 
-        foreach (MonoBehaviour behaviour in gameplayBehaviours)
+        GameplayLocked =
+            true;
+
+
+        // ==========================================
+        // Player 조작 Script 비활성화
+        // ==========================================
+
+        foreach (
+            MonoBehaviour behaviour
+            in gameplayBehaviours)
         {
             if (behaviour == null)
                 continue;
 
 
-            behaviour.enabled = false;
+            // 자기 자신은 끄면 안 됨
+            if (behaviour == this)
+                continue;
+
+
+            behaviour.enabled =
+                false;
         }
 
+
+        // ==========================================
+        // Camera 입력 정지
+        // ==========================================
+
+        if (thirdPersonCamera != null)
+        {
+            thirdPersonCamera.enabled =
+                false;
+        }
+
+
+        // ==========================================
+        // Mouse
+        // ==========================================
 
         Cursor.lockState =
             CursorLockMode.None;
 
-        Cursor.visible = true;
+
+        Cursor.visible =
+            true;
+
+
+        Debug.Log(
+            "[PlayerGameplayControl] 게임 조작 잠금"
+        );
+    }
+
+    // =========================================================
+    // 카메라를 찾는 코드
+    // =========================================================
+    public void SetCamera(
+    ThirdPersonCamera cameraController
+)
+    {
+        thirdPersonCamera =
+            cameraController;
     }
 
 
     // =========================================================
-    // 조작 복구
+    // Unlock
     // =========================================================
 
     public void UnlockControls()
     {
-        if (!isLocked)
+        if (!controlsLocked)
             return;
 
 
-        isLocked = false;
+        controlsLocked =
+            false;
 
 
-        foreach (MonoBehaviour behaviour in gameplayBehaviours)
+        GameplayLocked =
+            false;
+
+
+        // ==========================================
+        // Player 조작 복구
+        // ==========================================
+
+        foreach (
+            MonoBehaviour behaviour
+            in gameplayBehaviours)
         {
             if (behaviour == null)
                 continue;
 
 
-            behaviour.enabled = true;
+            if (behaviour == this)
+                continue;
+
+
+            behaviour.enabled =
+                true;
         }
 
+
+        // ==========================================
+        // Camera 복구
+        // ==========================================
+
+        if (thirdPersonCamera != null)
+        {
+            thirdPersonCamera.enabled =
+                true;
+        }
+
+
+        // ==========================================
+        // Mouse 게임 상태 복구
+        // ==========================================
 
         Cursor.lockState =
             CursorLockMode.Locked;
 
-        Cursor.visible = false;
+
+        Cursor.visible =
+            false;
+
+
+        Debug.Log(
+            "[PlayerGameplayControl] 게임 조작 복구"
+        );
     }
 
 
-    private void OnDisable()
-    {
-        // Player 자체가 파괴되는 상황을 대비
-        Cursor.lockState =
-            CursorLockMode.None;
+    // =========================================================
+    // Destroy
+    // =========================================================
 
-        Cursor.visible = true;
+    private void OnDestroy()
+    {
+        if (controlsLocked)
+        {
+            GameplayLocked =
+                false;
+        }
     }
 }

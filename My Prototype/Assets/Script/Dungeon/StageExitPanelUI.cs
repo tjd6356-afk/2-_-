@@ -7,6 +7,14 @@ using UnityEngine.UI;
 
 public class StageExitPanelUI : MonoBehaviour
 {
+    private PlayerGameplayControl currentPlayerControl;
+
+    public static StageExitPanelUI Instance
+    {
+        get;
+        private set;
+    }
+
     // =========================================================
     // Button Data
     // =========================================================
@@ -72,6 +80,8 @@ public class StageExitPanelUI : MonoBehaviour
         // 각 Button 자동 연결
         // ==========================================
 
+        Instance = this;
+
         foreach (
             StageChoice choice in stageChoices)
         {
@@ -117,32 +127,65 @@ public class StageExitPanelUI : MonoBehaviour
     // Panel Open
     // =========================================================
 
-    public void Open()
+    public void Open(
+    PlayerGameplayControl playerControl
+)
     {
-        if (panelRoot != null)
+        currentPlayerControl =
+            playerControl;
+
+
+        if (panelRoot == null)
         {
-            panelRoot.SetActive(
-                true
+            Debug.LogError(
+                "[StageExitPanelUI] Panel Root가 없습니다."
             );
 
-
-            // 다른 UI 위에 표시
-            panelRoot.transform.SetAsLastSibling();
+            return;
         }
 
 
-        Cursor.lockState =
-            CursorLockMode.None;
+        // ==========================================
+        // 플레이어 조작 잠금
+        // ==========================================
 
-        Cursor.visible =
-            true;
+        if (currentPlayerControl != null)
+        {
+            currentPlayerControl.LockControls();
+        }
+        else
+        {
+            // 안전장치
+            Cursor.lockState =
+                CursorLockMode.None;
+
+            Cursor.visible =
+                true;
+
+
+            Debug.LogWarning(
+                "[StageExitPanelUI] PlayerGameplayControl을 찾지 못했습니다."
+            );
+        }
+
+
+        // ==========================================
+        // UI 열기
+        // ==========================================
+
+        panelRoot.SetActive(
+            true
+        );
+
+
+        panelRoot.transform.SetAsLastSibling();
 
 
         RefreshButtons();
 
 
         Debug.Log(
-            "[StageExitPanel] Open"
+            "[StageExitPanelUI] Open"
         );
     }
 
@@ -161,11 +204,19 @@ public class StageExitPanelUI : MonoBehaviour
         }
 
 
-        Cursor.lockState =
-            CursorLockMode.Locked;
+        if (currentPlayerControl != null)
+        {
+            currentPlayerControl.UnlockControls();
+        }
 
-        Cursor.visible =
-            false;
+
+        currentPlayerControl =
+            null;
+
+
+        Debug.Log(
+            "[StageExitPanelUI] Close"
+        );
     }
 
 
@@ -330,6 +381,14 @@ public class StageExitPanelUI : MonoBehaviour
                 choice.button.interactable =
                     value;
             }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 }

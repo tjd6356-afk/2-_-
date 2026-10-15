@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &46487569 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 417082500273459409, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+  m_PrefabInstance: {fileID: 2003803410}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &100110777
 GameObject:
   m_ObjectHideFlags: 0
@@ -888,7 +893,6 @@ GameObject:
   m_Component:
   - component: {fileID: 727914298}
   - component: {fileID: 727914297}
-  - component: {fileID: 727914299}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -926,37 +930,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &727914299
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 727914296}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a372c9916318a840910587858b82262, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageExitPanelUI
-  panelRoot: {fileID: 294052857}
-  stageChoices:
-  - button: {fileID: 995507426}
-    targetStage: 1
-    routeId: 
-    description: 
-  - button: {fileID: 846004989}
-    targetStage: 1
-    routeId: 
-    description: 
-  - button: {fileID: 1862006249}
-    targetStage: 2
-    routeId: 
-    description: 
-  - button: {fileID: 109885675}
-    targetStage: 2
-    routeId: 
-    description: 
-  reloadDelay: 0.1
 --- !u!1 &846004985
 GameObject:
   m_ObjectHideFlags: 0
@@ -1745,13 +1718,47 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2770131075138811, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       insertIndex: -1
       addedObject: {fileID: 294052858}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 417082500273459409, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2003803417}
   m_SourcePrefab: {fileID: 100100000, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
 --- !u!224 &2003803411 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2770131075138811, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
   m_PrefabInstance: {fileID: 2003803410}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2003803417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46487569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a372c9916318a840910587858b82262, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageExitPanelUI
+  panelRoot: {fileID: 294052857}
+  stageChoices:
+  - button: {fileID: 995507426}
+    targetStage: 1
+    routeId: 
+    description: 
+  - button: {fileID: 846004989}
+    targetStage: 1
+    routeId: 
+    description: 
+  - button: {fileID: 1862006249}
+    targetStage: 2
+    routeId: 
+    description: 
+  - button: {fileID: 614567934}
+    targetStage: 2
+    routeId: 
+    description: 
+  reloadDelay: 0.1
 --- !u!1 &2054980627
 GameObject:
   m_ObjectHideFlags: 0
