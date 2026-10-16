@@ -1526,7 +1526,14 @@ MonoBehaviour:
   sensitivity: 0.15
   minPitch: -70
   maxPitch: 70
-  weaponManager: {fileID: 0}
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionRadius: 0.25
+  collisionPadding: 0.1
+  collisionReturnSpeed: 8
+  minimumCameraDistance: 0.05
+  weaponManager: {fileID: 466739315}
 --- !u!1001 &1326995707092164170
 PrefabInstance:
   m_ObjectHideFlags: 0
