@@ -5,6 +5,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+public enum StageExitType
+{
+    NormalStage,
+    BossRoom
+}
+
 public class StageExitPanelUI : MonoBehaviour
 {
     private PlayerGameplayControl currentPlayerControl;
@@ -19,23 +25,46 @@ public class StageExitPanelUI : MonoBehaviour
     // Button Data
     // =========================================================
 
-    [Serializable]
+    [System.Serializable]
     public class StageChoice
     {
-        [Tooltip("UI Button")]
+        [Header("Button")]
         public Button button;
 
 
-        [Tooltip("이 버튼이 이동하는 Stage 번호")]
-        public int targetStage;
+        [Header("Exit Type")]
+        [Tooltip("일반 스테이지 이동인지 Boss Room 이동인지")]
+        public StageExitType exitType =
+            StageExitType.NormalStage;
 
 
-        [Tooltip("경로 식별자. 예: 1_01")]
+        // =========================================================
+        // 일반 Stage용
+        // =========================================================
+
+        [Header("Normal Stage")]
+
+        [Tooltip("이 버튼이 이동할 Stage 번호")]
+        public int targetStage = 1;
+
+        [Tooltip("예: 1_01, 1_02")]
         public string routeId;
 
-
-        [Tooltip("디버그/기획용 설명")]
+        [Tooltip("상점, 강화 재료 등의 기획 설명")]
         public string description;
+
+
+        // =========================================================
+        // Boss Room용
+        // =========================================================
+
+        [Header("Boss Room")]
+
+        [Tooltip("Boss Room으로 사용할 Scene 이름")]
+        public string bossSceneName;
+
+        [Tooltip("이 Stage 이상일 때 Boss 버튼 사용 가능")]
+        public int bossUnlockStage = 0;
     }
 
 
@@ -244,8 +273,7 @@ public class StageExitPanelUI : MonoBehaviour
             currentStage + 1;
 
 
-        foreach (
-            StageChoice choice in stageChoices)
+        foreach (StageChoice choice in stageChoices)
         {
             if (choice == null ||
                 choice.button == null)
@@ -254,13 +282,33 @@ public class StageExitPanelUI : MonoBehaviour
             }
 
 
-            // =================================================
-            // 오직 다음 Stage 버튼만 활성화
-            // =================================================
+            bool canSelect = false;
 
-            bool canSelect =
-                choice.targetStage ==
-                nextStage;
+
+            // =====================================================
+            // 일반 Stage
+            // =====================================================
+
+            if (choice.exitType ==
+                StageExitType.NormalStage)
+            {
+                canSelect =
+                    choice.targetStage ==
+                    nextStage;
+            }
+
+
+            // =====================================================
+            // Boss Room
+            // =====================================================
+
+            else if (choice.exitType ==
+                     StageExitType.BossRoom)
+            {
+                canSelect =
+                    currentStage >=
+                    choice.bossUnlockStage;
+            }
 
 
             choice.button.interactable =
@@ -269,8 +317,7 @@ public class StageExitPanelUI : MonoBehaviour
 
 
         Debug.Log(
-            $"[StageExitPanel] Current={currentStage} / " +
-            $"Next={nextStage}"
+            $"[StageExitPanel] Current Stage = {currentStage}"
         );
     }
 
@@ -280,8 +327,8 @@ public class StageExitPanelUI : MonoBehaviour
     // =========================================================
 
     private void OnStageButtonClicked(
-        StageChoice choice
-    )
+    StageChoice choice
+)
     {
         if (isMovingStage)
             return;
@@ -291,31 +338,52 @@ public class StageExitPanelUI : MonoBehaviour
             return;
 
 
-        if (StageProgressManager.Instance == null)
+        // =========================================================
+        // 일반 Stage
+        // =========================================================
+
+        if (choice.exitType ==
+            StageExitType.NormalStage)
         {
-            Debug.LogError(
-                "[StageExitPanel] StageProgressManager가 없습니다."
+            MoveToNormalStage(
+                choice
             );
 
             return;
         }
 
 
-        bool success =
-            StageProgressManager.Instance.TryMoveToStage(
-                choice.targetStage,
-                choice.routeId
+        // =========================================================
+        // Boss Room
+        // =========================================================
+
+        if (choice.exitType ==
+            StageExitType.BossRoom)
+        {
+            MoveToBossRoom(
+                choice
+            );
+        }
+    }
+
+    private void MoveToBossRoom(
+    StageChoice choice
+)
+    {
+        if (string.IsNullOrWhiteSpace(
+                choice.bossSceneName))
+        {
+            Debug.LogError(
+                "[StageExitPanel] Boss Scene 이름이 비어있습니다."
             );
 
-
-        if (!success)
             return;
+        }
 
 
         Debug.Log(
-            $"[StageExitPanel] 선택 : " +
-            $"{choice.routeId} / " +
-            $"{choice.description}"
+            $"[StageExitPanel] Boss Room 이동 : " +
+            $"{choice.bossSceneName}"
         );
 
 
@@ -323,14 +391,17 @@ public class StageExitPanelUI : MonoBehaviour
             true;
 
 
-        // 모든 버튼 즉시 막음
         SetAllButtonsInteractable(
             false
         );
 
 
-        StartCoroutine(
-            ReloadDungeonRoutine()
+        Time.timeScale =
+            1f;
+
+
+        SceneManager.LoadScene(
+            choice.bossSceneName
         );
     }
 
@@ -368,6 +439,50 @@ public class StageExitPanelUI : MonoBehaviour
         );
     }
 
+    private void MoveToNormalStage(
+    StageChoice choice
+)
+    {
+        if (StageProgressManager.Instance == null)
+        {
+            Debug.LogError(
+                "[StageExitPanel] StageProgressManager가 없습니다."
+            );
+
+            return;
+        }
+
+
+        bool success =
+            StageProgressManager.Instance.TryMoveToStage(
+                choice.targetStage,
+                choice.routeId
+            );
+
+
+        if (!success)
+            return;
+
+
+        Debug.Log(
+            $"[StageExitPanel] 일반 Stage 선택 : " +
+            $"{choice.routeId}"
+        );
+
+
+        isMovingStage =
+            true;
+
+
+        SetAllButtonsInteractable(
+            false
+        );
+
+
+        StartCoroutine(
+            ReloadDungeonRoutine()
+        );
+    }
 
     private void SetAllButtonsInteractable(
         bool value
