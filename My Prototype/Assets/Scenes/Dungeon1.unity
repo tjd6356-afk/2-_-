@@ -1822,21 +1822,40 @@ MonoBehaviour:
   panelRoot: {fileID: 294052857}
   stageChoices:
   - button: {fileID: 995507426}
+    exitType: 0
     targetStage: 1
     routeId: 
     description: 
+    bossSceneName: 
+    bossUnlockStage: 0
   - button: {fileID: 846004989}
+    exitType: 0
     targetStage: 1
     routeId: 
     description: 
+    bossSceneName: 
+    bossUnlockStage: 0
   - button: {fileID: 1862006249}
+    exitType: 0
     targetStage: 2
     routeId: 
     description: 
+    bossSceneName: 
+    bossUnlockStage: 0
   - button: {fileID: 614567934}
+    exitType: 0
     targetStage: 2
     routeId: 
     description: 
+    bossSceneName: 
+    bossUnlockStage: 0
+  - button: {fileID: 109885675}
+    exitType: 1
+    targetStage: 0
+    routeId: 
+    description: 
+    bossSceneName: DungeonBoss1
+    bossUnlockStage: 2
   reloadDelay: 0.1
 --- !u!1 &2054980627
 GameObject:
