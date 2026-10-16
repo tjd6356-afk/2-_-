@@ -13,6 +13,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float jumpHeight = 1.5f;
     [SerializeField] private float gravity = -20f;
 
+    [Header("Glide (Warlock Strafe Glide)")]
+    [SerializeField] private float glideGravity = -4f;        // 활공 중일 때의 가벼운 중력
+    [SerializeField] private float maxGlideDuration = 3f;     // 활공 최대 유지 시간
+    [SerializeField] private float maxGlideFallSpeed = -2.5f; // 활공 중 최대 낙하 속도 (천천히 떨어지게)
+
+    private bool isGliding = false;
+    private float currentGlideTime = 0f;
+
     [Header("Ground Check")]
     [SerializeField] private float groundCheckDistance = 0.08f;
     [SerializeField] private float groundCheckRadiusMultiplier = 0.9f;
@@ -258,40 +266,66 @@ public class PlayerMovement : MonoBehaviour
 
     private void JumpAndGravity()
     {
-        // Ground에 있을 때 아래로 계속 떨어지는 현상 방지
+        // Ground에 있을 때 아래로 계속 떨어지는 현상 방지 및 활공 쿨타임 초기화
         if (isGrounded && verticalVelocity < 0f)
         {
             verticalVelocity = -2f;
+            isGliding = false;
+            currentGlideTime = maxGlideDuration; // 땅에 닿으면 활공 게이지 100% 회복
         }
 
-
-        // Ground 태그 위에 있을 때만 점프 가능
-        if (Keyboard.current != null &&
-            Keyboard.current.spaceKey.wasPressedThisFrame &&
-            isGrounded)
+        // 스페이스바 입력 처리
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
-            verticalVelocity =
-                Mathf.Sqrt(
-                    jumpHeight *
-                    -2f *
-                    gravity
-                );
-
-
-            // 점프하는 순간 바로 공중 상태로 전환
-            isGrounded = false;
+            if (isGrounded)
+            {
+                // 1. 땅에 있을 때 : 기본 점프
+                verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                isGrounded = false;
+            }
+            else
+            {
+                // 2. 공중에 있을 때 : 활공 ON/OFF 토글 (제어 활공)
+                // 남은 시간이 있을 때만 켤 수 있음
+                if (currentGlideTime > 0f)
+                {
+                    isGliding = !isGliding;
+                }
+            }
         }
 
+        // 활공 지속 시간 깎기
+        if (isGliding)
+        {
+            currentGlideTime -= Time.deltaTime;
 
-        // 중력
-        verticalVelocity += gravity * Time.deltaTime;
+            // 시간이 다 되면 강제로 활공 종료
+            if (currentGlideTime <= 0f)
+            {
+                isGliding = false;
+            }
+        }
 
+        // 중력 계산 (활공 켜짐 vs 꺼짐)
+        if (isGliding)
+        {
+            // 활공 중: 매우 약한 중력 적용 (체공 시간 증가)
+            verticalVelocity += glideGravity * Time.deltaTime;
 
-        controller.Move(
-            Vector3.up *
-            verticalVelocity *
-            Time.deltaTime
-        );
+            // 떨어지는 도중 활공을 켰을 때(위로 못 올라감) 천천히 낙하하도록 속도 제한
+            if (verticalVelocity < maxGlideFallSpeed)
+            {
+                verticalVelocity = maxGlideFallSpeed;
+            }
+        }
+        else
+        {
+            // 평상시: 기본 묵직한 중력 적용
+            verticalVelocity += gravity * Time.deltaTime;
+        }
+
+        // 최종 수직 이동 적용
+        controller.Move(Vector3.up * verticalVelocity * Time.deltaTime);
     }
 
 
