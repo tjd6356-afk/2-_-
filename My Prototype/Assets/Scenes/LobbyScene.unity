@@ -119,11 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &7877350 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6726286069582081299, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-  m_PrefabInstance: {fileID: 58059971}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &58059971
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -228,18 +223,6 @@ PrefabInstance:
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2058256454321272534, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: weaponManager
-      value: 
-      objectReference: {fileID: 466739315}
-    - target: {fileID: 2058256454321272534, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: rangedGunWeapon
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 2058256454321272534, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: developerShooter
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 3044122230013733058, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: m_SizeDelta.y
       value: 980
@@ -264,18 +247,6 @@ PrefabInstance:
       propertyPath: playerStats
       value: 
       objectReference: {fileID: 546167769}
-    - target: {fileID: 6644274869764759568, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6726286069582081299, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7143989748955452196, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 7377036525916872766, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: m_SizeDelta.x
       value: 1920
@@ -284,24 +255,17 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 1080
       objectReference: {fileID: 0}
-    - target: {fileID: 7862067800738652771, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      propertyPath: m_text
-      value: "\uC774\uB3D9 \uD558\uAE30"
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 417082500273459409, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 213467405}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
 --- !u!114 &58059972 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6541605629549372894, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
   m_PrefabInstance: {fileID: 58059971}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 213467400}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa48d866a7cf40a449346779ff742487, type: 3}
@@ -312,7 +276,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 315568571004645955, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
   m_PrefabInstance: {fileID: 58059971}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 213467400}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b807f62ef133a444baa51c7c094cb67, type: 3}
@@ -431,25 +395,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &213467400 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 417082500273459409, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
-  m_PrefabInstance: {fileID: 58059971}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &213467405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 213467400}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68983007efd0ea644b6f69a6af5ca0fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventoryUIController
-  inventoryRoot: {fileID: 7877350}
-  startClosed: 1
 --- !u!1001 &466739312
 PrefabInstance:
   m_ObjectHideFlags: 0
