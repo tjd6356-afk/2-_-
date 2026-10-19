@@ -155,7 +155,7 @@ GameObject:
   - component: {fileID: 8446348217701319962}
   m_Layer: 0
   m_Name: BlockedRoom1_01
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

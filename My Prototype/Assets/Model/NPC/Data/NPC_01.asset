@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: NPC_01
   m_EditorClassIdentifier: Assembly-CSharp::NPCData
   npcName: NPC
-  npcPortrait: {fileID: 0}
+  npcPortrait: {fileID: -2113016229578895373, guid: 9b484a7bdcc91094192dbe5b56c0ebf3, type: 3}
   stats:
   - statName: Health
     value: 2000
