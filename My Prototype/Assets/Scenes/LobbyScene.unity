@@ -1307,6 +1307,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLoadoutManager
   equippedWeaponId: 
+  equippedWeaponPrefab: {fileID: 0}
 --- !u!1 &1679863955
 GameObject:
   m_ObjectHideFlags: 0

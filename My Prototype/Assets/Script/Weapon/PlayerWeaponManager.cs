@@ -76,41 +76,67 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void Start()
     {
-        // ==========================================
-        // 이전 Scene에서 저장된 무기가 있다면
-        // WeaponCatalog에서 찾아서 장착
-        // ==========================================
-
         WeaponBase weaponToEquip =
-            startingWeaponPrefab;
+            null;
 
 
-        if (PlayerLoadoutManager.Instance != null &&
-            WeaponCatalog.Instance != null)
+        // =========================================================
+        // 1순위 : 이전 Scene에서 선택했던 Weapon
+        // =========================================================
+
+        if (PlayerLoadoutManager.Instance != null)
         {
-            string savedWeaponId =
+            weaponToEquip =
                 PlayerLoadoutManager
                     .Instance
-                    .EquippedWeaponId;
+                    .GetSavedWeapon();
 
 
-            WeaponBase savedPrefab =
-                WeaponCatalog.Instance
-                    .GetWeapon(savedWeaponId);
-
-
-            if (savedPrefab != null)
+            if (weaponToEquip != null)
             {
-                weaponToEquip =
-                    savedPrefab;
+                Debug.Log(
+                    $"[PlayerWeaponManager] 저장된 Weapon 사용 : " +
+                    $"{weaponToEquip.WeaponName}"
+                );
             }
         }
 
+
+        // =========================================================
+        // 2순위 : 저장된 Weapon이 없을 때만 기본 Weapon
+        // =========================================================
+
+        if (weaponToEquip == null)
+        {
+            weaponToEquip =
+                startingWeaponPrefab;
+
+
+            if (weaponToEquip != null)
+            {
+                Debug.Log(
+                    $"[PlayerWeaponManager] 저장된 Weapon 없음. " +
+                    $"Starting Weapon 사용 : " +
+                    $"{weaponToEquip.WeaponName}"
+                );
+            }
+        }
+
+
+        // =========================================================
+        // 장착
+        // =========================================================
 
         if (weaponToEquip != null)
         {
             EquipWeapon(
                 weaponToEquip
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[PlayerWeaponManager] 장착할 Weapon이 없습니다."
             );
         }
     }
@@ -221,7 +247,7 @@ public class PlayerWeaponManager : MonoBehaviour
             PlayerLoadoutManager
                 .Instance
                 .SaveWeapon(
-                    currentWeapon.WeaponId
+                    weaponPrefab
                 );
         }
 
