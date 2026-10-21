@@ -51,10 +51,10 @@ MonoBehaviour:
   firePoint: {fileID: 7969556516974125778}
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
   damageMultiplier: 0.2
-  fireRateMultiplier: 10
-  windUpTime: 1.5
-  windDownTime: 2
-  minSpoolToFire: 0.2
+  fireRateMultiplier: 6
+  windUpTime: 5
+  windDownTime: 3
+  minSpoolToFire: 0.01
   magazineSize: 200
   maxReserveMagazines: 3
   baseFullReloadTime: 4.5
