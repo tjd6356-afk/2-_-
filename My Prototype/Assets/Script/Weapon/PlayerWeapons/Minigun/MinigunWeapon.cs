@@ -33,14 +33,14 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
     [SerializeField] private AnimationCurve windUpCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
 
     [Header("Camera Recoil (카메라 반동/흔들림)")]
-    [Tooltip("첫 발사 시 카메라가 튀는 최대 반동 강도")]
-    [SerializeField] private float maxCameraKick = 1.5f;
+    [Tooltip("공속이 가장 느릴 때(예열 직후)의 '1초당' 총 반동 강도")]
+    [SerializeField] private float minCameraKickPerSec = 2.0f;
 
-    [Tooltip("연사를 지속하여 완전히 안정화되었을 때의 최소 카메라 반동 강도")]
-    [SerializeField] private float minCameraKick = 0.2f;
+    [Tooltip("공속이 가장 빠를 때(예열 100%)의 '1초당' 총 반동 강도")]
+    [SerializeField] private float maxCameraKickPerSec = 12.0f;
 
-    [Tooltip("최대 반동에서 최소 반동으로 카메라가 안정화되는 데 걸리는 시간 (초)")]
-    [SerializeField] private float recoilStabilizeTime = 2.0f;
+    [Tooltip("카메라가 좌우로 덜덜 흔들리는 비율")]
+    [SerializeField] private float horizontalKickRatio = 0.5f;
 
     [Header("Ammo & Aim")]
     [SerializeField] private int magazineSize = 200;
@@ -57,9 +57,7 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
 
     private float currentSpool = 0f;
     private float fireCooldownTimer = 100f;
-    private float currentSustainedFireTime = 0f;
 
-    // 카메라 연동용 레퍼런스
     private ThirdPersonCamera thirdPersonCam;
 
     public int CurrentAmmo => currentAmmo;
@@ -80,9 +78,8 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
         }
 
         currentSpool = 0f;
-        currentSustainedFireTime = 0f;
 
-        // 장착 시 PlayerCamera에서 ThirdPersonCamera 컴포넌트를 가져옴
+        // 장착 시 카메라 스크립트 연결
         if (PlayerCamera != null)
         {
             thirdPersonCam = PlayerCamera.GetComponent<ThirdPersonCamera>();
@@ -109,12 +106,7 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
 
         if (isAiming && isShooting)
         {
-            currentSustainedFireTime += Time.deltaTime;
             TryShoot();
-        }
-        else
-        {
-            currentSustainedFireTime = Mathf.Max(0f, currentSustainedFireTime - Time.deltaTime * 2f);
         }
     }
 
@@ -128,6 +120,13 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
 
         float currentRequiredDelay = 1f / finalFireRate;
 
+        // ✨ 핵심 수정 포인트: 쿨타임 저축 버그 완벽 차단 ✨
+        // 타이머가 한 발 쏠 수 있는 딜레이 이상으로 과도하게 쌓여있다면 딱 한 발치로 깎아냅니다.
+        if (fireCooldownTimer > currentRequiredDelay)
+        {
+            fireCooldownTimer = currentRequiredDelay;
+        }
+
         if (fireCooldownTimer < currentRequiredDelay) return;
 
         if (currentAmmo <= 0)
@@ -139,32 +138,24 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
 
         if (firePoint == null || trailPrefab == null) return;
 
-        Shoot();
+        Shoot(currentRequiredDelay);
 
         fireCooldownTimer -= currentRequiredDelay;
     }
 
-    private void Shoot()
+    private void Shoot(float delay)
     {
-        // ==========================================
-        // 1. ThirdPersonCamera 전용 반동(Kick) 전송
-        // ==========================================
         if (thirdPersonCam != null)
         {
-            float stabilizeProgress = Mathf.Clamp01(currentSustainedFireTime / recoilStabilizeTime);
-            float currentKick = Mathf.Lerp(maxCameraKick, minCameraKick, stabilizeProgress);
+            float currentKickPerSec = Mathf.Lerp(minCameraKickPerSec, maxCameraKickPerSec, currentSpool);
+            float kickThisShot = currentKickPerSec * delay;
 
-            // 위로 튀는 힘(Pitch)과 좌우 무작위 떨림(Yaw) 계산
-            float kickPitch = currentKick;
-            float kickYaw = UnityEngine.Random.Range(-currentKick, currentKick) * 0.5f;
+            float kickPitch = kickThisShot;
+            float kickYaw = UnityEngine.Random.Range(-kickThisShot, kickThisShot) * horizontalKickRatio;
 
-            // 카메라 스크립트에 반동 주입
             thirdPersonCam.AddRecoil(kickPitch, kickYaw);
         }
 
-        // ==========================================
-        // 2. 정확하게 화면 정중앙으로 발사 (탄퍼짐 없음)
-        // ==========================================
         Ray aimRay = PlayerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         Vector3 targetPoint;
 
@@ -215,7 +206,6 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
     {
         isReloading = true;
         currentSpool = 0f;
-        currentSustainedFireTime = 0f;
         NotifyAmmo();
 
         float reloadTime = PlayerStats.GetReloadTime(baseFullReloadTime);
@@ -234,7 +224,6 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
         StopAllCoroutines();
         isReloading = false;
         currentSpool = 0f;
-        currentSustainedFireTime = 0f;
         NotifyAmmo();
         base.Unequip();
     }
