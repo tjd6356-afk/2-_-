@@ -4,5 +4,6 @@
     Melee,
     RangedGun,
     WireGun,
-    Launcher
+    Launcher,
+    Minigun
 }
