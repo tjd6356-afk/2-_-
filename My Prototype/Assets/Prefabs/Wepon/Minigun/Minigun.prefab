@@ -53,7 +53,7 @@ MonoBehaviour:
   damageMultiplier: 0.2
   fireRateMultiplier: 6
   windUpTime: 3
-  windDownTime: 3
+  windDownTime: 2
   minSpoolToFire: 0
   windUpCurve:
     serializedVersion: 2
@@ -79,14 +79,14 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  maxCameraKick: 1.5
+  minCameraKick: 0.2
+  recoilStabilizeTime: 2
   magazineSize: 200
   maxReserveMagazines: 3
   baseFullReloadTime: 4.5
   maxAimDistance: 150
   aimMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  enemyMask:
     serializedVersion: 2
     m_Bits: 4294967295
 --- !u!1 &6353642266011064623

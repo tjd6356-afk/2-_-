@@ -693,6 +693,16 @@ public class ThirdPersonCamera : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // Weapon Recoil (무기 반동 외부 주입용)
+    // =========================================================
+    public void AddRecoil(float recoilPitch, float recoilYaw)
+    {
+        // 카메라 스크립트 구조상 pitch가 마이너스(-)가 되어야 화면이 위로 올라갑니다.
+        pitch -= recoilPitch;
+        yaw += recoilYaw;
 
+        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+    }
 
 }
