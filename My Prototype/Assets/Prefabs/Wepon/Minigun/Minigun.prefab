@@ -52,9 +52,33 @@ MonoBehaviour:
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
   damageMultiplier: 0.2
   fireRateMultiplier: 6
-  windUpTime: 5
+  windUpTime: 3
   windDownTime: 3
-  minSpoolToFire: 0.01
+  minSpoolToFire: 0
+  windUpCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   magazineSize: 200
   maxReserveMagazines: 3
   baseFullReloadTime: 4.5

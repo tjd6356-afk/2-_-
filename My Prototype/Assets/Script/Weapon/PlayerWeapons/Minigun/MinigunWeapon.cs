@@ -66,7 +66,7 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
     private bool isReloading;
     private bool ammoInitialized;
 
-    private float nextFireTime;
+    private float fireCooldownTimer = 100f;
 
     // 현재 예열 진행도 (시간 비례로 0f ~ 1f)
     private float currentSpool = 0f;
@@ -108,6 +108,8 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
         if (PlayerCamera == null || PlayerStats == null || Mouse.current == null)
             return;
 
+        fireCooldownTimer += Time.deltaTime;
+
         if (isReloading)
             return;
 
@@ -142,15 +144,20 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
 
     private void TryShoot()
     {
-        // 1. 최소 예열 수치 미달 시 발사 불가
         if (currentSpool < minSpoolToFire)
             return;
 
-        // 2. 발사 딜레이 타임 체크
-        if (Time.time < nextFireTime)
+        //  실시간 예열 상태를 바탕으로 '지금 당장 필요한 발사 딜레이' 계산
+        float spoolMultiplier = windUpCurve.Evaluate(currentSpool);
+        float maxFireRate = PlayerStats.FireRate * fireRateMultiplier;
+        float finalFireRate = Mathf.Max(0.01f, maxFireRate * spoolMultiplier);
+
+        float currentRequiredDelay = 1f / finalFireRate;
+
+        //  누적된 스톱워치가 현재 필요한 딜레이보다 짧으면 발사하지 않음
+        if (fireCooldownTimer < currentRequiredDelay)
             return;
 
-        // 3. 탄약 체크
         if (currentAmmo <= 0)
         {
             if (reserveMagazines > 0)
@@ -166,12 +173,9 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
 
         Shoot();
 
-        // 4. AnimationCurve를 이용해 예열 곡선에 따른 연사 속도 계산
-        float spoolMultiplier = windUpCurve.Evaluate(currentSpool);
-        float maxFireRate = PlayerStats.FireRate * fireRateMultiplier;
-        float finalFireRate = Mathf.Max(0.01f, maxFireRate * spoolMultiplier);
-
-        nextFireTime = Time.time + (1f / finalFireRate);
+        // ✅ 3. 발사 후 스톱워치 차감 
+        // (0으로 초기화하지 않고 요구 딜레이만큼만 빼주면 초고속 연사 시 미세한 프레임 손실을 막아줍니다)
+        fireCooldownTimer -= currentRequiredDelay;
     }
 
     private void Shoot()
