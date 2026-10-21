@@ -50,7 +50,7 @@ MonoBehaviour:
   weaponType: 5
   firePoint: {fileID: 7969556516974125778}
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
-  damageMultiplier: 0.2
+  damageMultiplier: 0.3
   fireRateMultiplier: 6
   windUpTime: 3
   windDownTime: 2
@@ -79,9 +79,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  maxCameraKick: 1.5
-  minCameraKick: 0.2
-  recoilStabilizeTime: 2
+  minCameraKickPerSec: 2
+  maxCameraKickPerSec: 12
+  horizontalKickRatio: 0.5
   magazineSize: 200
   maxReserveMagazines: 3
   baseFullReloadTime: 4.5
