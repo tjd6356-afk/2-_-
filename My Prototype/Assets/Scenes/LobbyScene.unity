@@ -207,14 +207,46 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 347745077366870251, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.0010439855
+      objectReference: {fileID: 0}
     - target: {fileID: 417082500273459409, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: m_Name
       value: Canvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 1466611247589842392, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1466611247589842392, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1466611247589842392, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -17
+      objectReference: {fileID: 0}
+    - target: {fileID: 4049838692116647052, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4049838692116647052, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4049838692116647052, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.3875
       objectReference: {fileID: 0}
     - target: {fileID: 5121800506005227239, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: playerStats
       value: 
       objectReference: {fileID: 546167769}
+    - target: {fileID: 6726286069582081299, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7477427495962093043, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: unavailableMessageText
       value: 
