@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 344548900188897486}
   - component: {fileID: 3383661770753467687}
   - component: {fileID: 4175748206305615774}
+  - component: {fileID: 1838236345115302885}
   - component: {fileID: 4352824083180150948}
   m_Layer: 0
   m_Name: Enemy
@@ -140,6 +141,24 @@ NavMeshAgent:
   m_BaseOffset: 1
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1838236345115302885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1287184418823599086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f51d43426a52f4f49b86efbdadbad554, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDropTable
+  drops:
+  - pickupPrefab: {fileID: 6315939368336245169, guid: cee43749d93bbef438a41099ad1eb3cc, type: 3}
+    dropChance: 35
+    minAmount: 1
+    maxAmount: 3
+  randomDropRadius: 0.5
 --- !u!114 &4352824083180150948
 MonoBehaviour:
   m_ObjectHideFlags: 0
