@@ -185,6 +185,15 @@ public class EnemyStats : MonoBehaviour
 
         Debug.Log($"{gameObject.name} Dead");
 
+        ItemDropTable dropTable =
+        GetComponent<ItemDropTable>();
+
+
+        if (dropTable != null)
+        {
+            dropTable.TryDrop();
+        }
+
         OnDied?.Invoke();
 
         Destroy(gameObject);
