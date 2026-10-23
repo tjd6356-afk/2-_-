@@ -4037,6 +4037,7 @@ GameObject:
   - component: {fileID: 646124253344105726}
   - component: {fileID: 1597858730027088965}
   - component: {fileID: 2825370595610606458}
+  - component: {fileID: 7744436755533276523}
   m_Layer: 5
   m_Name: DungeonCanvas
   m_TagString: Untagged
@@ -4178,7 +4179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68983007efd0ea644b6f69a6af5ca0fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryUIController
-  inventoryRoot: {fileID: 0}
+  inventoryRoot: {fileID: 5399330697341913498}
   unavailableMessageText: {fileID: 1171134051065867242}
   unavailableMessageDuration: 1.2
 --- !u!114 &2825370595610606458
@@ -4231,3 +4232,20 @@ MonoBehaviour:
     bossSceneName: DungeonBoss1
     bossUnlockStage: 2
   reloadDelay: 0.1
+--- !u!114 &7744436755533276523
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8776635390010244227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abe8ba853dfb69547a9a09d4f0c3ac9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryDisplayUI
+  contentRoot: {fileID: 1316934043944944928}
+  itemButtonPrefab: {fileID: -7346092010380700267, guid: 266c3d4ddb4d64b4bb4b978c6dea74b8, type: 3}
+  itemDataImage: {fileID: 1056219538580966340}
+  itemDataTitleText: {fileID: 8741425402973638535}
+  itemDataText: {fileID: 5361997398952720233}
