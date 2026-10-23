@@ -739,6 +739,13 @@ MonoBehaviour:
   sensitivity: 0.15
   minPitch: -70
   maxPitch: 70
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionRadius: 0.25
+  collisionPadding: 0.1
+  collisionReturnSpeed: 8
+  minimumCameraDistance: 0.05
   weaponManager: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
@@ -1870,6 +1877,18 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 1466611247589842392, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1466611247589842392, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1466611247589842392, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3191335670688911914, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
       value: 1
@@ -1897,6 +1916,18 @@ PrefabInstance:
     - target: {fileID: 3191335670688911914, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 4049838692116647052, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4049838692116647052, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4049838692116647052, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5121800506005227239, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
       propertyPath: playerStats
