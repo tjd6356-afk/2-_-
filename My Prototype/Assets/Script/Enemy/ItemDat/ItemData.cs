@@ -58,17 +58,16 @@ public class ItemData : ScriptableObject
     // =========================================================
 
     [Header("Use Effect")]
-
-    [Tooltip("Food 타입이 회복시키는 HP")]
-    [Min(0)]
+    [Tooltip("Food 타입 사용 시 회복하는 HP")]
+    [Min(0f)]
     [SerializeField]
-    private int healAmount;
+    private float healAmount;
 
 
-    [Tooltip("Danger 타입이 플레이어에게 주는 피해")]
-    [Min(0)]
+    [Tooltip("Danger 타입 사용 시 받는 피해")]
+    [Min(0f)]
     [SerializeField]
-    private int damageAmount;
+    private float damageAmount;
 
 
     [TextArea(3, 10)]
@@ -128,10 +127,11 @@ public class ItemData : ScriptableObject
     public ItemType ItemType =>
         itemType;
 
-    public int HealAmount =>
-        healAmount;
+    public float HealAmount =>
+    healAmount;
 
-    public int DamageAmount =>
+
+    public float DamageAmount =>
         damageAmount;
 
     public string UseDialogueText =>

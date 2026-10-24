@@ -75,6 +75,11 @@ public class ItemPickup : MonoBehaviour
         if (Keyboard.current == null)
             return;
 
+        if (PlayerHeldItemController.Instance != null &&
+        PlayerHeldItemController.Instance.HasHeldItems)
+        {
+            return;
+        }
 
         if (Keyboard.current.eKey.wasPressedThisFrame)
         {
