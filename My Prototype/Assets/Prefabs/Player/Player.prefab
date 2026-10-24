@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5821247941830255217}
   - component: {fileID: 4525119024753954002}
   - component: {fileID: 8235560101869539188}
+  - component: {fileID: 8686138121981914851}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -165,6 +166,23 @@ MonoBehaviour:
   minimumAlpha: 0.05
   fadeSpeed: 8
   forceTransparentMaterials: 1
+--- !u!114 &8686138121981914851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9714ecc0cf5a66a43b6669cef2c324c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHeldItemController
+  maxHeldItems: 3
+  holdPoints:
+  - {fileID: 8682389466644304238}
+  - {fileID: 5344640711491301589}
+  - {fileID: 7909426845250618148}
 --- !u!1 &1100990912702700306
 GameObject:
   m_ObjectHideFlags: 0

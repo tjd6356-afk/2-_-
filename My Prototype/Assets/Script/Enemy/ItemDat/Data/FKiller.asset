@@ -21,8 +21,8 @@ MonoBehaviour:
   itemType: 2
   healAmount: 0
   damageAmount: 0
-  useDialogueText: 
+  useDialogueText: "\uBA39\uC73C\uBA74 \uC548\uB418\uB294 \uAC78 \uBA39\uC5C8\uB2E4."
   consumeOnUse: 1
-  worldPickupPrefab: {fileID: 0}
-  heldVisualPrefab: {fileID: 0}
+  worldPickupPrefab: {fileID: 6315939368336245169, guid: cee43749d93bbef438a41099ad1eb3cc, type: 3}
+  heldVisualPrefab: {fileID: 1528062636059491173, guid: cee43749d93bbef438a41099ad1eb3cc, type: 3}
   maxStack: 99
