@@ -27,6 +27,8 @@ public class PlayerStats : MonoBehaviour
     // 사망 여부
     private bool isDead;
 
+    public event Action OnPlayerDied;
+
 
     // =========================================================
     // 외부에서 읽을 수 있는 스탯
