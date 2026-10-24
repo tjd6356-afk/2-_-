@@ -76,11 +76,6 @@ public class ItemData : ScriptableObject
     private string useDialogueText;
 
 
-    [Tooltip("사용 후 인벤토리에서 1개 제거할지")]
-    [SerializeField]
-    private bool consumeOnUse = true;
-
-
     // =========================================================
     // World
     // =========================================================
@@ -137,8 +132,14 @@ public class ItemData : ScriptableObject
     public string UseDialogueText =>
         useDialogueText;
 
-    public bool ConsumeOnUse =>
-        consumeOnUse;
+    public bool IsConsumable
+    {
+        get
+        {
+            return itemType == ItemType.Food ||
+                   itemType == ItemType.Danger;
+        }
+    }
 
     public ItemPickup WorldPickupPrefab =>
         worldPickupPrefab;

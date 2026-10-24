@@ -718,7 +718,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uBC84\uB9AC\uAE30"
+  m_text: "\uC190\uC5D0\uB4E4\uAE30"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7bfad29ce496eee4592c827a89afdb5c, type: 2}
   m_sharedMaterial: {fileID: -6948917214811332218, guid: 7bfad29ce496eee4592c827a89afdb5c, type: 2}
@@ -3750,6 +3750,7 @@ GameObject:
   - component: {fileID: 8543892329987293779}
   - component: {fileID: 4066759220370094331}
   - component: {fileID: 4271321075005627266}
+  - component: {fileID: 4799914251561400810}
   m_Layer: 5
   m_Name: InventoryBackground
   m_TagString: Untagged
@@ -3820,6 +3821,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &4799914251561400810
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5399330697341913498}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &5434950989630125478
 GameObject:
   m_ObjectHideFlags: 0
@@ -5382,6 +5395,8 @@ MonoBehaviour:
   holdButton: {fileID: 2354017909173355935}
   cancelButton: {fileID: 4388244849834212475}
   popupOffset: {x: 15, y: 0}
+  inventoryCanvasGroup: {fileID: 4799914251561400810}
+  dialogueInventoryAlpha: 0
   itemDialogueUI: {fileID: 3530837523826426035}
 --- !u!114 &3530837523826426035
 MonoBehaviour:

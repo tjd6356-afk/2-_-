@@ -1,4 +1,5 @@
 using TMPro;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -25,13 +26,18 @@ public class ItemUseDialogueUI : MonoBehaviour
 
     private int openedFrame;
 
-
+    private Action onDialogueClosed;
     public void Show(
-        ItemData itemData
-    )
+    ItemData itemData,
+    Action onClosed = null
+)
     {
         if (itemData == null)
             return;
+
+
+        onDialogueClosed =
+            onClosed;
 
 
         ShowText(
@@ -137,5 +143,20 @@ public class ItemUseDialogueUI : MonoBehaviour
                 false
             );
         }
+
+
+        // =========================================================
+        // Dialogue 종료 알림
+        // =========================================================
+
+        Action callback =
+            onDialogueClosed;
+
+
+        onDialogueClosed =
+            null;
+
+
+        callback?.Invoke();
     }
 }

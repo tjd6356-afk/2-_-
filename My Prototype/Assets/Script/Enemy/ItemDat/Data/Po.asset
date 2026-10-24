@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb53e92a499661c458b238248a99a429, type: 3}
+  m_Name: Po
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: Item02
+  itemTitle: "\uB3C5"
+  itemDescription: "\uBA39\uC73C\uBA74 \u3148\uB41C\uB2E4\uB294 \uAC78 \uC54C\uBA74\uC11C\uB3C4
+    \uBA39\uB294 \uB188\uC740 \uAF2D \uD558\uB098 \uC788\uB2E4."
+  itemIcon: {fileID: -3538447719847569623, guid: 7987f9b6bdd21864fbffcbe9276ed36b, type: 3}
+  itemType: 1
+  healAmount: 0
+  damageAmount: 50
+  useDialogueText: "\uB3C5\uC744 \uB9C8\uC168\uB2E4. \uB9DB\uC740 \uBE44\uB9BF\uD558\uACE0
+    \uC544\uBAAC\uB4DC \uD5A5\uC774 \uC785\uC548\uC5D0\uC11C \uD37C\uC9C0\uB294 \uB9DB\uC774\uB2E4."
+  worldPickupPrefab: {fileID: 6315939368336245169, guid: a43b92beee0f0044397d88fa9d98e00c, type: 3}
+  heldVisualPrefab: {fileID: 1528062636059491173, guid: a43b92beee0f0044397d88fa9d98e00c, type: 3}
+  maxStack: 99

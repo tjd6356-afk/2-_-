@@ -38,6 +38,15 @@ public class InventoryItemActionMenu : MonoBehaviour
             0f
         );
 
+    [Header("Inventory Fade")]
+
+    [SerializeField]
+    private CanvasGroup inventoryCanvasGroup;
+
+
+    [Range(0f, 1f)]
+    [SerializeField]
+    private float dialogueInventoryAlpha = 0.25f;
 
     // =========================================================
     // Dialogue
@@ -329,12 +338,17 @@ public class InventoryItemActionMenu : MonoBehaviour
         }
 
 
-        // ==========================================
+        // =========================================================
         // Item Type별 효과
-        // ==========================================
+        // =========================================================
 
         switch (data.ItemType)
         {
+            // =====================================================
+            // Food
+            // 회복 + 소모
+            // =====================================================
+
             case ItemType.Food:
 
                 playerStats.Heal(
@@ -343,6 +357,11 @@ public class InventoryItemActionMenu : MonoBehaviour
 
                 break;
 
+
+            // =====================================================
+            // Danger
+            // 데미지 + 소모
+            // =====================================================
 
             case ItemType.Danger:
 
@@ -353,32 +372,23 @@ public class InventoryItemActionMenu : MonoBehaviour
                 break;
 
 
+            // =====================================================
+            // Parts / History
+            // 효과는 없고 Dialogue만
+            // =====================================================
+
             case ItemType.Parts:
             case ItemType.History:
 
-                // 효과 없음.
-                // Dialogue만 출력
                 break;
         }
 
 
-        // ==========================================
-        // 사용 Dialogue
-        // ==========================================
+        // =========================================================
+        // Food / Danger만 Inventory에서 제거
+        // =========================================================
 
-        if (itemDialogueUI != null)
-        {
-            itemDialogueUI.Show(
-                data
-            );
-        }
-
-
-        // ==========================================
-        // 소비형 아이템
-        // ==========================================
-
-        if (data.ConsumeOnUse &&
+        if (data.IsConsumable &&
             InventoryManager.Instance != null)
         {
             InventoryManager.Instance.RemoveItem(
@@ -388,7 +398,24 @@ public class InventoryItemActionMenu : MonoBehaviour
         }
 
 
+        // Item Action 메뉴는 닫기
         Close();
+
+
+        // =========================================================
+        // Dialogue 표시
+        // =========================================================
+
+        if (itemDialogueUI != null)
+        {
+            FadeInventoryForDialogue();
+
+
+            itemDialogueUI.Show(
+                data,
+                RestoreInventoryAfterDialogue
+            );
+        }
     }
 
 
@@ -529,6 +556,57 @@ public class InventoryItemActionMenu : MonoBehaviour
 
         currentSourceButton =
             null;
+    }
+
+    private void FadeInventoryForDialogue()
+    {
+        if (inventoryCanvasGroup == null)
+            return;
+
+
+        // =========================================================
+        // Dialogue 뒤에서 Inventory가 보이도록 반투명
+        // =========================================================
+
+        inventoryCanvasGroup.alpha =
+            dialogueInventoryAlpha;
+
+
+        // Dialogue 중 Inventory 클릭 금지
+        inventoryCanvasGroup.interactable =
+            false;
+
+
+        inventoryCanvasGroup.blocksRaycasts =
+            false;
+
+
+        Debug.Log(
+            "[Inventory] Dialogue 상태 - Inventory Fade"
+        );
+    }
+
+    private void RestoreInventoryAfterDialogue()
+    {
+        if (inventoryCanvasGroup == null)
+            return;
+
+
+        inventoryCanvasGroup.alpha =
+            1f;
+
+
+        inventoryCanvasGroup.interactable =
+            true;
+
+
+        inventoryCanvasGroup.blocksRaycasts =
+            true;
+
+
+        Debug.Log(
+            "[Inventory] Dialogue 종료 - Inventory 복구"
+        );
     }
 
 
