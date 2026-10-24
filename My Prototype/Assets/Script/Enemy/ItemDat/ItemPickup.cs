@@ -42,6 +42,21 @@ public class ItemPickup : MonoBehaviour
             );
     }
 
+    public void Initialize(
+    ItemData data,
+    int newAmount = 1
+)
+    {
+        itemData =
+            data;
+
+
+        amount =
+            Mathf.Max(
+                1,
+                newAmount
+            );
+    }
 
     // =========================================================
     // Input

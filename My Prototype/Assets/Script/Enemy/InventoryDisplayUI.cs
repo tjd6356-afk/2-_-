@@ -5,6 +5,14 @@ using UnityEngine.UI;
 
 public class InventoryDisplayUI : MonoBehaviour
 {
+    [Header("Action Menu")]
+
+    [SerializeField]
+    private InventoryItemActionMenu actionMenu;
+
+
+    private InventoryManager.InventorySlot selectedSlot;
+
     // =========================================================
     // List
     // =========================================================
@@ -78,6 +86,14 @@ public class InventoryDisplayUI : MonoBehaviour
             InventoryManager.Instance.OnInventoryChanged -=
                 RefreshInventory;
         }
+
+        if (actionMenu != null)
+        {
+            actionMenu.Close();
+        }
+
+        selectedSlot =
+            null;
     }
 
 
@@ -122,8 +138,8 @@ public class InventoryDisplayUI : MonoBehaviour
 
 
             button.Setup(
-                slot,
-                ShowItemDetail
+            slot,
+            OnItemClicked
             );
         }
     }
@@ -175,6 +191,52 @@ public class InventoryDisplayUI : MonoBehaviour
 
         Debug.Log(
             $"[InventoryUI] 선택 : {data.ItemTitle}"
+        );
+    }
+
+    private void OnItemClicked(
+    InventoryManager.InventorySlot slot,
+    RectTransform buttonRect
+)
+    {
+        if (slot == null)
+            return;
+
+
+        // =========================================================
+        // 같은 아이템을 다시 클릭
+        // =========================================================
+
+        if (selectedSlot == slot)
+        {
+            if (actionMenu != null)
+            {
+                actionMenu.Toggle(
+                    slot,
+                    buttonRect
+                );
+            }
+
+            return;
+        }
+
+
+        // =========================================================
+        // 다른 아이템 선택
+        // =========================================================
+
+        if (actionMenu != null)
+        {
+            actionMenu.Close();
+        }
+
+
+        selectedSlot =
+            slot;
+
+
+        ShowItemDetail(
+            slot
         );
     }
 }

@@ -53,6 +53,23 @@ public class InventoryManager : MonoBehaviour
             amount +=
                 value;
         }
+
+        public bool RemoveAmount(
+    int value
+)
+        {
+            if (value <= 0)
+                return false;
+
+
+            if (amount < value)
+                return false;
+
+
+            amount -= value;
+
+            return true;
+        }
     }
 
 
@@ -192,5 +209,52 @@ public class InventoryManager : MonoBehaviour
 
 
         return null;
+    }
+
+    public bool RemoveItem(
+    ItemData itemData,
+    int amount = 1
+)
+    {
+        if (itemData == null ||
+            amount <= 0)
+        {
+            return false;
+        }
+
+
+        InventorySlot slot =
+            FindSlot(
+                itemData
+            );
+
+
+        if (slot == null)
+            return false;
+
+
+        if (!slot.RemoveAmount(amount))
+            return false;
+
+
+        // 0개가 되면 Slot 자체 삭제
+        if (slot.Amount <= 0)
+        {
+            items.Remove(
+                slot
+            );
+        }
+
+
+        Debug.Log(
+            $"[Inventory] 아이템 제거 : " +
+            $"{itemData.ItemTitle} x{amount}"
+        );
+
+
+        OnInventoryChanged?.Invoke();
+
+
+        return true;
     }
 }

@@ -28,7 +28,10 @@ public class InventoryItemButtonUI : MonoBehaviour
 
     public void Setup(
         InventoryManager.InventorySlot newSlot,
-        Action<InventoryManager.InventorySlot> onClicked
+        Action<
+            InventoryManager.InventorySlot,
+            RectTransform
+        > onClicked
     )
     {
         slot =
@@ -50,7 +53,6 @@ public class InventoryItemButtonUI : MonoBehaviour
         {
             itemIcon.sprite =
                 data.ItemIcon;
-
 
             itemIcon.enabled =
                 data.ItemIcon != null;
@@ -80,7 +82,8 @@ public class InventoryItemButtonUI : MonoBehaviour
                 () =>
                 {
                     onClicked?.Invoke(
-                        slot
+                        slot,
+                        transform as RectTransform
                     );
                 }
             );
