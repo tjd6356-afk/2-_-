@@ -52,6 +52,12 @@ public class PlayerGameplayControl : MonoBehaviour
         controlsLocked;
 
 
+    private bool deathLocked;
+
+
+    public bool DeathLocked =>
+        deathLocked;
+
     // =========================================================
     // Lock
     // =========================================================
@@ -138,6 +144,17 @@ public class PlayerGameplayControl : MonoBehaviour
 
     public void UnlockControls()
     {
+        if (deathLocked)
+        {
+            Cursor.lockState =
+                CursorLockMode.None;
+
+            Cursor.visible =
+                true;
+
+            return;
+        }
+
         if (!controlsLocked)
             return;
 
@@ -199,6 +216,31 @@ public class PlayerGameplayControl : MonoBehaviour
         );
     }
 
+    public void LockForDeath()
+    {
+        deathLocked =
+            true;
+
+
+        // 이미 Inventory 때문에 잠겨있지 않은 경우
+        if (!controlsLocked)
+        {
+            LockControls();
+        }
+
+
+        // 이미 잠겨있더라도 Cursor 상태는 확실하게
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible =
+            true;
+
+
+        Debug.Log(
+            "[PlayerGameplayControl] Player Death Lock"
+        );
+    }
 
     // =========================================================
     // Destroy

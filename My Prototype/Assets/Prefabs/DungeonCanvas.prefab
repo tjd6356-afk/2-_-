@@ -3372,7 +3372,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4889375437612726962
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5511,6 +5511,7 @@ GameObject:
   - component: {fileID: 7744436755533276523}
   - component: {fileID: 8897198635473149286}
   - component: {fileID: 3530837523826426035}
+  - component: {fileID: 2713509163851161783}
   m_Layer: 5
   m_Name: DungeonCanvas
   m_TagString: Untagged
@@ -5761,3 +5762,19 @@ MonoBehaviour:
   titleText: {fileID: 0}
   dialogueText: {fileID: 7654994008195605224}
   characterImage: {fileID: 0}
+--- !u!114 &2713509163851161783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8776635390010244227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 266ae4d31a2c59742a79fb8a2259ec61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameOverUI
+  gameOverPanel: {fileID: 4456747313120201755}
+  lobbyButton: {fileID: 4845592988792299865}
+  lobbySceneName: LobbyScene
+  pauseGameOnDeath: 1
