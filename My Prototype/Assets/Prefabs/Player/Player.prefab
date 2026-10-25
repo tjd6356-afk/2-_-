@@ -131,6 +131,7 @@ MonoBehaviour:
   gameplayBehaviours:
   - {fileID: 7132637885072722944}
   - {fileID: 4525119024753954002}
+  - {fileID: 8686138121981914851}
   thirdPersonCamera: {fileID: 0}
 --- !u!114 &4525119024753954002
 MonoBehaviour:

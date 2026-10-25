@@ -166,9 +166,23 @@ public class PlayerStats : MonoBehaviour
         currentHealth = 0f;
 
 
-        Debug.Log("Player Dead");
+        OnHealthChanged?.Invoke(
+            currentHealth,
+            maxHealth
+        );
 
+
+        Debug.Log(
+            "Player Dead"
+        );
+
+
+        // 기존 시스템용
         OnDied?.Invoke();
+
+
+        // PlayerDeathHandler용
+        OnPlayerDied?.Invoke();
     }
 
 

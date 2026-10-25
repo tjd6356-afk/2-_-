@@ -2,15 +2,9 @@ using UnityEngine;
 
 public class PlayerDeathHandler : MonoBehaviour
 {
-    // =========================================================
-    // References
-    // =========================================================
-
     [Header("Player")]
-
     [SerializeField]
     private PlayerStats playerStats;
-
 
     [SerializeField]
     private PlayerGameplayControl gameplayControl;
@@ -18,10 +12,6 @@ public class PlayerDeathHandler : MonoBehaviour
 
     private GameOverUI gameOverUI;
 
-
-    // =========================================================
-    // Awake
-    // =========================================================
 
     private void Awake()
     {
@@ -37,12 +27,15 @@ public class PlayerDeathHandler : MonoBehaviour
             gameplayControl =
                 GetComponent<PlayerGameplayControl>();
         }
+
+
+        Debug.Log(
+            $"[PlayerDeathHandler] Awake / " +
+            $"Stats={playerStats != null}, " +
+            $"GameplayControl={gameplayControl != null}"
+        );
     }
 
-
-    // =========================================================
-    // Subscribe
-    // =========================================================
 
     private void OnEnable()
     {
@@ -50,6 +43,11 @@ public class PlayerDeathHandler : MonoBehaviour
         {
             playerStats.OnPlayerDied +=
                 HandlePlayerDeath;
+
+
+            Debug.Log(
+                "[PlayerDeathHandler] 사망 이벤트 등록 완료"
+            );
         }
     }
 
@@ -70,10 +68,6 @@ public class PlayerDeathHandler : MonoBehaviour
     }
 
 
-    // =========================================================
-    // GameOver UI 자동 탐색
-    // =========================================================
-
     private void FindGameOverUI()
     {
         gameOverUI =
@@ -82,40 +76,47 @@ public class PlayerDeathHandler : MonoBehaviour
             );
 
 
-        if (gameOverUI == null)
+        if (gameOverUI != null)
         {
-            Debug.LogWarning(
-                "[PlayerDeath] GameOverUI를 찾지 못했습니다."
+            Debug.Log(
+                $"[PlayerDeathHandler] GameOverUI 발견 : " +
+                $"{gameOverUI.gameObject.name}"
+            );
+        }
+        else
+        {
+            Debug.LogError(
+                "[PlayerDeathHandler] GameOverUI를 찾지 못했습니다."
             );
         }
     }
 
 
-    // =========================================================
-    // Death
-    // =========================================================
-
     private void HandlePlayerDeath()
     {
         Debug.Log(
-            "[PlayerDeath] 사망 처리 시작"
+            "[PlayerDeathHandler] 사망 이벤트 수신 성공"
         );
 
 
         // ==========================================
-        // 가장 먼저 Death Lock
+        // 플레이어 조작 완전 잠금
         // ==========================================
 
         if (gameplayControl != null)
         {
             gameplayControl.LockForDeath();
         }
+        else
+        {
+            Debug.LogError(
+                "[PlayerDeathHandler] PlayerGameplayControl이 없습니다."
+            );
+        }
 
 
         // ==========================================
-        // 열려있는 Inventory가 있다면 닫음
-        // UnlockControls가 호출되어도
-        // DeathLock 때문에 조작은 복구되지 않음
+        // Inventory가 열려있으면 닫기
         // ==========================================
 
         InventoryUIController inventoryUI =
@@ -132,7 +133,7 @@ public class PlayerDeathHandler : MonoBehaviour
 
 
         // ==========================================
-        // GameOver
+        // GameOver UI
         // ==========================================
 
         if (gameOverUI == null)
@@ -147,7 +148,11 @@ public class PlayerDeathHandler : MonoBehaviour
         }
         else
         {
-            // UI가 없어도 Mouse는 확보
+            Debug.LogError(
+                "[PlayerDeathHandler] GameOverPanel을 열 수 없습니다."
+            );
+
+
             Cursor.lockState =
                 CursorLockMode.None;
 
