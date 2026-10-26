@@ -1,3 +1,4 @@
+using UnityEngine.Serialization;
 using UnityEngine;
 
 
@@ -70,10 +71,12 @@ public class ItemData : ScriptableObject
     private float damageAmount;
 
 
+    [Header("Use Message")]
+
+    [FormerlySerializedAs("useDialogueText")]
     [TextArea(3, 10)]
-    [Tooltip("사용하기를 눌렀을 때 출력되는 대사")]
     [SerializeField]
-    private string useDialogueText;
+    private string useEffectText;
 
 
     // =========================================================
@@ -129,8 +132,8 @@ public class ItemData : ScriptableObject
     public float DamageAmount =>
         damageAmount;
 
-    public string UseDialogueText =>
-        useDialogueText;
+    public string UseEffectText =>
+        useEffectText;
 
     public bool IsConsumable
     {

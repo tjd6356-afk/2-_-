@@ -46,16 +46,16 @@ public class InventoryItemActionMenu : MonoBehaviour
 
     [Range(0f, 1f)]
     [SerializeField]
-    private float dialogueInventoryAlpha = 0.25f;
+    private float effectInventoryAlpha = 0.25f;
 
     // =========================================================
-    // Dialogue
+    // Item Effect Message
     // =========================================================
 
-    [Header("Dialogue")]
+    [Header("Item Effect Message")]
 
     [SerializeField]
-    private ItemUseDialogueUI itemDialogueUI;
+    private ItemEffectMessageUI itemEffectUI;
 
 
     // =========================================================
@@ -339,14 +339,13 @@ public class InventoryItemActionMenu : MonoBehaviour
 
 
         // =========================================================
-        // Item Type별 효과
+        // Item 효과
         // =========================================================
 
         switch (data.ItemType)
         {
             // =====================================================
             // Food
-            // 회복 + 소모
             // =====================================================
 
             case ItemType.Food:
@@ -360,7 +359,6 @@ public class InventoryItemActionMenu : MonoBehaviour
 
             // =====================================================
             // Danger
-            // 데미지 + 소모
             // =====================================================
 
             case ItemType.Danger:
@@ -374,18 +372,18 @@ public class InventoryItemActionMenu : MonoBehaviour
 
             // =====================================================
             // Parts / History
-            // 효과는 없고 Dialogue만
             // =====================================================
 
             case ItemType.Parts:
             case ItemType.History:
 
+                // 별도 수치 효과 없음
                 break;
         }
 
 
         // =========================================================
-        // Food / Danger만 Inventory에서 제거
+        // Food / Danger만 소비
         // =========================================================
 
         if (data.IsConsumable &&
@@ -398,22 +396,36 @@ public class InventoryItemActionMenu : MonoBehaviour
         }
 
 
-        // Item Action 메뉴는 닫기
+        // 설정 메뉴 닫기
         Close();
 
 
         // =========================================================
-        // Dialogue 표시
+        // Inventory 반투명
         // =========================================================
 
-        if (itemDialogueUI != null)
+        FadeInventoryForEffect();
+
+
+        // =========================================================
+        // Item Effect Message
+        // =========================================================
+
+        if (itemEffectUI != null)
         {
-            FadeInventoryForDialogue();
-
-
-            itemDialogueUI.Show(
+            itemEffectUI.Show(
                 data,
-                RestoreInventoryAfterDialogue
+                RestoreInventoryAfterEffect
+            );
+        }
+        else
+        {
+            // UI가 없으면 Inventory는 즉시 복구
+            RestoreInventoryAfterEffect();
+
+
+            Debug.LogWarning(
+                "[ItemAction] ItemEffectMessageUI가 없습니다."
             );
         }
     }
@@ -520,10 +532,9 @@ public class InventoryItemActionMenu : MonoBehaviour
 
         if (!success)
         {
-            if (itemDialogueUI != null)
+            if (itemEffectUI != null)
             {
-                itemDialogueUI.ShowText(
-                    "손에 들기",
+                itemEffectUI.Show(
                     "더 이상 아이템을 들 수 없습니다.",
                     null
                 );
@@ -558,21 +569,16 @@ public class InventoryItemActionMenu : MonoBehaviour
             null;
     }
 
-    private void FadeInventoryForDialogue()
+    private void FadeInventoryForEffect()
     {
         if (inventoryCanvasGroup == null)
             return;
 
 
-        // =========================================================
-        // Dialogue 뒤에서 Inventory가 보이도록 반투명
-        // =========================================================
-
         inventoryCanvasGroup.alpha =
-            dialogueInventoryAlpha;
+            effectInventoryAlpha;
 
 
-        // Dialogue 중 Inventory 클릭 금지
         inventoryCanvasGroup.interactable =
             false;
 
@@ -582,11 +588,11 @@ public class InventoryItemActionMenu : MonoBehaviour
 
 
         Debug.Log(
-            "[Inventory] Dialogue 상태 - Inventory Fade"
+            "[Inventory] Item Effect 상태"
         );
     }
 
-    private void RestoreInventoryAfterDialogue()
+    private void RestoreInventoryAfterEffect()
     {
         if (inventoryCanvasGroup == null)
             return;
@@ -605,7 +611,7 @@ public class InventoryItemActionMenu : MonoBehaviour
 
 
         Debug.Log(
-            "[Inventory] Dialogue 종료 - Inventory 복구"
+            "[Inventory] Item Effect 종료"
         );
     }
 
