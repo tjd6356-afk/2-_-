@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LauncherWeapon
   weaponId: weapon_003
-  weaponName: Weapon
+  weaponName: luncher
   weaponType: 4
   firePoint: {fileID: 3813221830899585027}
   rocketPrefab: {fileID: 6359520086967549668, guid: 2c1b5ce847b332742806f4cb689bbd2e, type: 3}
