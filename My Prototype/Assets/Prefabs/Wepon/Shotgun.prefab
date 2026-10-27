@@ -82,10 +82,10 @@ MonoBehaviour:
   firePoint: {fileID: 4014565773434977279}
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
   damageMultiplier: 3
-  fireRateMultiplier: 0.3
-  pelletCount: 8
-  spreadRadius: 1.5
-  antiClumpFactor: 0.4
+  fireRateMultiplier: 0.7
+  pelletCount: 16
+  spreadRadius: 0.2
+  antiClumpFactor: 0.01
   kickPitch: 3
   kickYaw: 1
   magazineSize: 6
