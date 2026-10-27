@@ -329,7 +329,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84f16fab34b26364595aa303aca9308b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyWorldHealthUI
-  enemyStats: {fileID: 8002918626795020441}
+  healthSource: {fileID: 5599552862040267425}
   healthUIRoot: {fileID: 7890222196161334027}
   healthFillImage: {fileID: 1573694093930469459}
   targetCamera: {fileID: 0}

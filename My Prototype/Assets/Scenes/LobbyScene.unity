@@ -1452,6 +1452,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 344548900188897486, guid: 54fc00031419f814489931bde539f366, type: 3}
+      propertyPath: attackRange
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 1287184418823599086, guid: 54fc00031419f814489931bde539f366, type: 3}
       propertyPath: m_Name
       value: Enemy
@@ -2489,6 +2493,14 @@ PrefabInstance:
       propertyPath: interactionCamera
       value: 
       objectReference: {fileID: 1966443905}
+    - target: {fileID: 6973679169348577205, guid: f553924073585ac46b6203c3ae23110b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6973679169348577205, guid: f553924073585ac46b6203c3ae23110b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

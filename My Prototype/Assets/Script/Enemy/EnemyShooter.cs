@@ -4,17 +4,28 @@ using UnityEngine;
 public class EnemyShooter : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private EnemyStats enemyStats;
+    [SerializeField]
+    private EnemyStats enemyStats;
 
-    [SerializeField] private Transform firePoint;
+    [SerializeField]
+    private Transform firePoint;
 
-    [SerializeField] private Projectile projectilePrefab;
+    [SerializeField]
+    private Projectile projectilePrefab;
 
 
     [Header("Ammo")]
-    [SerializeField] private int magazineSize = 10;
+    [SerializeField]
+    private int magazineSize = 10;
 
-    [SerializeField] private float baseReloadTime = 2f;
+    [SerializeField]
+    private float baseReloadTime = 2f;
+
+
+    [Header("Aim")]
+    [Tooltip("타겟의 기본 조준 높이")]
+    [SerializeField]
+    private float targetHeight = 1f;
 
 
     private int currentAmmo;
@@ -46,7 +57,50 @@ public class EnemyShooter : MonoBehaviour
 
 
     // =========================================================
-    // AI가 호출
+    // Player / NPC Transform을 직접 전달
+    // =========================================================
+
+    public void TryShoot(
+        Transform target
+    )
+    {
+        if (target == null)
+            return;
+
+
+        // ==========================================
+        // 공격 가능한 대상인지 확인
+        // ==========================================
+
+        bool isPlayer =
+            target.GetComponentInParent<PlayerStats>() != null;
+
+
+        bool isNPC =
+            target.GetComponentInParent<NPCStats>() != null;
+
+
+        if (!isPlayer &&
+            !isNPC)
+        {
+            return;
+        }
+
+
+        Vector3 targetPosition =
+            target.position +
+            Vector3.up *
+            targetHeight;
+
+
+        TryShoot(
+            targetPosition
+        );
+    }
+
+
+    // =========================================================
+    // 기존 EnemyAI 호환용
     // =========================================================
 
     public void TryShoot(
@@ -65,9 +119,9 @@ public class EnemyShooter : MonoBehaviour
             return;
 
 
-        // =====================================================
+        // ==========================================
         // 탄약 없음
-        // =====================================================
+        // ==========================================
 
         if (currentAmmo <= 0)
         {
@@ -79,9 +133,9 @@ public class EnemyShooter : MonoBehaviour
         }
 
 
-        // =====================================================
+        // ==========================================
         // 발사속도
-        // =====================================================
+        // ==========================================
 
         if (Time.time <
             nextFireTime)
@@ -149,7 +203,6 @@ public class EnemyShooter : MonoBehaviour
         currentAmmo--;
 
 
-        // 마지막 총알
         if (currentAmmo <= 0)
         {
             StartCoroutine(
@@ -160,7 +213,7 @@ public class EnemyShooter : MonoBehaviour
 
 
     // =========================================================
-    // 재장전
+    // Reload
     // =========================================================
 
     private IEnumerator ReloadRoutine()
@@ -169,7 +222,8 @@ public class EnemyShooter : MonoBehaviour
             yield break;
 
 
-        isReloading = true;
+        isReloading =
+            true;
 
 
         float reloadTime =
@@ -187,6 +241,7 @@ public class EnemyShooter : MonoBehaviour
             magazineSize;
 
 
-        isReloading = false;
+        isReloading =
+            false;
     }
 }

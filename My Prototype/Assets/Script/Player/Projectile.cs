@@ -113,18 +113,21 @@ public class Projectile : MonoBehaviour
 
         // =====================================================
         // Player가 쏜 총알
+        //
+        // EnemyStats / NPCStats처럼
+        // IHealth를 가진 대상에게 피해
         // =====================================================
 
         if (owner != null &&
             owner.GetComponent<PlayerStats>() != null)
         {
-            EnemyStats enemyStats =
-                hitObject.GetComponentInParent<EnemyStats>();
+            IHealth health =
+                hitObject.GetComponentInParent<IHealth>();
 
 
-            if (enemyStats != null)
+            if (health != null)
             {
-                enemyStats.TakeDamage(
+                health.TakeDamage(
                     damage
                 );
             }
@@ -133,11 +136,16 @@ public class Projectile : MonoBehaviour
 
         // =====================================================
         // Enemy가 쏜 총알
+        // Player 또는 NPC에게 데미지
         // =====================================================
 
         else if (owner != null &&
                  owner.GetComponent<EnemyStats>() != null)
         {
+            // ==========================================
+            // Player 확인
+            // ==========================================
+
             PlayerStats playerStats =
                 hitObject.GetComponentInParent<PlayerStats>();
 
@@ -147,10 +155,42 @@ public class Projectile : MonoBehaviour
                 playerStats.TakeDamage(
                     damage
                 );
+
+
+                Destroy(
+                    gameObject
+                );
+
+                return;
+            }
+
+
+            // ==========================================
+            // NPC 확인
+            // ==========================================
+
+            NPCStats npcStats =
+                hitObject.GetComponentInParent<NPCStats>();
+
+
+            if (npcStats != null)
+            {
+                npcStats.TakeDamage(
+                    damage
+                );
+
+
+                Destroy(
+                    gameObject
+                );
+
+                return;
             }
         }
 
 
-        Destroy(gameObject);
+        Destroy(
+            gameObject
+        );
     }
 }

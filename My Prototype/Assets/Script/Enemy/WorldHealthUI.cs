@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class EnemyWorldHealthUI : MonoBehaviour
+public class WorldHealthUI : MonoBehaviour
 {
     // =========================================================
     // References
@@ -9,22 +9,22 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
     [Header("References")]
 
-    [Tooltip("체력을 읽을 EnemyStats")]
+    [Tooltip("IHealth를 가지고 있는 오브젝트. 비워두면 부모에서 자동 탐색")]
     [SerializeField]
-    private EnemyStats enemyStats;
+    private MonoBehaviour healthSource;
 
 
-    [Tooltip("전체 HP UI Root")]
+    [Tooltip("실제로 켜고 끌 HP UI Root")]
     [SerializeField]
     private GameObject healthUIRoot;
 
 
-    [Tooltip("Filled 타입의 HP Image")]
+    [Tooltip("Filled 타입 HP Image")]
     [SerializeField]
     private Image healthFillImage;
 
 
-    [Tooltip("플레이어 카메라. 비어있으면 자동으로 찾음")]
+    [Tooltip("바라볼 Camera. 비워두면 Camera.main 자동 탐색")]
     [SerializeField]
     private Camera targetCamera;
 
@@ -35,12 +35,12 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
     [Header("Visibility")]
 
-    [Tooltip("최대 체력일 때 HP UI를 숨길지")]
+    [Tooltip("체력이 최대일 때 HP UI 숨김")]
     [SerializeField]
     private bool hideWhenFullHealth = true;
 
 
-    [Tooltip("이 거리보다 멀어지면 HP UI를 완전히 숨김")]
+    [Tooltip("이 거리보다 멀어지면 UI 완전히 숨김")]
     [SerializeField]
     private float maxVisibleDistance = 40f;
 
@@ -51,22 +51,20 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
     [Header("Distance Scale")]
 
-    [Tooltip("이 거리에서는 최대 크기")]
+    [Tooltip("이 거리 이하에서는 최대 크기")]
     [SerializeField]
     private float nearDistance = 2f;
 
 
-    [Tooltip("이 거리에서는 최소 크기")]
+    [Tooltip("이 거리 이상에서는 최소 크기")]
     [SerializeField]
     private float farDistance = 25f;
 
 
-    [Tooltip("가까이 있을 때 UI Scale")]
     [SerializeField]
     private float nearScale = 1f;
 
 
-    [Tooltip("멀리 있을 때 UI Scale")]
     [SerializeField]
     private float farScale = 0.4f;
 
@@ -77,7 +75,6 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
     [Header("Billboard")]
 
-    [Tooltip("HP UI가 항상 카메라를 바라보게 함")]
     [SerializeField]
     private bool faceCamera = true;
 
@@ -85,6 +82,8 @@ public class EnemyWorldHealthUI : MonoBehaviour
     // =========================================================
     // Runtime
     // =========================================================
+
+    private IHealth health;
 
     private Vector3 originalScale;
 
@@ -97,23 +96,14 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
     private void Awake()
     {
-        // EnemyStats 자동 탐색
-        if (enemyStats == null)
-        {
-            enemyStats =
-                GetComponentInParent<EnemyStats>();
-        }
-
-
-        if (healthUIRoot == null)
-        {
-            healthUIRoot =
-                gameObject;
-        }
-
-
         originalScale =
             transform.localScale;
+
+
+        FindHealthSource();
+
+
+        FindCamera();
     }
 
 
@@ -123,72 +113,179 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
     private void Start()
     {
-        FindCamera();
-
-
-        if (enemyStats == null)
+        if (health == null)
         {
             Debug.LogError(
-                $"[EnemyHealthUI] EnemyStats를 찾을 수 없습니다 : {name}"
+                $"[WorldHealthUI] IHealth를 찾지 못했습니다 : {name}"
             );
 
             return;
         }
 
 
-        // 처음 HP 상태를 즉시 반영
         UpdateHealthUI(
-            enemyStats.CurrentHealth,
-            enemyStats.MaxHealth
+            health.CurrentHealth,
+            health.MaxHealth
         );
     }
 
 
     // =========================================================
-    // Event 등록
+    // Enable
     // =========================================================
 
     private void OnEnable()
     {
-        if (enemyStats == null)
+        if (health == null)
         {
-            enemyStats =
-                GetComponentInParent<EnemyStats>();
+            FindHealthSource();
         }
 
 
-        if (enemyStats != null)
-        {
-            enemyStats.OnHealthChanged +=
-                UpdateHealthUI;
-
-
-            enemyStats.OnDied +=
-                HandleDeath;
-        }
+        SubscribeHealth();
     }
 
 
+    // =========================================================
+    // Disable
+    // =========================================================
+
     private void OnDisable()
     {
-        if (enemyStats != null)
+        UnsubscribeHealth();
+    }
+
+
+    // =========================================================
+    // Health Source 자동 탐색
+    // =========================================================
+
+    private void FindHealthSource()
+    {
+        health =
+            null;
+
+
+        // ==========================================
+        // Inspector에서 직접 지정한 경우
+        // ==========================================
+
+        if (healthSource != null)
         {
-            enemyStats.OnHealthChanged -=
-                UpdateHealthUI;
+            health =
+                healthSource as IHealth;
 
 
-            enemyStats.OnDied -=
-                HandleDeath;
+            if (health != null)
+            {
+                return;
+            }
+
+
+            Debug.LogWarning(
+                $"[WorldHealthUI] 지정한 Health Source가 " +
+                $"IHealth를 구현하지 않았습니다 : " +
+                $"{healthSource.GetType().Name}"
+            );
+        }
+
+
+        // ==========================================
+        // 부모를 올라가며 IHealth 탐색
+        // ==========================================
+
+        Transform current =
+            transform;
+
+
+        while (current != null)
+        {
+            MonoBehaviour[] behaviours =
+                current.GetComponents<MonoBehaviour>();
+
+
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour is IHealth foundHealth)
+                {
+                    health =
+                        foundHealth;
+
+
+                    healthSource =
+                        behaviour;
+
+
+                    Debug.Log(
+                        $"[WorldHealthUI] Health 연결 : " +
+                        $"{behaviour.GetType().Name} / " +
+                        $"{current.name}"
+                    );
+
+
+                    return;
+                }
+            }
+
+
+            current =
+                current.parent;
         }
     }
 
 
     // =========================================================
-    // Camera / Distance
+    // Event
+    // =========================================================
+
+    private void SubscribeHealth()
+    {
+        if (health == null)
+            return;
+
+
+        health.OnHealthChanged -=
+            UpdateHealthUI;
+
+
+        health.OnDied -=
+            HandleDeath;
+
+
+        health.OnHealthChanged +=
+            UpdateHealthUI;
+
+
+        health.OnDied +=
+            HandleDeath;
+    }
+
+
+    private void UnsubscribeHealth()
+    {
+        if (health == null)
+            return;
+
+
+        health.OnHealthChanged -=
+            UpdateHealthUI;
+
+
+        health.OnDied -=
+            HandleDeath;
+    }
+
+
+    // =========================================================
+    // Late Update
     // =========================================================
 
     private void LateUpdate()
     {
+        if (health == null)
+            return;
+
+
         if (targetCamera == null)
         {
             FindCamera();
@@ -211,7 +308,7 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
 
         // ==========================================
-        // Camera 거리
+        // 거리
         // ==========================================
 
         float distance =
@@ -221,7 +318,7 @@ public class EnemyWorldHealthUI : MonoBehaviour
             );
 
 
-        // 최대 표시 거리 밖
+        // 너무 멀면 숨김
         if (distance >
             maxVisibleDistance)
         {
@@ -233,7 +330,7 @@ public class EnemyWorldHealthUI : MonoBehaviour
         }
 
 
-        // 체력 조건에 의해 보이면 표시
+        // 체력에 따른 표시 상태
         SetVisible(
             healthAllowsVisible
         );
@@ -244,7 +341,7 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
 
         // ==========================================
-        // 거리 → Scale
+        // 거리별 Scale
         // ==========================================
 
         float t =
@@ -282,7 +379,7 @@ public class EnemyWorldHealthUI : MonoBehaviour
             return;
 
 
-        float normalizedHealth =
+        float normalized =
             Mathf.Clamp01(
                 currentHealth /
                 maxHealth
@@ -292,12 +389,12 @@ public class EnemyWorldHealthUI : MonoBehaviour
         if (healthFillImage != null)
         {
             healthFillImage.fillAmount =
-                normalizedHealth;
+                normalized;
         }
 
 
         // ==========================================
-        // 표시 조건
+        // 죽음
         // ==========================================
 
         if (currentHealth <= 0f)
@@ -306,12 +403,20 @@ public class EnemyWorldHealthUI : MonoBehaviour
                 false;
         }
 
+        // ==========================================
+        // Full HP
+        // ==========================================
+
         else if (hideWhenFullHealth &&
                  currentHealth >= maxHealth)
         {
             healthAllowsVisible =
                 false;
         }
+
+        // ==========================================
+        // 피해 받은 상태
+        // ==========================================
 
         else
         {
@@ -343,7 +448,7 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
 
     // =========================================================
-    // Visibility
+    // Visible
     // =========================================================
 
     private void SetVisible(
@@ -351,14 +456,6 @@ public class EnemyWorldHealthUI : MonoBehaviour
     )
     {
         if (healthUIRoot == null)
-            return;
-
-
-        // healthUIRoot가 자기 자신이면
-        // 스크립트까지 꺼지는 문제가 있으므로
-        // CanvasRenderer만 관리하는 방식 대신
-        // 자식 Root를 사용하는 것을 권장
-        if (healthUIRoot == gameObject)
             return;
 
 
@@ -373,7 +470,7 @@ public class EnemyWorldHealthUI : MonoBehaviour
 
 
     // =========================================================
-    // Camera Find
+    // Camera
     // =========================================================
 
     private void FindCamera()

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class EnemyStats : MonoBehaviour
+public class EnemyStats : MonoBehaviour, IHealth
 {
     [Header("Health")]
     [SerializeField] private float maxHealth = 100f;

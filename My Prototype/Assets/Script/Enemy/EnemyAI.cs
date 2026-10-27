@@ -1,39 +1,99 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
+    // =========================================================
+    // References
+    // =========================================================
+
     [Header("References")]
-    [SerializeField] private EnemyStats enemyStats;
 
-    [SerializeField] private EnemyShooter enemyShooter;
+    [SerializeField]
+    private EnemyStats enemyStats;
 
-    [SerializeField] private NavMeshAgent agent;
 
-    [SerializeField] private Transform player;
+    [SerializeField]
+    private EnemyShooter enemyShooter;
 
+
+    [SerializeField]
+    private NavMeshAgent agent;
+
+
+    // =========================================================
+    // Detection
+    // =========================================================
 
     [Header("Detection")]
-    [Tooltip("플레이어를 발견하는 거리")]
-    [SerializeField] private float detectionRange = 20f;
+
+    [Tooltip("Player / NPC를 발견하는 최대 거리")]
+    [SerializeField]
+    private float detectionRange = 20f;
+
 
     [Tooltip("이 거리까지 접근하면 멈추고 공격")]
-    [SerializeField] private float attackRange = 10f;
+    [SerializeField]
+    private float attackRange = 10f;
 
+
+    [Tooltip("주변 타겟을 다시 검색하는 주기")]
+    [SerializeField]
+    private float targetScanInterval = 0.25f;
+
+
+    [Tooltip("탐색할 Layer. 처음에는 Everything 권장")]
+    [SerializeField]
+    private LayerMask targetMask = ~0;
+
+
+    // =========================================================
+    // Aim
+    // =========================================================
 
     [Header("Aim")]
-    [Tooltip("적이 조준할 플레이어 높이")]
-    [SerializeField] private float targetHeight = 1.2f;
 
-    [SerializeField] private float rotationSpeed = 8f;
+    [SerializeField]
+    private float targetHeight = 1.2f;
 
+
+    [SerializeField]
+    private float rotationSpeed = 8f;
+
+
+    // =========================================================
+    // Line Of Sight
+    // =========================================================
 
     [Header("Line Of Sight")]
-    [SerializeField] private LayerMask sightMask = ~0;
+
+    [SerializeField]
+    private LayerMask sightMask = ~0;
 
 
-    private bool detectedPlayer;
+    // =========================================================
+    // Runtime Target
+    // =========================================================
 
+    private Transform currentTarget;
+
+
+    private PlayerStats targetPlayer;
+
+    private NPCStats targetNPC;
+
+
+    private float nextTargetScanTime;
+
+
+    public Transform CurrentTarget =>
+        currentTarget;
+
+
+    // =========================================================
+    // Awake
+    // =========================================================
 
     private void Awake()
     {
@@ -59,24 +119,12 @@ public class EnemyAI : MonoBehaviour
     }
 
 
+    // =========================================================
+    // Start
+    // =========================================================
+
     private void Start()
     {
-        // Inspector에 직접 안 넣어도
-        // PlayerStats를 가진 객체를 검색
-        if (player == null)
-        {
-            PlayerStats playerStats =
-                FindFirstObjectByType<PlayerStats>();
-
-
-            if (playerStats != null)
-            {
-                player =
-                    playerStats.transform;
-            }
-        }
-
-
         if (agent != null &&
             enemyStats != null)
         {
@@ -88,110 +136,353 @@ public class EnemyAI : MonoBehaviour
             agent.updateRotation =
                 false;
         }
+
+
+        // 게임 시작 직후 한 번 탐색
+        FindNearestTarget();
     }
 
+
+    // =========================================================
+    // Update
+    // =========================================================
 
     private void Update()
     {
         if (enemyStats == null ||
             enemyStats.IsDead)
         {
+            StopMoving();
+
             return;
         }
 
 
-        if (player == null)
+        // =====================================================
+        // 일정 주기로 주변 타겟 검색
+        // =====================================================
+
+        if (Time.time >=
+            nextTargetScanTime)
+        {
+            nextTargetScanTime =
+                Time.time +
+                targetScanInterval;
+
+
+            FindNearestTarget();
+        }
+
+
+        // =====================================================
+        // 현재 타겟 없음
+        // =====================================================
+
+        if (currentTarget == null)
+        {
+            StopMoving();
+
             return;
+        }
+
+
+        // =====================================================
+        // 현재 타겟 사망 확인
+        // =====================================================
+
+        if (!IsCurrentTargetAlive())
+        {
+            ClearTarget();
+
+            FindNearestTarget();
+
+            StopMoving();
+
+            return;
+        }
 
 
         float distance =
             Vector3.Distance(
                 transform.position,
-                player.position
+                currentTarget.position
             );
 
 
         // =====================================================
-        // 플레이어 발견
+        // 타겟이 Detection Range 밖으로 나감
         // =====================================================
 
-        if (!detectedPlayer)
+        if (distance >
+            detectionRange)
         {
-            if (distance <=
-                detectionRange)
-            {
-                detectedPlayer = true;
-            }
-            else
-            {
-                StopMoving();
+            ClearTarget();
 
-                return;
-            }
+            StopMoving();
+
+            return;
         }
 
 
         // =====================================================
         // 공격 범위 밖
-        // → 접근
+        // → 추적
         // =====================================================
 
         if (distance >
             attackRange)
         {
-            ChasePlayer();
+            ChaseTarget();
 
             return;
         }
 
 
         // =====================================================
-        // 공격 범위
+        // 공격 범위 안
         // =====================================================
 
         StopMoving();
 
 
-        RotateTowardsPlayer();
+        RotateTowardsTarget();
 
 
-        if (CanSeePlayer())
+        if (CanSeeTarget())
         {
-            Collider playerCollider =
-    player.GetComponentInChildren<Collider>();
+            Vector3 targetPosition =
+                GetTargetAimPosition();
 
 
-            Vector3 targetPosition;
-
-
-            if (playerCollider != null)
+            if (enemyShooter != null)
             {
-                targetPosition =
-                    playerCollider.bounds.center;
+                enemyShooter.TryShoot(
+                    targetPosition
+                );
             }
-            else
-            {
-                targetPosition =
-                    player.position +
-                    Vector3.up * 0.5f;
-            }
-
-
-            enemyShooter.TryShoot(
-                targetPosition
-            );
         }
     }
 
 
     // =========================================================
-    // 추적
+    // 가장 가까운 Player / NPC 탐색
     // =========================================================
 
-    private void ChasePlayer()
+    private void FindNearestTarget()
     {
-        if (agent == null)
+        Collider[] hits =
+            Physics.OverlapSphere(
+                transform.position,
+                detectionRange,
+                targetMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+
+        Transform bestTarget =
+            null;
+
+
+        PlayerStats bestPlayer =
+            null;
+
+
+        NPCStats bestNPC =
+            null;
+
+
+        float bestDistanceSqr =
+            float.MaxValue;
+
+
+        // 같은 캐릭터에 Collider가 여러 개 있을 수 있으므로
+        // 중복 검사 방지
+        HashSet<Transform> checkedTargets =
+            new HashSet<Transform>();
+
+
+        foreach (Collider hit in hits)
+        {
+            if (hit == null)
+                continue;
+
+
+            // =================================================
+            // Player 탐색
+            // =================================================
+
+            PlayerStats player =
+                hit.GetComponentInParent<PlayerStats>();
+
+
+            if (player != null &&
+                !player.IsDead)
+            {
+                Transform playerTransform =
+                    player.transform;
+
+
+                if (checkedTargets.Add(
+                        playerTransform))
+                {
+                    float distanceSqr =
+                        (
+                            playerTransform.position -
+                            transform.position
+                        ).sqrMagnitude;
+
+
+                    if (distanceSqr <
+                        bestDistanceSqr)
+                    {
+                        bestDistanceSqr =
+                            distanceSqr;
+
+
+                        bestTarget =
+                            playerTransform;
+
+
+                        bestPlayer =
+                            player;
+
+
+                        bestNPC =
+                            null;
+                    }
+                }
+            }
+
+
+            // =================================================
+            // NPC 탐색
+            // =================================================
+
+            NPCStats npc =
+                hit.GetComponentInParent<NPCStats>();
+
+
+            if (npc != null &&
+                !npc.IsDead)
+            {
+                Transform npcTransform =
+                    npc.transform;
+
+
+                if (checkedTargets.Add(
+                        npcTransform))
+                {
+                    float distanceSqr =
+                        (
+                            npcTransform.position -
+                            transform.position
+                        ).sqrMagnitude;
+
+
+                    if (distanceSqr <
+                        bestDistanceSqr)
+                    {
+                        bestDistanceSqr =
+                            distanceSqr;
+
+
+                        bestTarget =
+                            npcTransform;
+
+
+                        bestNPC =
+                            npc;
+
+
+                        bestPlayer =
+                            null;
+                    }
+                }
+            }
+        }
+
+
+        // =====================================================
+        // 가장 가까운 대상 적용
+        // =====================================================
+
+        currentTarget =
+            bestTarget;
+
+
+        targetPlayer =
+            bestPlayer;
+
+
+        targetNPC =
+            bestNPC;
+    }
+
+
+    // =========================================================
+    // 현재 Target 생존 여부
+    // =========================================================
+
+    private bool IsCurrentTargetAlive()
+    {
+        if (currentTarget == null)
+            return false;
+
+
+        if (targetPlayer != null)
+        {
+            return !targetPlayer.IsDead;
+        }
+
+
+        if (targetNPC != null)
+        {
+            return !targetNPC.IsDead;
+        }
+
+
+        return false;
+    }
+
+
+    // =========================================================
+    // Target 제거
+    // =========================================================
+
+    private void ClearTarget()
+    {
+        currentTarget =
+            null;
+
+
+        targetPlayer =
+            null;
+
+
+        targetNPC =
+            null;
+    }
+
+
+    // =========================================================
+    // Target 추적
+    // =========================================================
+
+    private void ChaseTarget()
+    {
+        if (agent == null ||
+            currentTarget == null)
+        {
             return;
+        }
+
+
+        // Runtime NavMesh가 아직 없으면
+        // SetDestination 호출하지 않음
+        if (!agent.isOnNavMesh)
+        {
+            return;
+        }
 
 
         agent.isStopped =
@@ -203,16 +494,20 @@ public class EnemyAI : MonoBehaviour
 
 
         agent.SetDestination(
-            player.position
+            currentTarget.position
         );
 
 
-        // 이동 중에도 플레이어 쪽으로 회전
+        // =====================================================
+        // 이동 방향으로 회전
+        // =====================================================
+
         Vector3 direction =
             agent.desiredVelocity;
 
 
-        direction.y = 0f;
+        direction.y =
+            0f;
 
 
         if (direction.sqrMagnitude >
@@ -245,30 +540,36 @@ public class EnemyAI : MonoBehaviour
             return;
 
 
-        if (agent.isOnNavMesh)
-        {
-            agent.isStopped =
-                true;
+        if (!agent.isOnNavMesh)
+            return;
 
 
-            agent.ResetPath();
-        }
+        agent.isStopped =
+            true;
+
+
+        agent.ResetPath();
     }
 
 
     // =========================================================
-    // 플레이어 바라보기
+    // Target 바라보기
     // =========================================================
 
-    private void RotateTowardsPlayer()
+    private void RotateTowardsTarget()
     {
+        if (currentTarget == null)
+            return;
+
+
         Vector3 direction =
-            player.position -
+            currentTarget.position -
             transform.position;
 
 
         // 위아래로 몸이 기울어지지 않음
-        direction.y = 0f;
+        direction.y =
+            0f;
 
 
         if (direction.sqrMagnitude <
@@ -295,81 +596,83 @@ public class EnemyAI : MonoBehaviour
 
 
     // =========================================================
-    // 시야 확인
+    // 조준 위치
     // =========================================================
 
-    private bool CanSeePlayer()
+    private Vector3 GetTargetAimPosition()
     {
-        if (player == null)
+        if (currentTarget == null)
+        {
+            return transform.position;
+        }
+
+
+        Collider targetCollider =
+            currentTarget.GetComponentInChildren<Collider>();
+
+
+        if (targetCollider != null)
+        {
+            return targetCollider.bounds.center;
+        }
+
+
+        return currentTarget.position +
+               Vector3.up *
+               targetHeight;
+    }
+
+
+    // =========================================================
+    // Target 시야 확인
+    // =========================================================
+
+    private bool CanSeeTarget()
+    {
+        if (currentTarget == null)
             return false;
 
 
-        // ==========================================
-        // 1. Ray 시작 위치
-        // FirePoint가 있으면 총구에서 시작
-        // ==========================================
+        // =====================================================
+        // Ray 시작점
+        // =====================================================
 
-        Vector3 origin;
-
-        if (enemyShooter != null)
-        {
-            // 우선 Enemy 중심 정도에서 시작
-            origin = transform.position + Vector3.up * 0.5f;
-        }
-        else
-        {
-            origin = transform.position + Vector3.up * 0.5f;
-        }
+        Vector3 origin =
+            transform.position +
+            Vector3.up *
+            0.5f;
 
 
-        // ==========================================
-        // 2. Player의 실제 Collider 중심 찾기
-        // ==========================================
+        // =====================================================
+        // Target 중심
+        // =====================================================
 
-        Collider playerCollider =
-            player.GetComponentInChildren<Collider>();
+        Vector3 target =
+            GetTargetAimPosition();
 
-
-        Vector3 target;
-
-
-        if (playerCollider != null)
-        {
-            // 실제 Collider 정중앙
-            target =
-                playerCollider.bounds.center;
-        }
-        else
-        {
-            // Collider가 없을 경우 예비값
-            target =
-                player.position +
-                Vector3.up * 0.5f;
-        }
-
-
-        // ==========================================
-        // 3. 방향 계산
-        // ==========================================
 
         Vector3 direction =
-            target - origin;
+            target -
+            origin;
 
 
         float distance =
             direction.magnitude;
 
 
-        if (distance <= 0.01f)
+        if (distance <=
+            0.01f)
+        {
             return true;
+        }
 
 
         direction.Normalize();
 
 
-        // ==========================================
-        // 4. RaycastAll
-        // ==========================================
+        // =====================================================
+        // Raycast
+        // =====================================================
 
         RaycastHit[] hits =
             Physics.RaycastAll(
@@ -381,11 +684,12 @@ public class EnemyAI : MonoBehaviour
             );
 
 
-        // 가까운 순서로 정렬
         System.Array.Sort(
             hits,
             (a, b) =>
-                a.distance.CompareTo(b.distance)
+                a.distance.CompareTo(
+                    b.distance
+                )
         );
 
 
@@ -395,9 +699,9 @@ public class EnemyAI : MonoBehaviour
                 hit.collider.transform;
 
 
-            // ======================================
-            // Enemy 자기 자신은 무시
-            // ======================================
+            // =================================================
+            // Enemy 자기 자신 무시
+            // =================================================
 
             if (hitTransform == transform ||
                 hitTransform.IsChildOf(transform))
@@ -406,36 +710,68 @@ public class EnemyAI : MonoBehaviour
             }
 
 
-            // ======================================
-            // Player인지 검사
-            // ======================================
+            // =================================================
+            // 현재 Player Target인지 확인
+            // =================================================
 
-            PlayerStats hitPlayer =
-                hit.collider
-                    .GetComponentInParent<PlayerStats>();
-
-
-            if (hitPlayer != null)
+            if (targetPlayer != null)
             {
-                Debug.DrawLine(
-                    origin,
-                    hit.point,
-                    Color.green
-                );
+                PlayerStats hitPlayer =
+                    hit.collider
+                        .GetComponentInParent<PlayerStats>();
 
-                return true;
+
+                if (hitPlayer ==
+                    targetPlayer)
+                {
+                    Debug.DrawLine(
+                        origin,
+                        hit.point,
+                        Color.green
+                    );
+
+
+                    return true;
+                }
             }
 
 
-            // ======================================
-            // Player보다 먼저 벽 등을 만남
-            // ======================================
+            // =================================================
+            // 현재 NPC Target인지 확인
+            // =================================================
+
+            if (targetNPC != null)
+            {
+                NPCStats hitNPC =
+                    hit.collider
+                        .GetComponentInParent<NPCStats>();
+
+
+                if (hitNPC ==
+                    targetNPC)
+                {
+                    Debug.DrawLine(
+                        origin,
+                        hit.point,
+                        Color.green
+                    );
+
+
+                    return true;
+                }
+            }
+
+
+            // =================================================
+            // 목표 전에 벽 또는 다른 물체가 있음
+            // =================================================
 
             Debug.DrawLine(
                 origin,
                 hit.point,
                 Color.red
             );
+
 
             return false;
         }
@@ -448,25 +784,38 @@ public class EnemyAI : MonoBehaviour
             Color.yellow
         );
 
+
         return false;
     }
 
 
     // =========================================================
-    // Scene에서 거리 확인
+    // Scene Debug
     // =========================================================
 
     private void OnDrawGizmosSelected()
     {
+        // Detection
         Gizmos.DrawWireSphere(
             transform.position,
             detectionRange
         );
 
 
+        // Attack
         Gizmos.DrawWireSphere(
             transform.position,
             attackRange
         );
+
+
+        // 현재 선택된 Target
+        if (currentTarget != null)
+        {
+            Gizmos.DrawLine(
+                transform.position,
+                currentTarget.position
+            );
+        }
     }
 }
