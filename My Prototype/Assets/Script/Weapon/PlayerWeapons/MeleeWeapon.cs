@@ -54,11 +54,7 @@ public class MeleeWeapon : WeaponBase
 
     private void Awake()
     {
-        if (playerStats == null)
-        {
-            playerStats =
-                GetComponent<PlayerStats>();
-        }
+        FindPlayerStats();
     }
 
 
@@ -79,6 +75,21 @@ public class MeleeWeapon : WeaponBase
 
     private void TryAttack()
     {
+        if (playerStats == null)
+        {
+            FindPlayerStats();
+
+
+            if (playerStats == null)
+            {
+                Debug.LogError(
+                    "[MeleeWeapon] 공격 실패 : PlayerStats가 없습니다."
+                );
+
+                return;
+            }
+        }
+
         if (Time.time <
             nextAttackTime)
         {
@@ -176,11 +187,25 @@ public class MeleeWeapon : WeaponBase
 
 
     private void PerformAttack(
-        float multiplier
-    )
+    float multiplier
+)
     {
         if (attackPoint == null)
             return;
+
+
+        // ==========================================
+        // PlayerStats 확인
+        // ==========================================
+
+        if (playerStats == null)
+        {
+            FindPlayerStats();
+
+
+            if (playerStats == null)
+                return;
+        }
 
 
         float damage =
@@ -197,29 +222,56 @@ public class MeleeWeapon : WeaponBase
             );
 
 
-        HashSet<EnemyStats> hitEnemies =
-            new HashSet<EnemyStats>();
+        // ==========================================
+        // 같은 대상 중복 타격 방지
+        // ==========================================
+
+        HashSet<IHealth> hitTargets =
+            new HashSet<IHealth>();
 
 
         foreach (Collider hit in hits)
         {
-            EnemyStats enemy =
-                hit.GetComponentInParent
-                <EnemyStats>();
+            if (hit == null)
+                continue;
 
 
-            if (enemy == null ||
-                enemy.IsDead)
+            IHealth health =
+                hit.GetComponentInParent<IHealth>();
+
+
+            if (health == null)
+                continue;
+
+
+            // ==========================================
+            // 자기 Player는 공격하지 않음
+            // ==========================================
+
+            PlayerStats hitPlayer =
+                hit.GetComponentInParent<PlayerStats>();
+
+
+            if (hitPlayer == playerStats)
+                continue;
+
+
+            // ==========================================
+            // 이미 한 번 맞은 대상
+            // ==========================================
+
+            if (!hitTargets.Add(
+                    health))
             {
                 continue;
             }
 
 
-            if (!hitEnemies.Add(enemy))
+            if (health.IsDead)
                 continue;
 
 
-            enemy.TakeDamage(
+            health.TakeDamage(
                 damage
             );
         }
@@ -230,6 +282,41 @@ public class MeleeWeapon : WeaponBase
         );
     }
 
+    private void FindPlayerStats()
+    {
+        if (playerStats != null)
+            return;
+
+
+        // 1순위:
+        // 장착된 Weapon의 부모에서 PlayerStats 검색
+        playerStats =
+            GetComponentInParent<PlayerStats>();
+
+
+        // 2순위:
+        // 그래도 없으면 Scene의 PlayerStats 검색
+        if (playerStats == null)
+        {
+            playerStats =
+                FindFirstObjectByType<PlayerStats>();
+        }
+
+
+        if (playerStats != null)
+        {
+            Debug.Log(
+                $"[MeleeWeapon] PlayerStats 자동 연결 성공 : " +
+                $"{playerStats.gameObject.name}"
+            );
+        }
+        else
+        {
+            Debug.LogError(
+                "[MeleeWeapon] PlayerStats를 찾지 못했습니다."
+            );
+        }
+    }
 
     private void OnDrawGizmosSelected()
     {
