@@ -84,7 +84,9 @@ MonoBehaviour:
   damageMultiplier: 3
   fireRateMultiplier: 0.7
   pelletCount: 16
-  spreadRadius: 0.2
+  maxSpreadRadius: 0.2
+  minSpreadRadius: 0.03
+  aimTightenTime: 1
   antiClumpFactor: 0.01
   kickPitch: 3
   kickYaw: 1
