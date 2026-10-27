@@ -164,18 +164,18 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
             thirdPersonCam.AddRecoil(kickPitch, randomYaw);
         }
 
-        // 2. 조준 진행도를 기반으로 현재 탄퍼짐 범위(반지름) 계산
+        // 2. 조준 진행도를 기반으로 현재 탄퍼짐 범위 계산
         float currentSpreadRadius = Mathf.Lerp(maxSpreadRadius, minSpreadRadius, currentAimProgress);
-
         float totalDamage = PlayerStats.AttackPower * damageMultiplier;
         float damagePerPellet = totalDamage / pelletCount;
 
         Ray centerRay = PlayerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-
-        // 계산된 현재 탄퍼짐 범위를 넘겨주어 뭉침 방지 오프셋 생성
         List<Vector2> pelletOffsets = GenerateAntiClumpOffsets(currentSpreadRadius);
 
-        // 3. 산탄 발사
+        // ✨ 데미지 합산용 딕셔너리 (이번 발사에서 맞은 대상과 누적 데미지 기록) ✨
+        Dictionary<IHealth, float> damageMap = new Dictionary<IHealth, float>();
+
+        // 3. 산탄 발사 (레이캐스트 계산)
         for (int i = 0; i < pelletCount; i++)
         {
             Vector2 offset = pelletOffsets[i];
@@ -192,11 +192,18 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
             {
                 targetPoint = hit.point;
 
-                // IHealth 인터페이스 활용 데미지 처리
                 IHealth targetHealth = hit.collider.GetComponentInParent<IHealth>();
                 if (targetHealth != null && !targetHealth.IsDead)
                 {
-                    targetHealth.TakeDamage(damagePerPellet);
+                    // 즉시 데미지를 주지 않고, 딕셔너리에 대상과 데미지를 누적시킵니다.
+                    if (damageMap.ContainsKey(targetHealth))
+                    {
+                        damageMap[targetHealth] += damagePerPellet;
+                    }
+                    else
+                    {
+                        damageMap[targetHealth] = damagePerPellet;
+                    }
                 }
             }
             else
@@ -204,14 +211,21 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
                 targetPoint = pelletRay.GetPoint(maxAimDistance);
             }
 
+            // 시각 효과 생성
             MinigunTrailVFX trail = Instantiate(trailPrefab, firePoint.position, Quaternion.identity);
             trail.DrawTrail(firePoint.position, targetPoint);
         }
 
-        // 4. 발사 즉시 조준 진행도 초기화 (탄퍼짐이 다시 최대치로 리셋됨)
+        // ✨ 4. 누적된 데미지를 대상별로 딱 한 번씩만 일괄 적용 ✨
+        foreach (var kvp in damageMap)
+        {
+            kvp.Key.TakeDamage(kvp.Value);
+        }
+
+        // 5. 발사 즉시 조준 진행도 초기화
         currentAimProgress = 0f;
 
-        // 5. 탄약 차감
+        // 6. 탄약 차감
         currentAmmo--;
         NotifyAmmo();
 
