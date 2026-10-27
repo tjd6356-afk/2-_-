@@ -143,48 +143,161 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
         fireCooldownTimer -= currentRequiredDelay;
     }
 
-    private void Shoot(float delay)
+    private void Shoot(
+    float delay
+)
     {
+        // =========================================================
+        // Camera Recoil
+        // =========================================================
+
         if (thirdPersonCam != null)
         {
-            float currentKickPerSec = Mathf.Lerp(minCameraKickPerSec, maxCameraKickPerSec, currentSpool);
-            float kickThisShot = currentKickPerSec * delay;
+            float currentKickPerSec =
+                Mathf.Lerp(
+                    minCameraKickPerSec,
+                    maxCameraKickPerSec,
+                    currentSpool
+                );
 
-            float kickPitch = kickThisShot;
-            float kickYaw = UnityEngine.Random.Range(-kickThisShot, kickThisShot) * horizontalKickRatio;
 
-            thirdPersonCam.AddRecoil(kickPitch, kickYaw);
+            float kickThisShot =
+                currentKickPerSec *
+                delay;
+
+
+            float kickPitch =
+                kickThisShot;
+
+
+            float kickYaw =
+                UnityEngine.Random.Range(
+                    -kickThisShot,
+                    kickThisShot
+                ) *
+                horizontalKickRatio;
+
+
+            thirdPersonCam.AddRecoil(
+                kickPitch,
+                kickYaw
+            );
         }
 
-        Ray aimRay = PlayerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+        // =========================================================
+        // 화면 중앙으로 Ray
+        // =========================================================
+
+        Ray aimRay =
+            PlayerCamera.ViewportPointToRay(
+                new Vector3(
+                    0.5f,
+                    0.5f,
+                    0f
+                )
+            );
+
+
         Vector3 targetPoint;
 
-        if (Physics.Raycast(aimRay, out RaycastHit hit, maxAimDistance, aimMask, QueryTriggerInteraction.Ignore))
-        {
-            targetPoint = hit.point;
 
-            EnemyStats enemy = hit.collider.GetComponentInParent<EnemyStats>();
-            if (enemy != null && !enemy.IsDead)
+        // =========================================================
+        // Hit
+        // =========================================================
+
+        if (Physics.Raycast(
+                aimRay,
+                out RaycastHit hit,
+                maxAimDistance,
+                aimMask,
+                QueryTriggerInteraction.Ignore))
+        {
+            targetPoint =
+                hit.point;
+
+
+            // =====================================================
+            // Enemy / NPC 공통 체력 검색
+            // =====================================================
+
+            IHealth health =
+                hit.collider
+                    .GetComponentInParent<IHealth>();
+
+
+            if (health != null &&
+                !health.IsDead)
             {
-                float finalDamage = PlayerStats.AttackPower * damageMultiplier;
-                enemy.TakeDamage(finalDamage);
+                float finalDamage =
+                    PlayerStats.AttackPower *
+                    damageMultiplier;
+
+
+                health.TakeDamage(
+                    finalDamage
+                );
+
+
+                Debug.Log(
+                    $"[Minigun] Hit : " +
+                    $"{hit.collider.transform.root.name} / " +
+                    $"Damage = {finalDamage}"
+                );
             }
         }
+
+        // =========================================================
+        // 아무것도 안 맞은 경우
+        // =========================================================
+
         else
         {
-            targetPoint = aimRay.GetPoint(maxAimDistance);
+            targetPoint =
+                aimRay.GetPoint(
+                    maxAimDistance
+                );
         }
 
-        MinigunTrailVFX trail = Instantiate(trailPrefab, firePoint.position, Quaternion.identity);
-        trail.DrawTrail(firePoint.position, targetPoint);
+
+        // =========================================================
+        // Trail
+        // =========================================================
+
+        MinigunTrailVFX trail =
+            Instantiate(
+                trailPrefab,
+                firePoint.position,
+                Quaternion.identity
+            );
+
+
+        trail.DrawTrail(
+            firePoint.position,
+            targetPoint
+        );
+
+
+        // =========================================================
+        // Ammo
+        // =========================================================
 
         currentAmmo--;
+
+
         NotifyAmmo();
+
 
         if (currentAmmo <= 0)
         {
-            if (reserveMagazines > 0) LoadNextMagazine();
-            else TryFullReload();
+            if (reserveMagazines > 0)
+            {
+                LoadNextMagazine();
+            }
+            else
+            {
+                TryFullReload();
+            }
         }
     }
 

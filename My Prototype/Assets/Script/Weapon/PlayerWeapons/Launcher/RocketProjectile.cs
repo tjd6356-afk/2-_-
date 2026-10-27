@@ -4,114 +4,426 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class RocketProjectile : MonoBehaviour
 {
+    // =========================================================
+    // Movement
+    // =========================================================
+
     [Header("Rocket Movement")]
-    [SerializeField] private float initialSpeed = 5f;     // 처음 발사 속도
-    [SerializeField] private float maxSpeed = 35f;        // 최대 가속 속도
-    [SerializeField] private float acceleration = 20f;    // 초당 가속되는 정도
+
+    [SerializeField]
+    private float initialSpeed = 5f;
+
+
+    [SerializeField]
+    private float maxSpeed = 35f;
+
+
+    [SerializeField]
+    private float acceleration = 20f;
+
+
+    // =========================================================
+    // Explosion
+    // =========================================================
 
     [Header("Explosion Settings")]
-    [Tooltip("충돌 시 폭발을 일으킬 대상 태그 목록 (예: Enemy, Environment, Ground 등)")]
-    [SerializeField] private List<string> impactTags = new List<string> { "Enemy", "Wall", "Floor" };
 
-    [SerializeField] private float explosionRadius = 4f;  // 폭발 범위
-    [SerializeField] private float autoExplodeTime = 2f;  // 자동 폭발 시간
+    [Tooltip(
+        "충돌 시 폭발을 일으킬 대상 태그 목록"
+    )]
+    [SerializeField]
+    private List<string> impactTags =
+        new List<string>
+        {
+            "Enemy",
+            "Wall",
+            "Floor"
+        };
+
+
+    [SerializeField]
+    private float explosionRadius = 4f;
+
+
+    [SerializeField]
+    private float autoExplodeTime = 2f;
+
+
+    // =========================================================
+    // Effect
+    // =========================================================
 
     [Header("Effect")]
-    [Tooltip("폭발 시 생성될 파티클 프리팹 (선택)")]
-    [SerializeField] private GameObject explosionVFX;
 
-    // 런처에서 전달받을 변수들
+    [SerializeField]
+    private GameObject explosionVFX;
+
+
+    // =========================================================
+    // Runtime
+    // =========================================================
+
     private float currentSpeed;
+
     private float damage;
+
     private bool hasExploded;
 
-    public void Launch(Vector3 direction, float attackDamage, GameObject owner)
+
+    // 이 Rocket을 발사한 캐릭터
+    private GameObject owner;
+
+
+    // =========================================================
+    // Launch
+    // =========================================================
+
+    public void Launch(
+        Vector3 direction,
+        float attackDamage,
+        GameObject projectileOwner
+    )
     {
-        // 방향 설정 (런처에서 LookRotation으로 맞췄지만 확실하게 한 번 더 적용)
-        transform.forward = direction;
+        direction.Normalize();
 
-        damage = attackDamage;
-        currentSpeed = initialSpeed;
-        hasExploded = false;
 
-        // 발사 후 2초 뒤 자동 폭발 실행
-        Invoke(nameof(Explode), autoExplodeTime);
+        transform.forward =
+            direction;
+
+
+        damage =
+            attackDamage;
+
+
+        owner =
+            projectileOwner;
+
+
+        currentSpeed =
+            initialSpeed;
+
+
+        hasExploded =
+            false;
+
+
+        // ==========================================
+        // 발사자와 Rocket Collider 충돌 무시
+        // ==========================================
+
+        Collider rocketCollider =
+            GetComponent<Collider>();
+
+
+        if (owner != null &&
+            rocketCollider != null)
+        {
+            Collider[] ownerColliders =
+                owner.GetComponentsInChildren<Collider>();
+
+
+            foreach (
+                Collider ownerCollider
+                in ownerColliders)
+            {
+                if (ownerCollider == null)
+                    continue;
+
+
+                Physics.IgnoreCollision(
+                    rocketCollider,
+                    ownerCollider,
+                    true
+                );
+            }
+        }
+
+
+        // 일정 시간 후 자동 폭발
+        Invoke(
+            nameof(Explode),
+            autoExplodeTime
+        );
     }
+
+
+    // =========================================================
+    // Movement
+    // =========================================================
 
     private void Update()
     {
-        if (hasExploded) return;
+        if (hasExploded)
+            return;
 
-        // 1. 점점 빨라지는 가속 로직
-        currentSpeed += acceleration * Time.deltaTime;
-        currentSpeed = Mathf.Min(currentSpeed, maxSpeed); // 최대 속도 제한
 
-        // 2. 앞으로 이동
-        transform.position += transform.forward * currentSpeed * Time.deltaTime;
+        // ==========================================
+        // 가속
+        // ==========================================
+
+        currentSpeed +=
+            acceleration *
+            Time.deltaTime;
+
+
+        currentSpeed =
+            Mathf.Min(
+                currentSpeed,
+                maxSpeed
+            );
+
+
+        // ==========================================
+        // 이동
+        // ==========================================
+
+        transform.position +=
+            transform.forward *
+            currentSpeed *
+            Time.deltaTime;
     }
 
-    // Trigger나 Collision 둘 다 대응 가능하도록 설정 (Collider의 IsTrigger 체크 여부에 따라 다름)
-    private void OnTriggerEnter(Collider other)
+
+    // =========================================================
+    // Trigger
+    // =========================================================
+
+    private void OnTriggerEnter(
+        Collider other
+    )
     {
-        CheckImpact(other.gameObject);
+        CheckImpact(
+            other.gameObject
+        );
     }
 
-    private void OnCollisionEnter(Collision collision)
+
+    // =========================================================
+    // Collision
+    // =========================================================
+
+    private void OnCollisionEnter(
+        Collision collision
+    )
     {
-        CheckImpact(collision.gameObject);
+        CheckImpact(
+            collision.gameObject
+        );
     }
 
-    private void CheckImpact(GameObject hitObject)
-    {
-        if (hasExploded) return;
 
-        // 태그 목록에 포함된 물체에 부딪혔을 때만 폭발
-        if (impactTags.Contains(hitObject.tag))
+    // =========================================================
+    // Impact
+    // =========================================================
+
+    private void CheckImpact(
+        GameObject hitObject
+    )
+    {
+        if (hasExploded)
+            return;
+
+
+        if (hitObject == null)
+            return;
+
+
+        // ==========================================
+        // 발사자 자신 무시
+        // ==========================================
+
+        if (owner != null)
+        {
+            if (hitObject == owner ||
+                hitObject.transform.IsChildOf(
+                    owner.transform
+                ))
+            {
+                return;
+            }
+        }
+
+
+        // ==========================================
+        // Enemy / NPC처럼
+        // IHealth가 있으면 바로 폭발
+        // ==========================================
+
+        IHealth health =
+            hitObject.GetComponentInParent<IHealth>();
+
+
+        if (health != null)
+        {
+            Explode();
+
+            return;
+        }
+
+
+        // ==========================================
+        // Wall / Floor 등의 지정 Tag
+        // ==========================================
+
+        if (impactTags.Contains(
+                hitObject.tag))
         {
             Explode();
         }
     }
 
+
+    // =========================================================
+    // Explosion
+    // =========================================================
+
     private void Explode()
     {
-        if (hasExploded) return;
-        hasExploded = true;
+        if (hasExploded)
+            return;
 
-        // 1. 시각 효과 (VFX) 생성 및 크기 조절
+
+        hasExploded =
+            true;
+
+
+        CancelInvoke(
+            nameof(Explode)
+        );
+
+
+        // =====================================================
+        // 1. Explosion VFX
+        // =====================================================
+
         if (explosionVFX != null)
         {
-            GameObject vfx = Instantiate(explosionVFX, transform.position, Quaternion.identity);
+            GameObject vfx =
+                Instantiate(
+                    explosionVFX,
+                    transform.position,
+                    Quaternion.identity
+                );
 
-            // 폭발 범위(반지름)를 지름으로 변환하여 스케일 적용
-            // 파티클의 Scaling Mode가 Local이나 Hierarchy일 때 정상 작동합니다.
-            vfx.transform.localScale = Vector3.one * (explosionRadius * 2f);
 
-            // 파티클이 재생된 후 쓰레기가 쌓이지 않도록 1초 뒤 자동 삭제
-            Destroy(vfx, 1f);
+            vfx.transform.localScale =
+                Vector3.one *
+                (
+                    explosionRadius *
+                    2f
+                );
+
+
+            Destroy(
+                vfx,
+                1f
+            );
         }
 
-        // 2. 폭발 범위 내의 적(EnemyStats) 찾아서 데미지 적용
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, explosionRadius);
-        HashSet<EnemyStats> damagedEnemies = new HashSet<EnemyStats>();
 
-        foreach (Collider hit in hitColliders)
+        // =====================================================
+        // 2. 폭발 범위 탐색
+        // =====================================================
+
+        Collider[] hitColliders =
+            Physics.OverlapSphere(
+                transform.position,
+                explosionRadius
+            );
+
+
+        // 같은 캐릭터에 Collider가 여러 개 있어도
+        // 한 번만 데미지
+        HashSet<IHealth> damagedTargets =
+            new HashSet<IHealth>();
+
+
+        foreach (
+            Collider hit in hitColliders)
         {
-            EnemyStats enemy = hit.GetComponentInParent<EnemyStats>();
+            if (hit == null)
+                continue;
 
-            if (enemy != null && !enemy.IsDead && damagedEnemies.Add(enemy))
+
+            // ==========================================
+            // 발사자 자신 제외
+            // ==========================================
+
+            if (owner != null)
             {
-                enemy.TakeDamage(damage);
+                if (hit.gameObject == owner ||
+                    hit.transform.IsChildOf(
+                        owner.transform
+                    ))
+                {
+                    continue;
+                }
             }
+
+
+            // ==========================================
+            // IHealth 탐색
+            // ==========================================
+
+            IHealth health =
+                hit.GetComponentInParent<IHealth>();
+
+
+            if (health == null)
+                continue;
+
+
+            if (health.IsDead)
+                continue;
+
+
+            // ==========================================
+            // 같은 대상 중복 피해 방지
+            // ==========================================
+
+            if (!damagedTargets.Add(
+                    health))
+            {
+                continue;
+            }
+
+
+            // ==========================================
+            // 데미지
+            // ==========================================
+
+            health.TakeDamage(
+                damage
+            );
+
+
+            Debug.Log(
+                $"[Rocket] Explosion Damage : " +
+                $"{damage} / " +
+                $"{hit.transform.root.name}"
+            );
         }
 
-        // 폭발 로직이 끝났으므로 로켓 오브젝트 제거
-        Destroy(gameObject);
+
+        // =====================================================
+        // Rocket 제거
+        // =====================================================
+
+        Destroy(
+            gameObject
+        );
     }
 
-    // 에디터에서 폭발 범위를 시각적으로 볼 수 있게 해주는 기능
+
+    // =========================================================
+    // Gizmo
+    // =========================================================
+
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, explosionRadius);
+        Gizmos.DrawWireSphere(
+            transform.position,
+            explosionRadius
+        );
     }
 }
