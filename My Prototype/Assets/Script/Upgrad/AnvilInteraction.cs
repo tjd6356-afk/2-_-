@@ -9,7 +9,6 @@ public class AnvilInteraction : MonoBehaviour
     [SerializeField]
     private GameObject upgradeUIPanel;
 
-
     [Header("Mouse Interaction")]
     [Tooltip("모루를 클릭할 때 사용할 카메라")]
     [SerializeField]
@@ -27,11 +26,13 @@ public class AnvilInteraction : MonoBehaviour
     // =========================================================
     // Runtime
     // =========================================================
-
     private bool playerInside;
 
-    // 나중에 업그레이드 패널로 무기 정보를 넘겨주기 위해 플레이어의 무기 매니저를 저장해 둡니다.
+    // 상호작용 시 무기 정보를 넘겨주기 위한 매니저 캐싱
     private PlayerWeaponManager cachedWeaponManager;
+
+    // ✨ 추가: UI가 열렸을 때 조작을 잠그기 위한 컨트롤 캐싱
+    private PlayerGameplayControl cachedPlayerControl;
 
 
     private void Awake()
@@ -41,148 +42,119 @@ public class AnvilInteraction : MonoBehaviour
             interactionCamera = Camera.main;
         }
 
-        // 시작할 때 업그레이드 패널이 켜져있다면 꺼줍니다.
         if (upgradeUIPanel != null && upgradeUIPanel.activeSelf)
         {
             upgradeUIPanel.SetActive(false);
         }
     }
 
-
     private void Update()
     {
         if (!playerInside)
             return;
 
-
-        // 이미 업그레이드 창이 열려 있다면 입력을 무시합니다.
+        // ==========================================
+        // UI가 열려있을 때의 처리 (닫기)
+        // ==========================================
         if (upgradeUIPanel != null && upgradeUIPanel.activeSelf)
+        {
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                CloseUpgradePanel();
+            }
             return;
-
+        }
 
         // ==========================================
-        // E키로 상호작용
+        // UI가 닫혀있을 때의 처리 (열기)
         // ==========================================
-
-        if (Keyboard.current != null &&
-            Keyboard.current.eKey.wasPressedThisFrame)
+        if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
             OpenUpgradePanel();
             return;
         }
 
-
-        // ==========================================
-        // 마우스 좌클릭으로 상호작용
-        // ==========================================
-
-        if (Mouse.current != null &&
-            Mouse.current.leftButton.wasPressedThisFrame)
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             TryOpenPanelByMouse();
         }
     }
 
-
-    // =========================================================
-    // 마우스 클릭 레이캐스트 판정
-    // =========================================================
-
     private void TryOpenPanelByMouse()
     {
-        if (interactionCamera == null)
-            return;
+        if (interactionCamera == null) return;
 
         Ray ray;
 
         if (Cursor.lockState == CursorLockMode.Locked)
-        {
-            // 조준 중일 때는 화면 중앙 십자선 기준
             ray = interactionCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        }
         else
-        {
-            // 마우스 커서가 자유로울 때는 실제 마우스 커서 위치 기준
-            Vector2 mousePosition = Mouse.current.position.ReadValue();
-            ray = interactionCamera.ScreenPointToRay(mousePosition);
-        }
+            ray = interactionCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
 
-
-        if (!Physics.Raycast(
-                ray,
-                out RaycastHit hit,
-                clickRayDistance,
-                clickLayerMask,
-                QueryTriggerInteraction.Ignore))
-        {
-            return;
-        }
-
-
-        Transform hitTransform = hit.collider.transform;
-
-        // 클릭한 오브젝트가 이 모루(또는 자식 오브젝트)인지 확인
-        bool clickedThisAnvil = hitTransform == transform || hitTransform.IsChildOf(transform);
-
-        if (!clickedThisAnvil)
+        if (!Physics.Raycast(ray, out RaycastHit hit, clickRayDistance, clickLayerMask, QueryTriggerInteraction.Ignore))
             return;
 
-
-        OpenUpgradePanel();
+        if (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform))
+        {
+            OpenUpgradePanel();
+        }
     }
 
-
     // =========================================================
-    // 업그레이드 패널 띄우기
+    // 패널 열기 & 게임 잠금
     // =========================================================
-
     private void OpenUpgradePanel()
     {
-        if (upgradeUIPanel == null)
-        {
-            Debug.LogError("연결된 Upgrade UI Panel이 없습니다!");
-            return;
-        }
+        if (upgradeUIPanel == null) return;
 
-        Debug.Log("모루 상호작용: 무기 업그레이드 패널 열기");
-
-        // 1. UI 패널 활성화
         upgradeUIPanel.SetActive(true);
 
-        // [이후 구현할 부분]
-        // 2. 패널 스크립트에 cachedWeaponManager를 넘겨주어 현재 무기 정보 띄우기
-        // 3. PlayerGameplayControl.GameplayLocked = true; 등을 호출하여 캐릭터 조작 잠그고 마우스 풀기
+        // ✨ 수정됨: PlayerGameplayControl에 이미 구현된 완벽한 잠금 함수를 호출합니다.
+        if (cachedPlayerControl != null)
+        {
+            cachedPlayerControl.LockControls();
+        }
     }
 
+    // =========================================================
+    // 패널 닫기 & 게임 재개
+    // =========================================================
+    private void CloseUpgradePanel()
+    {
+        if (upgradeUIPanel == null) return;
+
+        upgradeUIPanel.SetActive(false);
+
+        // ✨ 수정됨: PlayerGameplayControl에 이미 구현된 완벽한 해제 함수를 호출합니다.
+        if (cachedPlayerControl != null)
+        {
+            cachedPlayerControl.UnlockControls();
+        }
+    }
 
     // =========================================================
-    // Player 범위 진입 / 이탈 감지
+    // Player 범위 감지 및 캐싱
     // =========================================================
-
     private void OnTriggerEnter(Collider other)
     {
-        // 무기 매니저를 찾아 플레이어인지 확실하게 검증하고 캐싱합니다.
         PlayerWeaponManager weaponManager = other.GetComponentInParent<PlayerWeaponManager>();
+        PlayerGameplayControl playerControl = other.GetComponentInParent<PlayerGameplayControl>();
 
-        if (weaponManager == null)
-            return;
+        if (weaponManager == null || playerControl == null) return;
 
         playerInside = true;
         cachedWeaponManager = weaponManager;
-
-        Debug.Log("모루 범위 내로 플레이어 진입");
+        cachedPlayerControl = playerControl; // 플레이어 컨트롤러를 찾아 저장해 둡니다.
     }
 
     private void OnTriggerExit(Collider other)
     {
+        // 나갈 때는 저장해둔 캐싱 정보들을 모두 비워줍니다.
         PlayerWeaponManager weaponManager = other.GetComponentInParent<PlayerWeaponManager>();
-
-        if (weaponManager == null)
-            return;
+        if (weaponManager == null) return;
 
         playerInside = false;
         cachedWeaponManager = null;
-
-        Debug.Log("모루 범위 밖으로 플레이어 이탈");
+        cachedPlayerControl = null;
     }
 }
