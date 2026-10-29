@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 [DefaultExecutionOrder(-100)]
@@ -103,13 +103,24 @@ public class AnvilInteraction : MonoBehaviour
     // =========================================================
     // 패널 열기 & 게임 잠금
     // =========================================================
+    // =========================================================
+    // 패널 열기 & 게임 잠금
+    // =========================================================
     private void OpenUpgradePanel()
     {
         if (upgradeUIPanel == null) return;
 
-        upgradeUIPanel.SetActive(true);
+        // ✨ 수정된 부분: WeaponUpgradePanelUI 컴포넌트를 찾아서 정보를 넘기며 엽니다.
+        WeaponUpgradePanelUI panelUI = upgradeUIPanel.GetComponent<WeaponUpgradePanelUI>();
+        if (panelUI != null)
+        {
+            panelUI.OpenPanel(cachedWeaponManager);
+        }
+        else
+        {
+            upgradeUIPanel.SetActive(true); // 혹시 스크립트가 안 붙어있을 때를 대비한 예외처리
+        }
 
-        // ✨ 수정됨: PlayerGameplayControl에 이미 구현된 완벽한 잠금 함수를 호출합니다.
         if (cachedPlayerControl != null)
         {
             cachedPlayerControl.LockControls();
