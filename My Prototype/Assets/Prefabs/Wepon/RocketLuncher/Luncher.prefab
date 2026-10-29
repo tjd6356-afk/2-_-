@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb14efc5c04918f49a9470846f9745e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LauncherWeapon
-  weaponId: weapon_003
+  weaponId: weapon_0001
   weaponName: luncher
   weaponType: 4
   firePoint: {fileID: 3813221830899585027}

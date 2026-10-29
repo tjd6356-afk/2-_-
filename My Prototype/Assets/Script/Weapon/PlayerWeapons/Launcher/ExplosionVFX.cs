@@ -13,12 +13,16 @@ public class ExplosionVFX : MonoBehaviour
     private Material myMaterial;
     private Color initialColor;
 
+    // ✨ 핵심: 무기 쪽에서 생성 직후 이 함수를 불러 폭발 크기를 맞춰줍니다. ✨
+    public void SetRadius(float radius)
+    {
+        maxRadius = radius;
+    }
+
     private void Start()
     {
-        // 처음 시작할 때 크기를 0으로 만듭니다.
         transform.localScale = Vector3.zero;
 
-        // 구체의 렌더러에서 머티리얼을 가져옵니다. (투명해지게 만들기 위함)
         Renderer rend = GetComponent<Renderer>();
         if (rend != null)
         {
@@ -26,7 +30,7 @@ public class ExplosionVFX : MonoBehaviour
 
             if (myMaterial.HasProperty("_Color"))
                 initialColor = myMaterial.color;
-            else if (myMaterial.HasProperty("_BaseColor")) // URP 대응
+            else if (myMaterial.HasProperty("_BaseColor"))
                 initialColor = myMaterial.GetColor("_BaseColor");
         }
     }
@@ -36,13 +40,13 @@ public class ExplosionVFX : MonoBehaviour
         timer += Time.deltaTime;
         float progress = timer / duration;
 
-        // 1. 크기 커지기
+        // 1. 크기 커지기 (변경된 maxRadius가 적용됨)
         float currentScale = Mathf.Lerp(0f, maxRadius * 2f, progress);
         transform.localScale = new Vector3(currentScale, currentScale, currentScale);
 
         if (myMaterial != null)
         {
-            // 2. 투명도 조절 (기존 코드)
+            // 2. 투명도 조절
             Color newColor = initialColor;
             newColor.a = Mathf.Lerp(initialColor.a, 0f, progress);
 
@@ -51,16 +55,14 @@ public class ExplosionVFX : MonoBehaviour
             else if (myMaterial.HasProperty("_BaseColor"))
                 myMaterial.SetColor("_BaseColor", newColor);
 
-            // 3. ✨ 빛(Emission) 서서히 꺼지게 만들기 추가 ✨
+            // 3. 빛 서서히 끄기
             if (myMaterial.HasProperty("_EmissionColor"))
             {
-                // progress가 1에 가까워질수록 Color.black(빛 없음)으로 변함
                 Color currentEmission = Color.Lerp(initialColor, Color.black, progress);
                 myMaterial.SetColor("_EmissionColor", currentEmission);
             }
         }
 
-        // 시간이 다 되면 파괴
         if (timer >= duration)
         {
             Destroy(gameObject);

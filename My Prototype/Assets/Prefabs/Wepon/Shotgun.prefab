@@ -76,7 +76,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a0c2872f0be4904eb12391d0e57975f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShotgunWeapon
-  weaponId: weapon_005
+  weaponId: weapon_01
   weaponName: shotgun
   weaponType: 0
   firePoint: {fileID: 4014565773434977279}
