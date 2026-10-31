@@ -40,6 +40,16 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
     [SerializeField, Range(0f, 1f)] private float minSpoolToFire = 0.2f;
     [SerializeField] private AnimationCurve windUpCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
 
+    [Header("Barrel Rotation (총열 회전)")]
+    [Tooltip("회전시킬 총열 모델의 Transform (몸통 말고 총열 부품)")]
+    [SerializeField] private Transform barrelTransform;
+
+    [Tooltip("최대 예열 상태(100%)일 때의 1초당 회전 속도")]
+    [SerializeField] private float maxBarrelRotationSpeed = 1000f;
+
+    [Tooltip("총열이 회전할 로컬 축 (모델에 따라 X, Y, Z 중 하나를 1로 설정)")]
+    [SerializeField] private Vector3 barrelRotationAxis = Vector3.forward;
+
     [Header("Camera Recoil (카메라 반동/흔들림)")]
     [SerializeField] private float minCameraKickPerSec = 2.0f;
     [SerializeField] private float maxCameraKickPerSec = 12.0f;
@@ -106,6 +116,14 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
             currentSpool = Mathf.MoveTowards(currentSpool, 1f, Time.deltaTime / windUpTime);
         else
             currentSpool = Mathf.MoveTowards(currentSpool, 0f, Time.deltaTime / windDownTime);
+
+
+        //예열 진행도에 비례한 총열 회전 적용
+        if (barrelTransform != null)
+        {
+            float currentRotationSpeed = maxBarrelRotationSpeed * currentSpool;
+            barrelTransform.Rotate(barrelRotationAxis * currentRotationSpeed * Time.deltaTime, Space.Self);
+        }
 
         if (isAiming && isShooting)
         {
