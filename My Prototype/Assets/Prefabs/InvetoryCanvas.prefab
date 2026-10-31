@@ -1897,7 +1897,7 @@ MonoBehaviour:
   cancelButton: {fileID: 8123604184255838914}
   popupOffset: {x: 15, y: 0}
   inventoryCanvasGroup: {fileID: 3588117082357766594}
-  effectInventoryAlpha: 0.25
+  effectInventoryAlpha: 0
   itemEffectUI: {fileID: 1025685676017692073}
 --- !u!114 &1025685676017692073
 MonoBehaviour:
