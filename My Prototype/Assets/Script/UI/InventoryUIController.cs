@@ -14,6 +14,10 @@ public class InventoryUIController : MonoBehaviour
     [SerializeField]
     private GameObject inventoryRoot;
 
+    [Header("Tab")]
+
+    [SerializeField]
+    private InventoryTabController tabController;
 
     [Header("Blocked Message")]
 
@@ -94,9 +98,14 @@ public class InventoryUIController : MonoBehaviour
             return;
 
 
-        if (Keyboard.current.iKey.wasPressedThisFrame)
+        bool inventoryKeyPressed =
+            Keyboard.current.iKey.wasPressedThisFrame ||
+            Keyboard.current.tabKey.wasPressedThisFrame;
+
+
+        if (inventoryKeyPressed)
         {
-            HandleInventoryInput();
+            ToggleInventory();
         }
     }
 
@@ -213,6 +222,10 @@ public class InventoryUIController : MonoBehaviour
             true
         );
 
+        if (tabController != null)
+        {
+            tabController.ResetToDefaultTab();
+        }
 
         // 다른 UI 위로 올림
         inventoryRoot.transform.SetAsLastSibling();
