@@ -379,6 +379,14 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  circleAttackChance: 0.5
+  circleAttackRadius: 18
+  circleWarningTotalTime: 1.4
+  circleWarningGrowTime: 0.85
+  circleAttackHeight: 4
+  circleWarningHeight: 0.04
+  circleGroundOffset: 0.03
+  circleWarningPrefab: {fileID: 7045955803062671587, guid: 48d15447e2487f74a9b7035037d47a95, type: 3}
 --- !u!114 &83314884
 MonoBehaviour:
   m_ObjectHideFlags: 0

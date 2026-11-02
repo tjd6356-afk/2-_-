@@ -135,6 +135,57 @@ public class BossPatternAI : MonoBehaviour
     private LayerMask groundMask = ~0;
 
     // =========================================================
+    // Pattern Selection
+    // =========================================================
+
+    [Header("Pattern Selection")]
+
+    [Tooltip("원형 공격을 사용할 확률. 0.5 = 50%")]
+    [SerializeField, Range(0f, 1f)]
+    private float circleAttackChance = 0.5f;
+
+
+    // =========================================================
+    // Circle Attack
+    // =========================================================
+
+    [Header("Circle Attack")]
+
+    [Tooltip("원형 공격 최대 반경")]
+    [SerializeField]
+    private float circleAttackRadius = 5f;
+
+
+    [Tooltip("원형 공격 전체 예고 시간")]
+    [SerializeField]
+    private float circleWarningTotalTime = 1.4f;
+
+
+    [Tooltip("원이 최대 크기까지 커지는 시간")]
+    [SerializeField]
+    private float circleWarningGrowTime = 0.85f;
+
+
+    [Tooltip("실제 공격 판정 높이")]
+    [SerializeField]
+    private float circleAttackHeight = 2f;
+
+
+    [Tooltip("바닥 경고의 두께")]
+    [SerializeField]
+    private float circleWarningHeight = 0.04f;
+
+
+    [Tooltip("바닥과 겹치지 않도록 살짝 띄우는 값")]
+    [SerializeField]
+    private float circleGroundOffset = 0.03f;
+
+
+    [Tooltip("원형 공격 경고용 Cylinder Prefab")]
+    [SerializeField]
+    private GameObject circleWarningPrefab;
+
+    // =========================================================
     // Runtime
     // =========================================================
 
@@ -649,10 +700,29 @@ public class BossPatternAI : MonoBehaviour
             return;
 
 
-        attackRoutine =
-            StartCoroutine(
-                AttackRoutine()
-            );
+        // ==========================================
+        // 패턴 선택
+        // ==========================================
+
+        bool useCircleAttack =
+            Random.value <
+            circleAttackChance;
+
+
+        if (useCircleAttack)
+        {
+            attackRoutine =
+                StartCoroutine(
+                    CircleAttackRoutine()
+                );
+        }
+        else
+        {
+            attackRoutine =
+                StartCoroutine(
+                    AttackRoutine()
+                );
+        }
     }
 
 
@@ -1174,6 +1244,363 @@ public class BossPatternAI : MonoBehaviour
 
 
             yield return null;
+        }
+    }
+
+    // =========================================================
+    // Circle Attack Pattern
+    // =========================================================
+
+    private IEnumerator CircleAttackRoutine()
+    {
+        isAttacking =
+            true;
+
+
+        StopMoving();
+
+
+        // ==========================================
+        // Player 방향 바라보기
+        // ==========================================
+
+        RotateTowardsPlayer();
+
+
+        // ==========================================
+        // 공격 시작 시 Boss의 위치를 고정
+        // ==========================================
+
+        Vector3 circleCenter =
+            transform.position;
+
+
+        // 기존에 만든 바닥 검색 함수 사용
+        Vector3 groundPosition =
+            FindGroundPosition(
+                circleCenter
+            );
+
+
+        // ==========================================
+        // Warning 생성
+        // ==========================================
+
+        if (circleWarningPrefab != null)
+        {
+            Vector3 warningPosition =
+                groundPosition +
+                Vector3.up *
+                (
+                    circleGroundOffset +
+                    circleWarningHeight *
+                    0.5f
+                );
+
+
+            currentWarning =
+                Instantiate(
+                    circleWarningPrefab,
+                    warningPosition,
+                    Quaternion.identity
+                );
+
+
+            // 혹시 Collider가 있으면 비활성화
+            Collider[] warningColliders =
+                currentWarning
+                    .GetComponentsInChildren<Collider>();
+
+
+            foreach (Collider col in warningColliders)
+            {
+                col.enabled =
+                    false;
+            }
+        }
+
+
+        // ==========================================
+        // 성장 시간
+        // ==========================================
+
+        float growTime =
+            Mathf.Clamp(
+                circleWarningGrowTime,
+                0.01f,
+                circleWarningTotalTime
+            );
+
+
+        float elapsed =
+            0f;
+
+
+        // ==========================================
+        // 0 → 최대 크기
+        // ==========================================
+
+        while (elapsed <
+               growTime)
+        {
+            // Groggy / 사망 / 전투 종료
+            if (!battleActive ||
+                bossStats.IsDead ||
+                bossStats.IsGroggy)
+            {
+                CleanupWarning();
+
+
+                isAttacking =
+                    false;
+
+
+                attackRoutine =
+                    null;
+
+
+                yield break;
+            }
+
+
+            elapsed +=
+                Time.deltaTime;
+
+
+            float t =
+                Mathf.Clamp01(
+                    elapsed /
+                    growTime
+                );
+
+
+            // 조금 더 자연스럽게 커지게
+            float smoothT =
+                Mathf.SmoothStep(
+                    0f,
+                    1f,
+                    t
+                );
+
+
+            float diameter =
+                Mathf.Lerp(
+                    0.05f,
+                    circleAttackRadius * 2f,
+                    smoothT
+                );
+
+
+            if (currentWarning != null)
+            {
+                // Unity 기본 Cylinder 기준
+                // X/Z = 지름
+                // Y = 매우 얇게
+                currentWarning.transform.localScale =
+                    new Vector3(
+                        diameter,
+                        circleWarningHeight * 0.5f,
+                        diameter
+                    );
+            }
+
+
+            yield return null;
+        }
+
+
+        // ==========================================
+        // 정확히 최대 크기로 고정
+        // ==========================================
+
+        if (currentWarning != null)
+        {
+            float maxDiameter =
+                circleAttackRadius *
+                2f;
+
+
+            currentWarning.transform.localScale =
+                new Vector3(
+                    maxDiameter,
+                    circleWarningHeight * 0.5f,
+                    maxDiameter
+                );
+        }
+
+
+        // ==========================================
+        // 남은 예고 시간
+        //
+        // 예:
+        // Total = 1.4
+        // Grow  = 0.85
+        //
+        // Wait = 0.55
+        // ==========================================
+
+        float remainingWarningTime =
+            Mathf.Max(
+                0f,
+                circleWarningTotalTime -
+                growTime
+            );
+
+
+        if (remainingWarningTime > 0f)
+        {
+            yield return new WaitForSeconds(
+                remainingWarningTime
+            );
+        }
+
+
+        // ==========================================
+        // 공격 직전 상태 재확인
+        // ==========================================
+
+        if (!battleActive ||
+            bossStats.IsDead ||
+            bossStats.IsGroggy)
+        {
+            CleanupWarning();
+
+
+            isAttacking =
+                false;
+
+
+            attackRoutine =
+                null;
+
+
+            yield break;
+        }
+
+
+        // ==========================================
+        // 실제 원형 공격
+        // ==========================================
+
+        PerformCircleAttack(
+            groundPosition
+        );
+
+
+        // ==========================================
+        // Warning 제거
+        // ==========================================
+
+        CleanupWarning();
+
+
+        // ==========================================
+        // 후딜
+        // ==========================================
+
+        yield return new WaitForSeconds(
+            attackCooldown
+        );
+
+
+        isAttacking =
+            false;
+
+
+        attackRoutine =
+            null;
+    }
+
+    // =========================================================
+    // Circle Damage
+    // =========================================================
+
+    private void PerformCircleAttack(
+        Vector3 groundPosition
+    )
+    {
+        Vector3 overlapCenter =
+            groundPosition +
+            Vector3.up *
+            (
+                circleAttackHeight *
+                0.5f
+            );
+
+
+        // 우선 주변 대상 검색
+        Collider[] hits =
+            Physics.OverlapSphere(
+                overlapCenter,
+                circleAttackRadius,
+                playerMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+
+        HashSet<PlayerStats> damagedPlayers =
+            new HashSet<PlayerStats>();
+
+
+        foreach (Collider hit in hits)
+        {
+            PlayerStats hitPlayer =
+                hit.GetComponentInParent<PlayerStats>();
+
+
+            if (hitPlayer == null ||
+                hitPlayer.IsDead)
+            {
+                continue;
+            }
+
+
+            if (!damagedPlayers.Add(
+                    hitPlayer))
+            {
+                continue;
+            }
+
+
+            // ==========================================
+            // 중요한 부분:
+            // 구형 범위가 아니라 바닥 기준 원형 거리 확인
+            // ==========================================
+
+            Vector3 playerOffset =
+                hitPlayer.transform.position -
+                groundPosition;
+
+
+            playerOffset.y =
+                0f;
+
+
+            float horizontalDistanceSqr =
+                playerOffset.sqrMagnitude;
+
+
+            if (horizontalDistanceSqr >
+                circleAttackRadius *
+                circleAttackRadius)
+            {
+                continue;
+            }
+
+
+            // ==========================================
+            // Damage
+            // ==========================================
+
+            hitPlayer.TakeDamage(
+                bossStats.AttackPower
+            );
+
+
+            Debug.Log(
+                $"[Boss] Circle Attack Hit / " +
+                $"Damage = {bossStats.AttackPower}"
+            );
         }
     }
 }
