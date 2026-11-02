@@ -90,6 +90,29 @@ public class BossPatternAI : MonoBehaviour
     [SerializeField]
     private GameObject attackWarningPrefab;
 
+    [Tooltip("바닥에 표시되는 경고의 두께")]
+    [SerializeField]
+    private float warningHeight = 0.05f;
+
+
+    [Tooltip("바닥과 겹쳐 깜빡이는 것을 방지하기 위한 높이")]
+    [SerializeField]
+    private float warningGroundOffset = 0.03f;
+
+
+    [Tooltip("바닥을 찾기 위해 위에서 Ray를 시작하는 높이")]
+    [SerializeField]
+    private float groundSearchHeight = 5f;
+
+
+    [Tooltip("바닥 탐색 최대 거리")]
+    [SerializeField]
+    private float groundSearchDistance = 20f;
+
+
+    [Tooltip("바닥으로 사용할 Layer")]
+    [SerializeField]
+    private LayerMask groundMask = ~0;
 
     // =========================================================
     // Runtime
@@ -662,13 +685,34 @@ public class BossPatternAI : MonoBehaviour
 
 
         // ==========================================
-        // 공격 중심
+        // Boss 앞쪽의 공격 예정 X/Z 위치
+        // ==========================================
+
+        Vector3 attackBasePosition =
+            transform.position +
+            attackDirection *
+            attackForwardOffset;
+
+
+        // ==========================================
+        // 실제 바닥 위치 검색
+        // ==========================================
+
+        Vector3 groundPosition =
+            FindGroundPosition(
+                attackBasePosition
+            );
+
+
+        // ==========================================
+        // 실제 공격 판정 중심
+        //
+        // OverlapBox는 중심점을 기준으로 하기 때문에
+        // 공격 높이 절반만큼 위로 올림
         // ==========================================
 
         Vector3 attackCenter =
-            transform.position +
-            attackDirection *
-            attackForwardOffset +
+            groundPosition +
             Vector3.up *
             (
                 attackBoxSize.y *
@@ -677,24 +721,49 @@ public class BossPatternAI : MonoBehaviour
 
 
         // ==========================================
-        // 붉은 Warning Box
+        // 바닥 공격 Warning
         // ==========================================
 
         if (attackWarningPrefab != null)
         {
+            // ======================================
+            // Warning은 실제 공격 Box와 달리
+            // 바닥 바로 위에 위치
+            // ======================================
+
+            Vector3 warningPosition =
+                groundPosition +
+                Vector3.up *
+                (
+                    warningGroundOffset +
+                    warningHeight *
+                    0.5f
+                );
+
+
             currentWarning =
                 Instantiate(
                     attackWarningPrefab,
-                    attackCenter,
+                    warningPosition,
                     attackRotation
                 );
 
 
+            // ======================================
+            // X/Z는 실제 공격 범위와 동일
+            // Y는 아주 얇게
+            // ======================================
+
             currentWarning.transform.localScale =
-                attackBoxSize;
+                new Vector3(
+                    attackBoxSize.x,
+                    warningHeight,
+                    attackBoxSize.z
+                );
 
 
-            // Warning은 공격 판정이 아님
+            // Warning은 시각 표시일 뿐
+            // 공격 Collider가 아님
             Collider[] warningColliders =
                 currentWarning
                     .GetComponentsInChildren<Collider>();
@@ -890,5 +959,60 @@ public class BossPatternAI : MonoBehaviour
             transform.position,
             attackRange
         );
+    }
+
+    // =========================================================
+    // 공격 위치의 실제 바닥 찾기
+    // =========================================================
+
+    private Vector3 FindGroundPosition(
+        Vector3 position
+    )
+    {
+        Vector3 rayOrigin =
+            position +
+            Vector3.up *
+            groundSearchHeight;
+
+
+        RaycastHit[] hits =
+            Physics.RaycastAll(
+                rayOrigin,
+                Vector3.down,
+                groundSearchDistance,
+                groundMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+
+        // 가까운 것부터 검사
+        System.Array.Sort(
+            hits,
+            (a, b) =>
+                a.distance.CompareTo(
+                    b.distance
+                )
+        );
+
+
+        foreach (RaycastHit hit in hits)
+        {
+            // ==========================================
+            // Boss 자신의 Collider는 바닥으로 인정하지 않음
+            // ==========================================
+
+            if (hit.transform == transform ||
+                hit.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+
+            return hit.point;
+        }
+
+
+        // 바닥을 못 찾으면 기존 Y 사용
+        return position;
     }
 }
