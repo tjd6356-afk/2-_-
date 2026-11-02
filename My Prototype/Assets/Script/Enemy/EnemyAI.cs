@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -86,9 +87,49 @@ public class EnemyAI : MonoBehaviour
 
     private float nextTargetScanTime;
 
+    private bool isStunned;
+
+    private Coroutine stunRoutine;
+
+    private Transform playerTransform;
+
+
+    public bool IsStunned =>
+        isStunned;
 
     public Transform CurrentTarget =>
         currentTarget;
+
+    // =========================================================
+    // Hit Reaction
+    // =========================================================
+
+    [Header("Hit Reaction")]
+
+    [Tooltip("공격을 맞았을 때 행동 불가 시간")]
+    [SerializeField]
+    private float stunDuration = 0.3f;
+
+
+    [Tooltip("피격 시 뒤로 밀리는 거리")]
+    [SerializeField]
+    private float knockbackDistance = 0.5f;
+
+
+    [Tooltip("뒤로 밀려나는 데 걸리는 시간")]
+    [SerializeField]
+    private float knockbackDuration = 0.12f;
+
+
+    [Tooltip("넉백 움직임 곡선")]
+    [SerializeField]
+    private AnimationCurve knockbackCurve =
+        AnimationCurve.EaseInOut(
+            0f,
+            0f,
+            1f,
+            1f
+        );
 
 
     // =========================================================
@@ -140,6 +181,16 @@ public class EnemyAI : MonoBehaviour
 
         // 게임 시작 직후 한 번 탐색
         FindNearestTarget();
+
+        PlayerStats foundPlayer =
+        FindFirstObjectByType<PlayerStats>();
+
+
+        if (foundPlayer != null)
+        {
+            playerTransform =
+                foundPlayer.transform;
+        }
     }
 
 
@@ -157,6 +208,10 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
+        if (isStunned)
+        {
+            return;
+        }
 
         // =====================================================
         // 일정 주기로 주변 타겟 검색
@@ -817,5 +872,257 @@ public class EnemyAI : MonoBehaviour
                 currentTarget.position
             );
         }
+    }
+
+    private void OnEnable()
+    {
+        if (enemyStats == null)
+        {
+            enemyStats =
+                GetComponent<EnemyStats>();
+        }
+
+
+        if (enemyStats != null)
+        {
+            enemyStats.OnDamaged +=
+                HandleDamaged;
+        }
+    }
+
+
+    private void OnDisable()
+    {
+        if (enemyStats != null)
+        {
+            enemyStats.OnDamaged -=
+                HandleDamaged;
+        }
+    }
+
+    // =========================================================
+    // 피격
+    // =========================================================
+
+    private void HandleDamaged(
+        float damage
+    )
+    {
+        if (enemyStats == null ||
+            enemyStats.IsDead)
+        {
+            return;
+        }
+
+
+        // Runtime 생성 Player라서 아직 못 찾았다면 재탐색
+        if (playerTransform == null)
+        {
+            PlayerStats foundPlayer =
+                FindFirstObjectByType<PlayerStats>();
+
+
+            if (foundPlayer != null)
+            {
+                playerTransform =
+                    foundPlayer.transform;
+            }
+        }
+
+
+        // 이미 경직 중에 또 맞으면
+        // 기존 경직을 끊고 처음부터 다시 경직
+        if (stunRoutine != null)
+        {
+            StopCoroutine(
+                stunRoutine
+            );
+        }
+
+
+        stunRoutine =
+            StartCoroutine(
+                StunRoutine()
+            );
+    }
+
+    // =========================================================
+    // Stun
+    // =========================================================
+
+    private IEnumerator StunRoutine()
+    {
+        isStunned =
+            true;
+
+
+        // ==========================================
+        // 이동 즉시 정지
+        // ==========================================
+
+        StopMoving();
+
+
+        // ==========================================
+        // 사격 금지
+        // ==========================================
+
+        if (enemyShooter != null)
+        {
+            enemyShooter.SetStunned(
+                true
+            );
+        }
+
+
+        // ==========================================
+        // Player 반대 방향 계산
+        // ==========================================
+
+        Vector3 knockbackDirection =
+            -transform.forward;
+
+
+        if (playerTransform != null)
+        {
+            knockbackDirection =
+                transform.position -
+                playerTransform.position;
+
+
+            knockbackDirection.y =
+                0f;
+
+
+            if (knockbackDirection.sqrMagnitude >
+                0.001f)
+            {
+                knockbackDirection.Normalize();
+            }
+            else
+            {
+                knockbackDirection =
+                    -transform.forward;
+            }
+        }
+
+
+        // ==========================================
+        // 짧은 Knockback
+        // ==========================================
+
+        float elapsed =
+            0f;
+
+
+        float previousProgress =
+            0f;
+
+
+        while (elapsed <
+               knockbackDuration)
+        {
+            if (enemyStats == null ||
+                enemyStats.IsDead)
+            {
+                yield break;
+            }
+
+
+            elapsed +=
+                Time.deltaTime;
+
+
+            float normalizedTime =
+                Mathf.Clamp01(
+                    elapsed /
+                    Mathf.Max(
+                        0.01f,
+                        knockbackDuration
+                    )
+                );
+
+
+            float currentProgress =
+                knockbackCurve.Evaluate(
+                    normalizedTime
+                );
+
+
+            float progressDelta =
+                currentProgress -
+                previousProgress;
+
+
+            Vector3 movement =
+                knockbackDirection *
+                knockbackDistance *
+                progressDelta;
+
+
+            // ======================================
+            // NavMesh 위에서 밀기
+            // ======================================
+
+            if (agent != null &&
+                agent.isOnNavMesh)
+            {
+                agent.Move(
+                    movement
+                );
+            }
+            else
+            {
+                transform.position +=
+                    movement;
+            }
+
+
+            previousProgress =
+                currentProgress;
+
+
+            yield return null;
+        }
+
+
+        // ==========================================
+        // 남은 경직 시간
+        // ==========================================
+
+        float remainingStunTime =
+            Mathf.Max(
+                0f,
+                stunDuration -
+                knockbackDuration
+            );
+
+
+        if (remainingStunTime > 0f)
+        {
+            yield return new WaitForSeconds(
+                remainingStunTime
+            );
+        }
+
+
+        // ==========================================
+        // 경직 해제
+        // ==========================================
+
+        isStunned =
+            false;
+
+
+        if (enemyShooter != null)
+        {
+            enemyShooter.SetStunned(
+                false
+            );
+        }
+
+
+        stunRoutine =
+            null;
     }
 }

@@ -150,6 +150,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: -8891868867189086975, guid: d89dc34741f1da746bd681324e79dd9f, type: 3}
   magazineSize: 10
   baseReloadTime: 2
+  targetHeight: 1
 --- !u!114 &344548900188897486
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -165,14 +166,44 @@ MonoBehaviour:
   enemyStats: {fileID: 8002918626795020441}
   enemyShooter: {fileID: 9096280380810927270}
   agent: {fileID: 4175748206305615774}
-  player: {fileID: 0}
   detectionRange: 60
   attackRange: 3
+  targetScanInterval: 0.25
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   targetHeight: 0.5
   rotationSpeed: 8
   sightMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  stunDuration: 0.5
+  knockbackDistance: 0.5
+  knockbackDuration: 0.12
+  knockbackCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!136 &3383661770753467687
 CapsuleCollider:
   m_ObjectHideFlags: 0

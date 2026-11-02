@@ -60,6 +60,7 @@ public class EnemyStats : MonoBehaviour, IHealth
 
     public event Action OnDied;
 
+    public event Action<float> OnDamaged;
 
     private void Awake()
     {
@@ -97,6 +98,15 @@ public class EnemyStats : MonoBehaviour, IHealth
         OnHealthChanged?.Invoke(
             currentHealth,
             maxHealth
+        );
+
+
+        // =========================================================
+        // 피격 알림
+        // =========================================================
+
+        OnDamaged?.Invoke(
+            damage
         );
 
 

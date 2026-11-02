@@ -27,7 +27,10 @@ public class EnemyShooter : MonoBehaviour
     [SerializeField]
     private float targetHeight = 1f;
 
+    private bool isStunned;
 
+    public bool IsStunned =>
+        isStunned;
     private int currentAmmo;
 
     private float nextFireTime;
@@ -57,6 +60,19 @@ public class EnemyShooter : MonoBehaviour
 
 
     // =========================================================
+    // Stun
+    // =========================================================
+
+    public void SetStunned(
+        bool stunned
+    )
+    {
+        isStunned =
+            stunned;
+    }
+
+
+    // =========================================================
     // Player / NPC Transform을 직접 전달
     // =========================================================
 
@@ -64,6 +80,9 @@ public class EnemyShooter : MonoBehaviour
         Transform target
     )
     {
+        if (isStunned)
+            return;
+
         if (target == null)
             return;
 
@@ -107,6 +126,9 @@ public class EnemyShooter : MonoBehaviour
         Vector3 targetPosition
     )
     {
+        if (isStunned)
+            return;
+
         if (enemyStats == null)
             return;
 
