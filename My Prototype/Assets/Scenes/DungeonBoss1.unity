@@ -341,7 +341,7 @@ MonoBehaviour:
   attackWindUpTime: 0.8
   attackCooldown: 1.5
   attackForwardOffset: 2.5
-  attackBoxSize: {x: 4, y: 2, z: 5}
+  attackBoxSize: {x: 4, y: 4, z: 5}
   playerMask:
     serializedVersion: 2
     m_Bits: 4294967295
