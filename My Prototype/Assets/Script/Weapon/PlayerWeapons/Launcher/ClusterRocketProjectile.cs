@@ -31,8 +31,14 @@ public class ClusterRocketProjectile : MonoBehaviour
     [Tooltip("자탄의 폭발 데미지 (메인 로켓 데미지의 몇 배? 예: 0.3 = 30%)")]
     [SerializeField] private float clusterDamageMultiplier = 0.3f;
 
-    [Tooltip("자탄이 위로 뿜어져 나가는 힘")]
-    [SerializeField] private float clusterEjectForce = 10f;
+    [Tooltip("자탄이 위로 뿜어져 나가는 최소 힘 (높이)")]
+    [SerializeField] private float minClusterEjectForce = 7f;
+
+    [Tooltip("자탄이 위로 뿜어져 나가는 최대 힘 (높이)")]
+    [SerializeField] private float maxClusterEjectForce = 15f;
+
+    [Tooltip("자탄이 옆으로 퍼지는 정도 (0 = 수직 상승, 값이 클수록 넓게 퍼짐)")]
+    [SerializeField, Range(0f, 2f)] private float horizontalSpread = 0.4f;
     // =========================================================
 
 
@@ -131,13 +137,16 @@ public class ClusterRocketProjectile : MonoBehaviour
         {
             for (int i = 0; i < clusterCount; i++)
             {
-                // 약간 위쪽에서 겹치지 않게 생성
                 Vector3 spawnPos = transform.position + Vector3.up * 0.5f;
                 ClusterBomb bomb = Instantiate(clusterPrefab, spawnPos, Quaternion.identity);
 
-                // 자탄 초기화 및 발사
                 float subDamage = damage * clusterDamageMultiplier;
-                bomb.InitializeAndEject(subDamage, owner, impactTags, clusterEjectForce);
+
+                // ✨ 수정됨: 최소~최대 사이의 랜덤한 폭발력을 계산하여 전달 ✨
+                float randomForce = Random.Range(minClusterEjectForce, maxClusterEjectForce);
+
+                // 퍼짐 정도(horizontalSpread)도 같이 넘겨줍니다.
+                bomb.InitializeAndEject(subDamage, owner, impactTags, randomForce, horizontalSpread);
             }
         }
 

@@ -13,7 +13,8 @@ public class ClusterBomb : MonoBehaviour
     private List<string> impactTags;
     private bool hasExploded = false;
 
-    public void InitializeAndEject(float subDamage, GameObject projectileOwner, List<string> tags, float ejectForce)
+    // ✨ 퍼짐 정도(horizontalSpread) 인자가 추가되었습니다.
+    public void InitializeAndEject(float subDamage, GameObject projectileOwner, List<string> tags, float ejectForce, float horizontalSpread)
     {
         damage = subDamage;
         owner = projectileOwner;
@@ -21,10 +22,14 @@ public class ClusterBomb : MonoBehaviour
 
         Rigidbody rb = GetComponent<Rigidbody>();
 
-        Vector3 randomDir = Random.onUnitSphere;
-        randomDir.y = Mathf.Abs(randomDir.y);
-        Vector3 ejectDirection = (Vector3.up * 1.5f + randomDir).normalized;
+        // ✨ 수정됨: 무조건 위쪽(Up)을 향하되, 수평(X, Z)으로 퍼지는 정도를 제한합니다.
+        Vector2 randomCircle = Random.insideUnitCircle; // 2D 원 안의 랜덤 좌표
+        Vector3 horizontalDir = new Vector3(randomCircle.x, 0f, randomCircle.y) * horizontalSpread;
 
+        // 최종 분출 방향 = (완벽한 위쪽 + 좁게 제한된 수평 방향)
+        Vector3 ejectDirection = (Vector3.up + horizontalDir).normalized;
+
+        // 전달받은 랜덤한 힘(ejectForce)으로 튕겨냅니다.
         rb.AddForce(ejectDirection * ejectForce, ForceMode.Impulse);
 
         Invoke(nameof(Explode), 3f);

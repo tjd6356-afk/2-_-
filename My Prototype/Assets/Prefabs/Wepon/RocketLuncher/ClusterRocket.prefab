@@ -174,7 +174,9 @@ MonoBehaviour:
   clusterPrefab: {fileID: 6116453754605888295, guid: a0c3c00808536c9458ecc63a3398a3f6, type: 3}
   clusterCount: 10
   clusterDamageMultiplier: 0.1
-  clusterEjectForce: 5
+  minClusterEjectForce: 5
+  maxClusterEjectForce: 8
+  horizontalSpread: 0.3
 --- !u!54 &-430064124268022041
 Rigidbody:
   m_ObjectHideFlags: 0
