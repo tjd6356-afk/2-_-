@@ -20,6 +20,13 @@ public class ClusterBomb : MonoBehaviour
         owner = projectileOwner;
         impactTags = tags;
 
+        TrailRenderer tr = GetComponent<TrailRenderer>();
+        if (tr != null)
+        {
+            tr.emitting = true;
+            tr.Clear();
+        }
+
         Rigidbody rb = GetComponent<Rigidbody>();
 
         // ✨ 수정됨: 무조건 위쪽(Up)을 향하되, 수평(X, Z)으로 퍼지는 정도를 제한합니다.

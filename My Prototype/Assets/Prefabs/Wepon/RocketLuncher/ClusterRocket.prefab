@@ -173,7 +173,7 @@ MonoBehaviour:
   explosionVFX: {fileID: 4710882073124766357, guid: 71e5a6e5f758142458b6a36126f41eac, type: 3}
   clusterPrefab: {fileID: 6116453754605888295, guid: a0c3c00808536c9458ecc63a3398a3f6, type: 3}
   clusterCount: 10
-  clusterDamageMultiplier: 0.1
+  clusterDamageMultiplier: 0.05
   minClusterEjectForce: 5
   maxClusterEjectForce: 8
   horizontalSpread: 0.3
