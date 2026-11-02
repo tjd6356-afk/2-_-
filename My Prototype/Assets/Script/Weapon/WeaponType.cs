@@ -5,5 +5,6 @@
     RangedGun,
     WireGun,
     Launcher,
-    Minigun
+    Minigun,
+    Shotgun
 }
