@@ -79,6 +79,26 @@ public class BossPatternAI : MonoBehaviour
     [SerializeField]
     private LayerMask playerMask = ~0;
 
+    [Tooltip("공격 순간 앞으로 이동하는 거리")]
+    [SerializeField]
+    private float attackLungeDistance = 1.5f;
+
+
+    [Tooltip("공격 전진에 걸리는 시간")]
+    [SerializeField]
+    private float attackLungeDuration = 0.18f;
+
+
+    [Tooltip("공격 전진 속도 변화")]
+    [SerializeField]
+    private AnimationCurve attackLungeCurve =
+        AnimationCurve.EaseInOut(
+            0f,
+            0f,
+            1f,
+            1f
+        );
+
 
     // =========================================================
     // Telegraph
@@ -809,6 +829,37 @@ public class BossPatternAI : MonoBehaviour
 
 
         // ==========================================
+        // 실제 공격 순간 앞으로 짧게 전진
+        // ==========================================
+
+        yield return StartCoroutine(
+            AttackLungeRoutine(
+                attackDirection
+            )
+        );
+
+
+        // 돌진 도중 Groggy / 사망 가능
+        if (!battleActive ||
+            bossStats.IsDead ||
+            bossStats.IsGroggy)
+        {
+            CleanupWarning();
+
+
+            isAttacking =
+                false;
+
+
+            attackRoutine =
+                null;
+
+
+            yield break;
+        }
+
+
+        // ==========================================
         // 실제 Box 공격
         // ==========================================
 
@@ -1014,5 +1065,115 @@ public class BossPatternAI : MonoBehaviour
 
         // 바닥을 못 찾으면 기존 Y 사용
         return position;
+    }
+
+    // =========================================================
+    // 실제 공격 순간 짧게 전진
+    // =========================================================
+
+    private IEnumerator AttackLungeRoutine(
+        Vector3 attackDirection
+    )
+    {
+        if (attackLungeDistance <= 0f ||
+            attackLungeDuration <= 0f)
+        {
+            yield break;
+        }
+
+
+        attackDirection.y =
+            0f;
+
+
+        if (attackDirection.sqrMagnitude <
+            0.001f)
+        {
+            yield break;
+        }
+
+
+        attackDirection.Normalize();
+
+
+        float elapsed =
+            0f;
+
+
+        float previousProgress =
+            0f;
+
+
+        while (elapsed <
+               attackLungeDuration)
+        {
+            // Groggy나 사망 시 돌진 즉시 중단
+            if (!battleActive ||
+                bossStats == null ||
+                bossStats.IsDead ||
+                bossStats.IsGroggy)
+            {
+                yield break;
+            }
+
+
+            elapsed +=
+                Time.deltaTime;
+
+
+            float normalizedTime =
+                Mathf.Clamp01(
+                    elapsed /
+                    attackLungeDuration
+                );
+
+
+            float currentProgress =
+                attackLungeCurve.Evaluate(
+                    normalizedTime
+                );
+
+
+            float progressDelta =
+                currentProgress -
+                previousProgress;
+
+
+            float moveDistance =
+                attackLungeDistance *
+                progressDelta;
+
+
+            Vector3 movement =
+                attackDirection *
+                moveDistance;
+
+
+            // ==========================================
+            // NavMeshAgent가 정상적으로 NavMesh 위에 있음
+            // ==========================================
+
+            if (agent != null &&
+                agent.isOnNavMesh)
+            {
+                agent.Move(
+                    movement
+                );
+            }
+
+            // NavMeshAgent가 없는 테스트 상황
+            else
+            {
+                transform.position +=
+                    movement;
+            }
+
+
+            previousProgress =
+                currentProgress;
+
+
+            yield return null;
+        }
     }
 }
