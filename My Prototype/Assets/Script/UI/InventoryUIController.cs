@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,6 +29,13 @@ public class InventoryUIController : MonoBehaviour
     [SerializeField]
     private float unavailableMessageDuration = 1.2f;
 
+    [Header("Inventory Block UI")]
+
+    [Tooltip("이 UI들 중 하나라도 활성화되어 있으면 " +
+    "Inventory를 열 수 없습니다.")]
+    [SerializeField]
+    private List<GameObject> blockingUIRoots =
+    new List<GameObject>();
 
     // =========================================================
     // Runtime Player
@@ -109,40 +117,6 @@ public class InventoryUIController : MonoBehaviour
         }
     }
 
-
-    // =========================================================
-    // I Key
-    // =========================================================
-
-    private void HandleInventoryInput()
-    {
-        // ==========================================
-        // 전투 중
-        // ==========================================
-
-        if (IsBattleActive())
-        {
-            // 혹시 이미 Inventory가 열려있다면 닫음
-            if (isOpen)
-            {
-                CloseInventory();
-            }
-
-
-            ShowUnavailableMessage();
-
-            return;
-        }
-
-
-        // ==========================================
-        // 평상시
-        // ==========================================
-
-        ToggleInventory();
-    }
-
-
     // =========================================================
     // Battle 검사
     // =========================================================
@@ -181,14 +155,58 @@ public class InventoryUIController : MonoBehaviour
 
     public void ToggleInventory()
     {
+        // =========================================================
+        // 이미 Inventory가 열려 있다면
+        // 어떤 상황에서도 닫을 수 있음
+        // =========================================================
+
         if (isOpen)
         {
             CloseInventory();
+
+            return;
         }
-        else
+
+
+        // =========================================================
+        // 전투 중이면 Inventory 사용 불가
+        // =========================================================
+
+        if (IsBattleActive())
         {
-            OpenInventory();
+            Debug.Log(
+                "[InventoryUI] 전투 중이라 Inventory 사용 불가"
+            );
+
+
+            ShowUnavailableMessage();
+
+            return;
         }
+
+
+        // =========================================================
+        // 다른 UI가 열려있으면 Inventory 사용 불가
+        // =========================================================
+
+        if (IsBlockedByOtherUI())
+        {
+            Debug.Log(
+                "[InventoryUI] 다른 UI 사용 중이라 Inventory 사용 불가"
+            );
+
+
+            ShowUnavailableMessage();
+
+            return;
+        }
+
+
+        // =========================================================
+        // 아무 문제 없으면 Open
+        // =========================================================
+
+        OpenInventory();
     }
 
 
@@ -210,6 +228,12 @@ public class InventoryUIController : MonoBehaviour
             return;
         }
 
+        if (IsBlockedByOtherUI())
+        {
+            ShowUnavailableMessage();
+
+            return;
+        }
 
         // Runtime Player가 아직 연결되지 않았다면 다시 탐색
         if (gameplayControl == null)
@@ -386,5 +410,35 @@ public class InventoryUIController : MonoBehaviour
 
         messageCoroutine =
             null;
+    }
+
+    // =========================================================
+    // 다른 UI 때문에 Inventory를 열 수 없는지 확인
+    // =========================================================
+
+    private bool IsBlockedByOtherUI()
+    {
+        foreach (
+            GameObject uiRoot
+            in blockingUIRoots)
+        {
+            if (uiRoot == null)
+                continue;
+
+
+            if (uiRoot.activeInHierarchy)
+            {
+                Debug.Log(
+                    $"[Inventory] 사용 불가 - 다른 UI 활성화 : " +
+                    $"{uiRoot.name}"
+                );
+
+
+                return true;
+            }
+        }
+
+
+        return false;
     }
 }
