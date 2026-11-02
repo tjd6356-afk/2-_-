@@ -20,8 +20,8 @@ MonoBehaviour:
   itemType: 1
   healAmount: 0
   damageAmount: 50
-  useDialogueText: "\uB3C5\uC744 \uB9C8\uC168\uB2E4. \uB9DB\uC740 \uBE44\uB9BF\uD558\uACE0
-    \uC544\uBAAC\uB4DC \uD5A5\uC774 \uC785\uC548\uC5D0\uC11C \uD37C\uC9C0\uB294 \uB9DB\uC774\uB2E4."
+  useEffectText: "\uB9DB\uC740 \uC788\uC5C8\uB2E4. \uB2E4\uB9CC \uBAB8\uC774 \uC544\uD50C
+    \uBFD0\uC774\uB2E4."
   worldPickupPrefab: {fileID: 6315939368336245169, guid: a43b92beee0f0044397d88fa9d98e00c, type: 3}
   heldVisualPrefab: {fileID: 1528062636059491173, guid: a43b92beee0f0044397d88fa9d98e00c, type: 3}
   maxStack: 99
