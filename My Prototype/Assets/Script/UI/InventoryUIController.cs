@@ -123,6 +123,10 @@ public class InventoryUIController : MonoBehaviour
 
     private bool IsBattleActive()
     {
+        // =========================================================
+        // 1. 일반 Dungeon Room 전투 검사
+        // =========================================================
+
         RoomBattleController[] battleRooms =
             FindObjectsByType<RoomBattleController>(
                 FindObjectsSortMode.None
@@ -144,6 +148,36 @@ public class InventoryUIController : MonoBehaviour
             }
         }
 
+
+        // =========================================================
+        // 2. Boss Battle 검사
+        // =========================================================
+
+        BossPatternAI[] bosses =
+            FindObjectsByType<BossPatternAI>(
+                FindObjectsSortMode.None
+            );
+
+
+        foreach (
+            BossPatternAI boss
+            in bosses)
+        {
+            if (boss == null)
+                continue;
+
+
+            if (boss.BattleActive &&
+                !boss.IsBossDead)
+            {
+                return true;
+            }
+        }
+
+
+        // =========================================================
+        // 전투 없음
+        // =========================================================
 
         return false;
     }

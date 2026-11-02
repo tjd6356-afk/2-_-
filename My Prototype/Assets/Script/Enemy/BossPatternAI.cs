@@ -226,6 +226,13 @@ public class BossPatternAI : MonoBehaviour
 
     private bool battleActive;
 
+    public bool BattleActive =>
+    battleActive;
+
+    public bool IsBossDead =>
+    bossStats != null &&
+    bossStats.IsDead;
+
     private bool isAttacking;
 
 
@@ -1381,45 +1388,6 @@ public class BossPatternAI : MonoBehaviour
                     false;
             }
         }
-
-
-        // ==========================================
-        // Warning 생성
-        // ==========================================
-
-        if (circleWarningPrefab != null)
-        {
-            Vector3 warningPosition =
-                groundPosition +
-                Vector3.up *
-                (
-                    circleGroundOffset +
-                    circleWarningHeight *
-                    0.5f
-                );
-
-
-            currentWarning =
-                Instantiate(
-                    circleWarningPrefab,
-                    warningPosition,
-                    Quaternion.identity
-                );
-
-
-            // 혹시 Collider가 있으면 비활성화
-            Collider[] warningColliders =
-                currentWarning
-                    .GetComponentsInChildren<Collider>();
-
-
-            foreach (Collider col in warningColliders)
-            {
-                col.enabled =
-                    false;
-            }
-        }
-
 
         // ==========================================
         // 성장 시간
