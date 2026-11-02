@@ -27,7 +27,7 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
     [SerializeField, Range(2, 30)] private int pelletCount = 8;
 
     [Tooltip("기본(최대) 탄퍼짐 원의 반지름 (비조준 상태 또는 발사 직후 넓어진 상태)")]
-    [SerializeField, Range(0.1f, 5f)] private float maxSpreadRadius = 2.0f;
+    [SerializeField, Range(0.01f, 5f)] private float maxSpreadRadius = 2.0f;
 
     [Tooltip("조준을 끝까지 유지했을 때 최대로 좁아지는 탄퍼짐 원의 반지름")]
     [SerializeField, Range(0.01f, 5f)] private float minSpreadRadius = 0.5f;
