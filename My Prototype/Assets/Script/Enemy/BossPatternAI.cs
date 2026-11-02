@@ -185,6 +185,38 @@ public class BossPatternAI : MonoBehaviour
     [SerializeField]
     private GameObject circleWarningPrefab;
 
+    [Header("Circle Dash")]
+
+    [Tooltip("원형 공격 전에 플레이어 쪽으로 빠르게 이동")]
+    [SerializeField]
+    private bool useCircleDash = true;
+
+
+    [Tooltip("한 번에 접근할 수 있는 최대 거리")]
+    [SerializeField]
+    private float circleDashMaxDistance = 6f;
+
+
+    [Tooltip("플레이어와 이 정도 거리를 남겨두고 정지")]
+    [SerializeField]
+    private float circleDashStopDistance = 1.5f;
+
+
+    [Tooltip("빠른 접근에 걸리는 시간")]
+    [SerializeField]
+    private float circleDashDuration = 0.15f;
+
+
+    [Tooltip("접근 움직임 곡선")]
+    [SerializeField]
+    private AnimationCurve circleDashCurve =
+        AnimationCurve.EaseInOut(
+            0f,
+            0f,
+            1f,
+            1f
+        );
+
     // =========================================================
     // Runtime
     // =========================================================
@@ -1260,26 +1292,95 @@ public class BossPatternAI : MonoBehaviour
         StopMoving();
 
 
-        // ==========================================
-        // Player 방향 바라보기
-        // ==========================================
+        // =====================================================
+        // 1. Player 방향 바라보기
+        // =====================================================
 
         RotateTowardsPlayer();
 
 
-        // ==========================================
-        // 공격 시작 시 Boss의 위치를 고정
-        // ==========================================
+        // =====================================================
+        // 2. 공격 전에 Player 쪽으로 빠르게 접근
+        // =====================================================
+
+        yield return StartCoroutine(
+            CircleDashToPlayerRoutine()
+        );
+
+
+        // =====================================================
+        // Dash 도중 Groggy / 사망 가능
+        // =====================================================
+
+        if (!battleActive ||
+            bossStats == null ||
+            bossStats.IsDead ||
+            bossStats.IsGroggy)
+        {
+            CleanupWarning();
+
+
+            isAttacking =
+                false;
+
+
+            attackRoutine =
+                null;
+
+
+            yield break;
+        }
+
+
+        // =====================================================
+        // 3. Dash가 끝난 위치를 공격 중심으로 확정
+        // =====================================================
 
         Vector3 circleCenter =
             transform.position;
 
 
-        // 기존에 만든 바닥 검색 함수 사용
         Vector3 groundPosition =
             FindGroundPosition(
                 circleCenter
             );
+
+
+        // =====================================================
+        // 여기부터 기존 Warning 생성 코드
+        // =====================================================
+
+        if (circleWarningPrefab != null)
+        {
+            Vector3 warningPosition =
+                groundPosition +
+                Vector3.up *
+                (
+                    circleGroundOffset +
+                    circleWarningHeight *
+                    0.5f
+                );
+
+
+            currentWarning =
+                Instantiate(
+                    circleWarningPrefab,
+                    warningPosition,
+                    Quaternion.identity
+                );
+
+
+            Collider[] warningColliders =
+                currentWarning
+                    .GetComponentsInChildren<Collider>();
+
+
+            foreach (Collider col in warningColliders)
+            {
+                col.enabled =
+                    false;
+            }
+        }
 
 
         // ==========================================
@@ -1601,6 +1702,173 @@ public class BossPatternAI : MonoBehaviour
                 $"[Boss] Circle Attack Hit / " +
                 $"Damage = {bossStats.AttackPower}"
             );
+        }
+    }
+
+    // =========================================================
+    // Circle Attack - Player 쪽으로 빠르게 접근
+    // =========================================================
+
+    private IEnumerator CircleDashToPlayerRoutine()
+    {
+        if (!useCircleDash)
+            yield break;
+
+
+        if (player == null)
+            yield break;
+
+
+        if (circleDashDuration <= 0f)
+            yield break;
+
+
+        StopMoving();
+
+
+        // =====================================================
+        // Dash 시작 순간의 Player 위치를 기준으로 함
+        //
+        // Dash 도중 Player를 계속 추적하지 않음.
+        // =====================================================
+
+        Vector3 targetPosition =
+            player.position;
+
+
+        Vector3 direction =
+            targetPosition -
+            transform.position;
+
+
+        direction.y =
+            0f;
+
+
+        float distanceToPlayer =
+            direction.magnitude;
+
+
+        if (distanceToPlayer <=
+            circleDashStopDistance)
+        {
+            yield break;
+        }
+
+
+        if (direction.sqrMagnitude <
+            0.001f)
+        {
+            yield break;
+        }
+
+
+        direction.Normalize();
+
+
+        // =====================================================
+        // Player를 뚫고 지나가지 않도록
+        // StopDistance만큼 남김
+        // =====================================================
+
+        float availableDistance =
+            distanceToPlayer -
+            circleDashStopDistance;
+
+
+        float dashDistance =
+            Mathf.Min(
+                availableDistance,
+                circleDashMaxDistance
+            );
+
+
+        // =====================================================
+        // Dash 방향 바라보기
+        // =====================================================
+
+        transform.rotation =
+            Quaternion.LookRotation(
+                direction
+            );
+
+
+        float elapsed =
+            0f;
+
+
+        float previousProgress =
+            0f;
+
+
+        // =====================================================
+        // 실제 Dash
+        // =====================================================
+
+        while (elapsed <
+               circleDashDuration)
+        {
+            // 전투 종료 / 사망 / Groggy면 중단
+            if (!battleActive ||
+                bossStats == null ||
+                bossStats.IsDead ||
+                bossStats.IsGroggy)
+            {
+                yield break;
+            }
+
+
+            elapsed +=
+                Time.deltaTime;
+
+
+            float normalizedTime =
+                Mathf.Clamp01(
+                    elapsed /
+                    circleDashDuration
+                );
+
+
+            float currentProgress =
+                circleDashCurve.Evaluate(
+                    normalizedTime
+                );
+
+
+            float progressDelta =
+                currentProgress -
+                previousProgress;
+
+
+            Vector3 movement =
+                direction *
+                dashDistance *
+                progressDelta;
+
+
+            // ==========================================
+            // NavMesh를 유지하면서 이동
+            // ==========================================
+
+            if (agent != null &&
+                agent.isOnNavMesh)
+            {
+                agent.Move(
+                    movement
+                );
+            }
+            else
+            {
+                transform.position +=
+                    movement;
+            }
+
+
+            previousProgress =
+                currentProgress;
+
+
+            yield return null;
         }
     }
 }
