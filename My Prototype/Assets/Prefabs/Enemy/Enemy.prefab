@@ -131,7 +131,7 @@ MonoBehaviour:
   maxHealth: 100
   fireRate: 2
   reloadSpeed: 1
-  attackPower: 10
+  attackPower: 3
   moveSpeed: 6
 --- !u!114 &9096280380810927270
 MonoBehaviour:
