@@ -32,12 +32,25 @@ public class MultipleLauncherWeapon : WeaponBase, IAmmoWeapon
     [SerializeField] private float maxAimDistance = 100f;
     [SerializeField] private LayerMask aimMask = ~0;
 
+    [Header("Smooth Camera Recoil (묵직한 반동)")]
+    [Tooltip("최종적으로 도달할 위쪽 반동(Pitch) 목표치")]
+    [SerializeField] private float targetKickPitch = 5.0f;
+
+    [Tooltip("목표 반동까지 밀려 올라가는 데 걸리는 시간 (초) - 이 값이 속도를 결정합니다")]
+    [SerializeField] private float recoilDuration = 0.15f;
+
+    [Tooltip("좌우 흔들림 비율")]
+    [SerializeField] private float horizontalKickRatio = 0.5f;
+
+    
+
     // Runtime variables
     private int currentAmmo;
     private int reserveMagazines;
     private bool isReloading;
     private bool ammoInitialized;
     private float nextFireTime;
+    private ThirdPersonCamera thirdPersonCam;
 
     // 점사 진행 중인지 체크하는 변수
     private bool isBursting;
@@ -57,6 +70,11 @@ public class MultipleLauncherWeapon : WeaponBase, IAmmoWeapon
             currentAmmo = magazineSize;
             reserveMagazines = maxReserveMagazines;
             ammoInitialized = true;
+        }
+
+        if (PlayerCamera != null)
+        {
+            thirdPersonCam = PlayerCamera.GetComponent<ThirdPersonCamera>();
         }
 
         isBursting = false; // 장착 시 점사 상태 초기화
@@ -127,6 +145,12 @@ public class MultipleLauncherWeapon : WeaponBase, IAmmoWeapon
     // 단일 로켓 1발을 쏘는 로직 (기존 Shoot과 동일하되 이름만 변경)
     private void ShootSingleRocket()
     {
+        if (thirdPersonCam != null)
+        {
+            float targetYaw = UnityEngine.Random.Range(-targetKickPitch, targetKickPitch) * horizontalKickRatio;
+            StartCoroutine(SmoothRecoilRoutine(targetKickPitch, targetYaw, recoilDuration));
+        }
+
         // 매 발사마다 화면 중앙을 다시 계산합니다 (점사 도중 마우스를 움직여도 따라가도록)
         Ray aimRay = PlayerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         Vector3 targetPoint = Physics.Raycast(aimRay, out RaycastHit hit, maxAimDistance, aimMask, QueryTriggerInteraction.Ignore)
@@ -181,5 +205,34 @@ public class MultipleLauncherWeapon : WeaponBase, IAmmoWeapon
         isBursting = false; // 무기 스왑 시 점사 초기화
         NotifyAmmo();
         base.Unequip();
+    }
+
+    // ✨ 목표 반동량(n)을 시간(duration)에 걸쳐 부드럽게 주입하는 코루틴
+    private IEnumerator SmoothRecoilRoutine(float totalPitch, float totalYaw, float duration)
+    {
+        if (duration <= 0f)
+        {
+            thirdPersonCam.AddRecoil(totalPitch, totalYaw);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float dt = Time.deltaTime;
+
+            // 마지막 프레임 보정 (오버해서 반동이 들어가지 않도록)
+            if (elapsed + dt > duration)
+                dt = duration - elapsed;
+
+            // 1프레임당 들어가야 할 반동량 계산
+            float framePitch = (totalPitch / duration) * dt;
+            float frameYaw = (totalYaw / duration) * dt;
+
+            thirdPersonCam.AddRecoil(framePitch, frameYaw);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
     }
 }

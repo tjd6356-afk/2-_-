@@ -61,6 +61,9 @@ MonoBehaviour:
   aimMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  targetKickPitch: 5
+  recoilDuration: 0.02
+  horizontalKickRatio: 0.5
 --- !u!1 &2732468056764597543
 GameObject:
   m_ObjectHideFlags: 0
