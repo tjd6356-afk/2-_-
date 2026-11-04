@@ -3190,6 +3190,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3657542925898152779, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.00084050413
+      objectReference: {fileID: 0}
+    - target: {fileID: 4181623926765745456, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4181623926765745456, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4181623926765745456, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7399474164664762341, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
       propertyPath: m_Name
       value: DialogueCanvas

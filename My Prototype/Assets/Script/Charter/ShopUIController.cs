@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class ShopUIController : MonoBehaviour
 {
     // =========================================================
-    // UI
+    // Shop UI
     // =========================================================
 
     [Header("Shop UI")]
@@ -19,8 +19,9 @@ public class ShopUIController : MonoBehaviour
     private Transform contentRoot;
 
 
+    [Tooltip("상점 목록에 생성되는 아이템 Icon Prefab")]
     [SerializeField]
-    private ShopItemButtonUI itemButtonPrefab;
+    private ShopItemIconUI itemIconPrefab;
 
 
     [SerializeField]
@@ -28,15 +29,34 @@ public class ShopUIController : MonoBehaviour
 
 
     // =========================================================
+    // Selected Item
+    // =========================================================
+
+    [Header("Selected Item")]
+
+    [Tooltip("사진의 빨간 박스 위치에 있는 큰 아이템 이미지")]
+    [SerializeField]
+    private Image selectedItemImage;
+
+
+    [Tooltip("선택한 아이템을 실제로 구입하는 버튼")]
+    [SerializeField]
+    private Button buyButton;
+
+
+    // =========================================================
     // Runtime
     // =========================================================
 
     private readonly List<GameObject>
-        generatedButtons =
+        generatedIcons =
             new List<GameObject>();
 
 
     private MerchantNPCData currentMerchant;
+
+
+    private MerchantShopEntry selectedEntry;
 
 
     private Action<bool> onShopClosed;
@@ -57,10 +77,26 @@ public class ShopUIController : MonoBehaviour
 
     private void Awake()
     {
+        // ==========================================
+        // Close
+        // ==========================================
+
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(
                 Close
+            );
+        }
+
+
+        // ==========================================
+        // Buy
+        // ==========================================
+
+        if (buyButton != null)
+        {
+            buyButton.onClick.AddListener(
+                PurchaseSelectedItem
             );
         }
     }
@@ -78,6 +114,9 @@ public class ShopUIController : MonoBehaviour
                 false
             );
         }
+
+
+        ClearSelection();
     }
 
 
@@ -110,6 +149,9 @@ public class ShopUIController : MonoBehaviour
             true;
 
 
+        ClearSelection();
+
+
         if (shopRoot != null)
         {
             shopRoot.SetActive(
@@ -131,13 +173,29 @@ public class ShopUIController : MonoBehaviour
 
     private void BuildShop()
     {
-        ClearButtons();
+        ClearGeneratedIcons();
 
 
-        if (currentMerchant == null ||
-            itemButtonPrefab == null ||
-            contentRoot == null)
+        if (currentMerchant == null)
+            return;
+
+
+        if (itemIconPrefab == null)
         {
+            Debug.LogError(
+                "[Shop] Item Icon Prefab이 없습니다."
+            );
+
+            return;
+        }
+
+
+        if (contentRoot == null)
+        {
+            Debug.LogError(
+                "[Shop] Content Root가 없습니다."
+            );
+
             return;
         }
 
@@ -153,36 +211,96 @@ public class ShopUIController : MonoBehaviour
             }
 
 
-            ShopItemButtonUI button =
+            ShopItemIconUI icon =
                 Instantiate(
-                    itemButtonPrefab,
+                    itemIconPrefab,
                     contentRoot
                 );
 
 
-            button.Setup(
+            icon.Setup(
                 entry,
                 this
             );
 
 
-            generatedButtons.Add(
-                button.gameObject
+            generatedIcons.Add(
+                icon.gameObject
             );
         }
     }
 
 
     // =========================================================
-    // Purchase
+    // Item 선택
     // =========================================================
 
-    public void PurchaseItem(
+    public void SelectItem(
         MerchantShopEntry entry
     )
     {
         if (entry == null ||
             entry.ItemData == null)
+        {
+            return;
+        }
+
+
+        selectedEntry =
+            entry;
+
+
+        // ==========================================
+        // 사진의 큰 Item Image 변경
+        // ==========================================
+
+        if (selectedItemImage != null)
+        {
+            selectedItemImage.sprite =
+                selectedEntry.ItemData.ItemIcon;
+
+
+            selectedItemImage.enabled =
+                selectedEntry.ItemData.ItemIcon != null;
+
+
+            selectedItemImage.gameObject.SetActive(
+                true
+            );
+        }
+
+
+        // ==========================================
+        // 구입 버튼 활성화
+        // ==========================================
+
+        if (buyButton != null)
+        {
+            buyButton.gameObject.SetActive(
+                true
+            );
+
+
+            buyButton.interactable =
+                true;
+        }
+
+
+        Debug.Log(
+            $"[Shop] 선택 : " +
+            $"{selectedEntry.ItemData.ItemTitle}"
+        );
+    }
+
+
+    // =========================================================
+    // 구입
+    // =========================================================
+
+    private void PurchaseSelectedItem()
+    {
+        if (selectedEntry == null ||
+            selectedEntry.ItemData == null)
         {
             return;
         }
@@ -199,13 +317,12 @@ public class ShopUIController : MonoBehaviour
 
 
         // =====================================================
-        // 현재는 돈 / 재료 / 조건 없음
-        // 무조건 구매 성공
+        // 현재는 돈 / 재료 조건 없음
         // =====================================================
 
         InventoryManager.Instance.AddItem(
-            entry.ItemData,
-            entry.Amount
+            selectedEntry.ItemData,
+            selectedEntry.Amount
         );
 
 
@@ -214,9 +331,60 @@ public class ShopUIController : MonoBehaviour
 
 
         Debug.Log(
-            $"[Shop] 구입 : " +
-            $"{entry.ItemData.ItemTitle} x{entry.Amount}"
+            $"[Shop] 구매 완료 : " +
+            $"{selectedEntry.ItemData.ItemTitle} " +
+            $"x{selectedEntry.Amount}"
         );
+
+
+        // =====================================================
+        // 구매 후 상세 이미지 제거
+        // =====================================================
+
+        ClearSelection();
+    }
+
+
+    // =========================================================
+    // 선택 초기화
+    // =========================================================
+
+    private void ClearSelection()
+    {
+        selectedEntry =
+            null;
+
+
+        // ==========================================
+        // Item Image 제거
+        // ==========================================
+
+        if (selectedItemImage != null)
+        {
+            selectedItemImage.sprite =
+                null;
+
+
+            selectedItemImage.enabled =
+                false;
+
+
+            selectedItemImage.gameObject.SetActive(
+                false
+            );
+        }
+
+
+        // ==========================================
+        // Buy Button 숨김
+        // ==========================================
+
+        if (buyButton != null)
+        {
+            buyButton.gameObject.SetActive(
+                false
+            );
+        }
     }
 
 
@@ -242,14 +410,16 @@ public class ShopUIController : MonoBehaviour
         }
 
 
-        ClearButtons();
+        ClearSelection();
+
+        ClearGeneratedIcons();
 
 
         Action<bool> callback =
             onShopClosed;
 
 
-        bool result =
+        bool purchased =
             purchasedAnyItem;
 
 
@@ -266,30 +436,30 @@ public class ShopUIController : MonoBehaviour
 
 
         callback?.Invoke(
-            result
+            purchased
         );
     }
 
 
     // =========================================================
-    // Clear
+    // 생성된 Icon 제거
     // =========================================================
 
-    private void ClearButtons()
+    private void ClearGeneratedIcons()
     {
         foreach (
-            GameObject button
-            in generatedButtons)
+            GameObject icon
+            in generatedIcons)
         {
-            if (button != null)
+            if (icon != null)
             {
                 Destroy(
-                    button
+                    icon
                 );
             }
         }
 
 
-        generatedButtons.Clear();
+        generatedIcons.Clear();
     }
 }
