@@ -22,4 +22,6 @@ MonoBehaviour:
   - "\uAC10\uC0AC"
   noPurchaseDialogue:
   - . . .
-  shopItems: []
+  shopItems:
+  - itemData: {fileID: 11400000, guid: 0f3e274865e54c442886333ca7a8943a, type: 2}
+    amount: 1

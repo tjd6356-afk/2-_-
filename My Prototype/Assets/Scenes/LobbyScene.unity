@@ -694,17 +694,12 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &291192476 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7399474164664762341, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
-  m_PrefabInstance: {fileID: 6891813886822376370}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &291192478 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8063261731425846239, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
   m_PrefabInstance: {fileID: 6891813886822376370}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 291192476}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
@@ -715,7 +710,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1125563036819802457, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
   m_PrefabInstance: {fileID: 6891813886822376370}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 291192476}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 935e9f9e97a839144b9a25f0fef1d18e, type: 3}
@@ -2289,6 +2284,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryManager
   items: []
+--- !u!1 &1615380378 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6780770799261521670, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
+  m_PrefabInstance: {fileID: 6891813886822376370}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1679863955
 GameObject:
   m_ObjectHideFlags: 0
@@ -3021,6 +3021,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2129237571 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1806395524073718970, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
+  m_PrefabInstance: {fileID: 6891813886822376370}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1326995707092164170
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3379,7 +3384,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: blockingUIRoots.Array.size
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: 'blockingUIRoots.Array.data[0]'
@@ -3388,15 +3393,19 @@ PrefabInstance:
     - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: 'blockingUIRoots.Array.data[1]'
       value: 
-      objectReference: {fileID: 291192476}
+      objectReference: {fileID: 758576491}
     - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: 'blockingUIRoots.Array.data[2]'
       value: 
-      objectReference: {fileID: 758576491}
+      objectReference: {fileID: 1241785957}
     - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: 'blockingUIRoots.Array.data[3]'
       value: 
-      objectReference: {fileID: 1241785957}
+      objectReference: {fileID: 1615380378}
+    - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
+      propertyPath: 'blockingUIRoots.Array.data[4]'
+      value: 
+      objectReference: {fileID: 2129237571}
     - target: {fileID: 919067340021515922, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
