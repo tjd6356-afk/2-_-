@@ -52,7 +52,7 @@ MonoBehaviour:
   rocketPrefab: {fileID: 6359520086967549668, guid: ae65d7a48f653e94a896d172ee93d579, type: 3}
   burstCount: 4
   burstInterval: 0.2
-  damageMultiplier: 1.5
+  damageMultiplier: 1.25
   fireRateMultiplier: 0.25
   magazineSize: 12
   maxReserveMagazines: 3

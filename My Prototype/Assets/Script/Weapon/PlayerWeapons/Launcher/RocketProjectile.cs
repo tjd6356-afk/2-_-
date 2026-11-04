@@ -298,26 +298,20 @@ public class RocketProjectile : MonoBehaviour
 
         if (explosionVFX != null)
         {
-            GameObject vfx =
-                Instantiate(
-                    explosionVFX,
-                    transform.position,
-                    Quaternion.identity
-                );
+            GameObject vfx = Instantiate(explosionVFX, transform.position, Quaternion.identity);
 
-
-            vfx.transform.localScale =
-                Vector3.one *
-                (
-                    explosionRadius *
-                    2f
-                );
-
-
-            Destroy(
-                vfx,
-                1f
-            );
+            // ExplosionVFX 스크립트가 있다면 크기 설정
+            ExplosionVFX effectScript = vfx.GetComponent<ExplosionVFX>();
+            if (effectScript != null)
+            {
+                effectScript.SetRadius(explosionRadius);
+            }
+            else
+            {
+                // 스크립트가 없는 일반 파티클 이펙트일 경우 강제로 스케일 변경
+                vfx.transform.localScale = Vector3.one * (explosionRadius * 2f);
+                Destroy(vfx, 1f);
+            }
         }
 
 

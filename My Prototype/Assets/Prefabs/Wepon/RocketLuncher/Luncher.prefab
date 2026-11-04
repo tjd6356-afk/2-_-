@@ -50,8 +50,8 @@ MonoBehaviour:
   weaponType: 4
   firePoint: {fileID: 3813221830899585027}
   rocketPrefab: {fileID: 6359520086967549668, guid: 2c1b5ce847b332742806f4cb689bbd2e, type: 3}
-  damageMultiplier: 5
-  fireRateMultiplier: 0.25
+  damageMultiplier: 4
+  fireRateMultiplier: 0.2
   magazineSize: 3
   maxReserveMagazines: 3
   baseFullReloadTime: 3.5
