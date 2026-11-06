@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using static InventoryManager;
 
 public class ShopUIController : MonoBehaviour
 {
@@ -282,7 +283,9 @@ public class ShopUIController : MonoBehaviour
 
 
             buyButton.interactable =
-                true;
+                CanAfford(
+                    selectedEntry
+                );
         }
 
 
@@ -295,6 +298,10 @@ public class ShopUIController : MonoBehaviour
 
     // =========================================================
     // 구입
+    // =========================================================
+
+    // =========================================================
+    // 선택된 Item 구매
     // =========================================================
 
     private void PurchaseSelectedItem()
@@ -317,28 +324,82 @@ public class ShopUIController : MonoBehaviour
 
 
         // =====================================================
-        // 현재는 돈 / 재료 조건 없음
+        // 1. 재료 확인
         // =====================================================
 
-        InventoryManager.Instance.AddItem(
-            selectedEntry.ItemData,
-            selectedEntry.Amount
-        );
+        if (!CanAfford(
+                selectedEntry))
+        {
+            Debug.Log(
+                "[Shop] 거래에 필요한 아이템이 부족합니다."
+            );
 
+
+            return;
+        }
+
+
+        // =====================================================
+        // 2. 재료 소비
+        // =====================================================
+
+        bool consumed =
+            ConsumeRequirements(
+                selectedEntry
+            );
+
+
+        if (!consumed)
+        {
+            Debug.LogError(
+                "[Shop] 거래 재료 소비에 실패했습니다."
+            );
+
+
+            return;
+        }
+
+
+        // =====================================================
+        // 3. 상품 지급
+        // =====================================================
+
+        bool added =
+            InventoryManager.Instance.AddItem(
+                selectedEntry.ItemData,
+                selectedEntry.Amount
+            );
+
+
+        if (!added)
+        {
+            Debug.LogError(
+                "[Shop] 구매한 아이템을 Inventory에 " +
+                "추가하지 못했습니다."
+            );
+
+
+            return;
+        }
+
+
+        // =====================================================
+        // 4. 구매 성공
+        // =====================================================
 
         purchasedAnyItem =
             true;
 
 
         Debug.Log(
-            $"[Shop] 구매 완료 : " +
+            $"[Shop] 물물교환 성공 : " +
             $"{selectedEntry.ItemData.ItemTitle} " +
             $"x{selectedEntry.Amount}"
         );
 
 
         // =====================================================
-        // 구매 후 상세 이미지 제거
+        // 5. 선택 UI 초기화
         // =====================================================
 
         ClearSelection();
@@ -461,5 +522,177 @@ public class ShopUIController : MonoBehaviour
 
 
         generatedIcons.Clear();
+    }
+
+    // =========================================================
+    // 현재 선택 상품을 구매할 수 있는지 확인
+    // =========================================================
+
+    private bool CanAfford(
+        MerchantShopEntry entry
+    )
+    {
+        if (entry == null)
+            return false;
+
+
+        if (InventoryManager.Instance == null)
+            return false;
+
+
+        // ==========================================
+        // 필요한 재료 전부 확인
+        // ==========================================
+
+        foreach (
+            MerchantTradeRequirement requirement
+            in entry.Requirements)
+        {
+            if (requirement == null)
+                continue;
+
+
+            ItemData requiredItem =
+                requirement.RequiredItem;
+
+
+            if (requiredItem == null)
+                continue;
+
+
+            int requiredAmount =
+                requirement.RequiredAmount;
+
+
+            int ownedAmount =
+                GetInventoryItemCount(
+                    requiredItem
+                );
+
+
+            // 필요한 수량보다 적음
+            if (ownedAmount <
+                requiredAmount)
+            {
+                return false;
+            }
+        }
+
+
+        return true;
+    }
+
+    // =========================================================
+    // Inventory 안의 특정 ItemData 총 수량
+    // =========================================================
+
+    private int GetInventoryItemCount(
+        ItemData itemData
+    )
+    {
+        if (itemData == null)
+            return 0;
+
+
+        if (InventoryManager.Instance == null)
+            return 0;
+
+
+        int totalAmount =
+            0;
+
+
+        foreach (
+            InventorySlot slot
+            in InventoryManager.Instance.Items)
+        {
+            if (slot == null)
+                continue;
+
+
+            if (slot.ItemData !=
+                itemData)
+            {
+                continue;
+            }
+
+
+            totalAmount +=
+                slot.Amount;
+        }
+
+
+        return totalAmount;
+    }
+
+    // =========================================================
+    // 거래에 필요한 Item 제거
+    // =========================================================
+
+    private bool ConsumeRequirements(
+        MerchantShopEntry entry
+    )
+    {
+        if (entry == null)
+            return false;
+
+
+        if (InventoryManager.Instance == null)
+            return false;
+
+
+        // =====================================================
+        // 반드시 먼저 모든 조건을 검사
+        //
+        // 일부 재료만 사라지는 현상 방지
+        // =====================================================
+
+        if (!CanAfford(entry))
+        {
+            return false;
+        }
+
+
+        // =====================================================
+        // 실제 재료 소비
+        // =====================================================
+
+        foreach (
+            MerchantTradeRequirement requirement
+            in entry.Requirements)
+        {
+            if (requirement == null)
+                continue;
+
+
+            ItemData requiredItem =
+                requirement.RequiredItem;
+
+
+            if (requiredItem == null)
+                continue;
+
+
+            bool removed =
+                InventoryManager.Instance.RemoveItem(
+                    requiredItem,
+                    requirement.RequiredAmount
+                );
+
+
+            if (!removed)
+            {
+                Debug.LogError(
+                    $"[Shop] 거래 재료 제거 실패 : " +
+                    $"{requiredItem.name}"
+                );
+
+
+                return false;
+            }
+        }
+
+
+        return true;
     }
 }

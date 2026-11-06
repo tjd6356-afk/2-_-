@@ -119,20 +119,46 @@ public class MerchantNPCData : ScriptableObject
 
 
 // =============================================================
-// 판매 상품 하나
+// 판매 상품
 // =============================================================
 
 [Serializable]
 public class MerchantShopEntry
 {
+    // =========================================================
+    // 판매되는 Item
+    // =========================================================
+
+    [Header("Product")]
+
+    [Tooltip("플레이어가 구입하게 될 ItemData")]
     [SerializeField]
     private ItemData itemData;
 
 
-    [Tooltip("한 번 구매할 때 들어오는 수량")]
+    [Tooltip("한 번 거래할 때 받는 수량")]
     [SerializeField]
     private int amount = 1;
 
+
+    // =========================================================
+    // 필요한 물물교환 재료
+    // =========================================================
+
+    [Header("Trade Requirements")]
+
+    [Tooltip(
+        "이 상품을 구입하기 위해 필요한 ItemData와 수량"
+    )]
+    [SerializeField]
+    private List<MerchantTradeRequirement>
+        requirements =
+            new List<MerchantTradeRequirement>();
+
+
+    // =========================================================
+    // Properties
+    // =========================================================
 
     public ItemData ItemData =>
         itemData;
@@ -142,5 +168,39 @@ public class MerchantShopEntry
         Mathf.Max(
             1,
             amount
+        );
+
+
+    public IReadOnlyList<MerchantTradeRequirement>
+        Requirements =>
+            requirements;
+}
+
+
+// =============================================================
+// 물물교환 조건 하나
+// =============================================================
+
+[Serializable]
+public class MerchantTradeRequirement
+{
+    [Tooltip("거래에 필요한 ItemData")]
+    [SerializeField]
+    private ItemData requiredItem;
+
+
+    [Tooltip("필요한 수량")]
+    [SerializeField]
+    private int requiredAmount = 1;
+
+
+    public ItemData RequiredItem =>
+        requiredItem;
+
+
+    public int RequiredAmount =>
+        Mathf.Max(
+            1,
+            requiredAmount
         );
 }

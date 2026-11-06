@@ -26,5 +26,11 @@ MonoBehaviour:
   shopItems:
   - itemData: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
     amount: 1
+    requirements:
+    - requiredItem: {fileID: 11400000, guid: 0f3e274865e54c442886333ca7a8943a, type: 2}
+      requiredAmount: 1
   - itemData: {fileID: 11400000, guid: 0f3e274865e54c442886333ca7a8943a, type: 2}
     amount: 1
+    requirements:
+    - requiredItem: {fileID: 11400000, guid: 023cb8fe27923db47a77f793de234455, type: 2}
+      requiredAmount: 1
