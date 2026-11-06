@@ -15,7 +15,8 @@ MonoBehaviour:
   merchantName: "\uC0C1\uC778\uC774\uB2E4."
   merchantPortrait: {fileID: 0}
   startDialogue:
-  - "\uC0C1\uC778"
+  - "\uBB3C\uAC74 \uD310\uB2E4."
+  - "\uC88B\uC740 \uBB3C\uAC74 \uD310\uB2E4."
   aboutDialogue:
   - "\uB098 \uC0C1\uC778"
   purchaseDialogue:
@@ -23,5 +24,7 @@ MonoBehaviour:
   noPurchaseDialogue:
   - . . .
   shopItems:
+  - itemData: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
+    amount: 1
   - itemData: {fileID: 11400000, guid: 0f3e274865e54c442886333ca7a8943a, type: 2}
     amount: 1

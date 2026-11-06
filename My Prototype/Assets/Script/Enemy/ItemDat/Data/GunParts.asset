@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb53e92a499661c458b238248a99a429, type: 3}
+  m_Name: GunParts
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: Item03
+  itemTitle: "\uCD1D\uC758 \uC124\uACC4\uB3C4"
+  itemDescription: "\uC774\uAC83\uC740 \uB9CC\uB4E0 \uC774\uB294 \uC778\uAC04\uC778\uAC00
+    \uC544\uB2C8\uBA74 \uC6B0\uB9AC\uB4E4 \uC778\uAC00 \uD604\uC7AC \uB85C\uC11C\uB294
+    \uBAA8\uB978\uB2E4."
+  itemIcon: {fileID: 9023577260674995161, guid: 4660189f766483c418e9c2759fe02670, type: 3}
+  itemType: 2
+  healAmount: 0
+  damageAmount: 0
+  useEffectText: "\uCD1D\uAE30\uB97C \uB9CC\uB4DC\uB294\uB370 \uD544\uC694\uD55C
+    \uC124\uACC4\uB3C4 \uC774\uB2E4.\n\uB0A1\uC740 \uBB38\uC591\uB4E4\uC774 \uC5EC\uB7FF
+    \uBCF4\uC778\uB2E4."
+  worldPickupPrefab: {fileID: 6315939368336245169, guid: b5599d44b421da544bd30c4c8f699f63, type: 3}
+  heldVisualPrefab: {fileID: 1528062636059491173, guid: b5599d44b421da544bd30c4c8f699f63, type: 3}
+  maxStack: 99
