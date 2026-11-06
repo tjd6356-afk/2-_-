@@ -14,7 +14,7 @@ public enum StageExitType
 public class StageExitPanelUI : MonoBehaviour
 {
     private PlayerGameplayControl currentPlayerControl;
-
+    private bool merchantRoutePrepared;
     public static StageExitPanelUI Instance
     {
         get;
@@ -65,6 +65,44 @@ public class StageExitPanelUI : MonoBehaviour
 
         [Tooltip("이 Stage 이상일 때 Boss 버튼 사용 가능")]
         public int bossUnlockStage = 0;
+
+        [Header("Merchant")]
+
+        [SerializeField]
+        private GameObject merchantMarker;
+
+
+        [SerializeField]
+        private bool bossRoute;
+
+
+        [System.NonSerialized]
+        private bool hasMerchant;
+
+
+        public GameObject MerchantMarker =>
+            merchantMarker;
+
+
+        public bool HasMerchant =>
+            hasMerchant;
+
+
+        public void SetMerchant(
+            bool value
+        )
+        {
+            hasMerchant =
+                value;
+
+
+            if (merchantMarker != null)
+            {
+                merchantMarker.SetActive(
+                    value
+                );
+            }
+        }
     }
 
 
@@ -212,6 +250,7 @@ public class StageExitPanelUI : MonoBehaviour
 
         RefreshButtons();
 
+        PrepareMerchantRoute();
 
         Debug.Log(
             "[StageExitPanelUI] Open"
@@ -399,6 +438,10 @@ public class StageExitPanelUI : MonoBehaviour
         Time.timeScale =
             1f;
 
+        MerchantStageSpawnState
+        .Instance
+        .SetNextDungeonMerchant(
+        false);
 
         SceneManager.LoadScene(
             choice.bossSceneName
@@ -469,6 +512,16 @@ public class StageExitPanelUI : MonoBehaviour
             $"{choice.routeId}"
         );
 
+        // =========================================================
+        // 선택한 Route에 Merchant가 있으면
+        // 다음 Dungeon에서 상인 확정 생성
+        // =========================================================
+
+        MerchantStageSpawnState
+            .Instance
+            .SetNextDungeonMerchant(
+                choice.HasMerchant
+            );
 
         isMovingStage =
             true;
@@ -505,5 +558,109 @@ public class StageExitPanelUI : MonoBehaviour
         {
             Instance = null;
         }
+    }
+
+    // =========================================================
+    // 이번 Stage 선택지 중
+    // Merchant가 등장할 Route 하나 선정
+    // =========================================================
+
+    private void PrepareMerchantRoute()
+    {
+        if (merchantRoutePrepared)
+            return;
+
+
+        merchantRoutePrepared =
+            true;
+
+
+        List<StageChoice> candidates =
+            new List<StageChoice>();
+
+
+        // =====================================================
+        // 우선 모든 Marker 초기화
+        // =====================================================
+
+        foreach (
+            StageChoice choice
+            in stageChoices)
+        {
+            if (choice == null)
+                continue;
+
+
+            choice.SetMerchant(
+                false
+            );
+        }
+
+
+        // =====================================================
+        // 현재 실제 선택 가능한 일반 Route만 후보
+        // =====================================================
+
+        foreach (
+            StageChoice choice
+            in stageChoices)
+        {
+            if (choice == null)
+                continue;
+
+
+            if (choice.exitType ==
+            StageExitType.BossRoom)
+            {
+                continue;
+            }
+
+            if (choice.button == null)
+                continue;
+
+
+            // 현재 Stage에서 잠겨있는 버튼 제외
+            if (!choice.button.interactable)
+                continue;
+
+
+            candidates.Add(
+                choice
+            );
+        }
+
+
+        if (candidates.Count == 0)
+        {
+            Debug.Log(
+                "[StageExit] Merchant Route 후보 없음"
+            );
+
+
+            return;
+        }
+
+
+        // =====================================================
+        // 정확히 하나만 선택
+        // =====================================================
+
+        StageChoice selected =
+        candidates[
+        UnityEngine.Random.Range(
+            0,
+            candidates.Count
+        )
+        ];
+
+
+        selected.SetMerchant(
+            true
+        );
+
+
+        Debug.Log(
+            "[StageExit] Merchant 확정 Route 생성"
+        );
     }
 }

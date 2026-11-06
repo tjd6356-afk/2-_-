@@ -2410,6 +2410,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a43b92beee0f0044397d88fa9d98e00c, type: 3}
+--- !u!114 &1802298446 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9068836093851472100, guid: 29e3a1ca89a48484583f351fb13d88a1, type: 3}
+  m_PrefabInstance: {fileID: 7935620430833755215}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f5761ee7ba36ae41a6fff68e5025474, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NPCStats
 --- !u!1 &1815920220
 GameObject:
   m_ObjectHideFlags: 0
@@ -3336,7 +3347,7 @@ PrefabInstance:
     - target: {fileID: 4471684669666319424, guid: 29e3a1ca89a48484583f351fb13d88a1, type: 3}
       propertyPath: healthSource
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1802298446}
     - target: {fileID: 5451147344280057439, guid: 29e3a1ca89a48484583f351fb13d88a1, type: 3}
       propertyPath: m_Name
       value: ShopNPC-01

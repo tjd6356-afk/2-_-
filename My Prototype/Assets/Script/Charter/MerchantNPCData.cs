@@ -203,4 +203,4 @@ public class MerchantTradeRequirement
             1,
             requiredAmount
         );
-}
+}   

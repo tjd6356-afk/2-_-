@@ -74,6 +74,34 @@ public class DungeonGridGenerator : MonoBehaviour
 
 
     // =========================================================
+    // Merchant
+    // =========================================================
+
+    [Header("Merchant Spawn")]
+
+    [Tooltip("Dungeon에 등장할 수 있는 상인 Prefab들")]
+    [SerializeField]
+    private GameObject[] merchantPrefabs;
+
+
+    [Tooltip("이 Scene에서 상인 생성 허용")]
+    [SerializeField]
+    private bool allowMerchantSpawn = true;
+
+
+    [Tooltip("상인 생성 높이 보정")]
+    [SerializeField]
+    private float merchantSpawnYOffset = 0f;
+
+
+    [Tooltip("Stage 선택 없이 Dungeon Scene에서 직접 테스트할 때 사용")]
+    [SerializeField]
+    private bool debugForceMerchantSpawn = false;
+
+
+    private GameObject spawnedMerchant;
+
+    // =========================================================
     // 현재 생성된 방
     // =========================================================
 
@@ -1275,6 +1303,8 @@ public class DungeonGridGenerator : MonoBehaviour
 
         spawnedStageExit =
             null;
+        spawnedMerchant =
+            null;
     }
     private void FillRemainingOpenings()
     {
@@ -1603,6 +1633,65 @@ public class DungeonGridGenerator : MonoBehaviour
             generatedRooms[exitCell];
 
         // =========================================================
+        // Merchant 생성 여부 확인
+        // =========================================================
+
+        bool stageWantsMerchant =
+            MerchantStageSpawnState
+                .Instance
+                .ConsumeNextDungeonMerchant();
+
+
+        bool shouldSpawnMerchant =
+            allowMerchantSpawn &&
+            (
+                stageWantsMerchant ||
+                debugForceMerchantSpawn
+            );
+
+
+        // =========================================================
+        // Merchant Room
+        // =========================================================
+
+        DungeonRoom merchantRoom =
+            null;
+
+
+        Vector2Int merchantCell =
+            default;
+
+
+        if (shouldSpawnMerchant)
+        {
+            bool foundMerchantRoom =
+                TryGetMerchantRoom(
+                    playerCell,
+                    exitCell,
+                    out merchantCell,
+                    out merchantRoom
+                );
+
+
+            if (foundMerchantRoom)
+            {
+                // ==========================================
+                // 상인 Room은 Monster Battle 제거
+                // ==========================================
+
+                DisableBattleInRoom(
+                    merchantRoom
+                );
+
+
+                Debug.Log(
+                    $"[Merchant Spawn] Merchant Room 지정 : " +
+                    $"{merchantCell} / {merchantRoom.name}"
+                );
+            }
+        }
+
+        // =========================================================
         // Player 시작방 / StageExit 방은 Monster Battle 제거
         // =========================================================
 
@@ -1693,6 +1782,19 @@ public class DungeonGridGenerator : MonoBehaviour
 
         spawnedStageExit.name =
             "GeneratedStageExit";
+
+        // =========================================================
+        // Merchant 정확히 1명 생성
+        // =========================================================
+
+        if (shouldSpawnMerchant &&
+            merchantRoom != null)
+        {
+            SpawnMerchant(
+                merchantRoom,
+                gameplayRoot.transform
+            );
+        }
 
         // =========================================================
         // 생성된 StageExit에 StageExitPanelUI 연결
@@ -1823,5 +1925,205 @@ public class DungeonGridGenerator : MonoBehaviour
 
             battle.DisableBattleRoom();
         }
+    }
+
+    // =========================================================
+    // Merchant Room 선택
+    // =========================================================
+
+    private bool TryGetMerchantRoom(
+        Vector2Int playerCell,
+        Vector2Int exitCell,
+        out Vector2Int merchantCell,
+        out DungeonRoom merchantRoom
+    )
+    {
+        merchantCell =
+            default;
+
+
+        merchantRoom =
+            null;
+
+
+        List<Vector2Int> candidates =
+            new List<Vector2Int>();
+
+
+        foreach (
+            KeyValuePair<Vector2Int, DungeonRoom> pair
+            in generatedRooms)
+        {
+            if (pair.Value == null)
+                continue;
+
+
+            // ==========================================
+            // Player Room 제외
+            // ==========================================
+
+            if (pair.Key ==
+                playerCell)
+            {
+                continue;
+            }
+
+
+            // ==========================================
+            // StageExit Room 제외
+            // ==========================================
+
+            if (pair.Key ==
+                exitCell)
+            {
+                continue;
+            }
+
+
+            candidates.Add(
+                pair.Key
+            );
+        }
+
+
+        if (candidates.Count == 0)
+        {
+            Debug.LogWarning(
+                "[Merchant Spawn] 상인을 배치할 제3의 Room이 없습니다."
+            );
+
+
+            return false;
+        }
+
+
+        // ==========================================
+        // 가능한 방 중 하나 랜덤
+        // ==========================================
+
+        merchantCell =
+            candidates[
+                Random.Range(
+                    0,
+                    candidates.Count
+                )
+            ];
+
+
+        merchantRoom =
+            generatedRooms[
+                merchantCell
+            ];
+
+
+        return
+            merchantRoom != null;
+    }
+
+    // =========================================================
+    // Merchant Spawn
+    // =========================================================
+
+    private void SpawnMerchant(
+        DungeonRoom merchantRoom,
+        Transform gameplayRoot
+    )
+    {
+        if (merchantRoom == null)
+            return;
+
+
+        if (gameplayRoot == null)
+            return;
+
+
+        if (merchantPrefabs == null ||
+            merchantPrefabs.Length == 0)
+        {
+            Debug.LogWarning(
+                "[Merchant Spawn] Merchant Prefabs가 비어있습니다."
+            );
+
+
+            return;
+        }
+
+
+        // =====================================================
+        // None Prefab 제외
+        // =====================================================
+
+        List<GameObject> validPrefabs =
+            new List<GameObject>();
+
+
+        foreach (
+            GameObject prefab
+            in merchantPrefabs)
+        {
+            if (prefab != null)
+            {
+                validPrefabs.Add(
+                    prefab
+                );
+            }
+        }
+
+
+        if (validPrefabs.Count == 0)
+        {
+            Debug.LogWarning(
+                "[Merchant Spawn] 사용 가능한 Merchant Prefab이 없습니다."
+            );
+
+
+            return;
+        }
+
+
+        // =====================================================
+        // 랜덤 Merchant 한 명
+        // =====================================================
+
+        GameObject selectedMerchant =
+            validPrefabs[
+                Random.Range(
+                    0,
+                    validPrefabs.Count
+                )
+            ];
+
+
+        // =====================================================
+        // Room PlacementPoint 사용
+        // =====================================================
+
+        Vector3 spawnPosition =
+            merchantRoom.GetPlacementPosition();
+
+
+        spawnPosition +=
+            Vector3.up *
+            merchantSpawnYOffset;
+
+
+        spawnedMerchant =
+            Instantiate(
+                selectedMerchant,
+                spawnPosition,
+                selectedMerchant.transform.rotation,
+                gameplayRoot
+            );
+
+
+        spawnedMerchant.name =
+            $"GeneratedMerchant_{selectedMerchant.name}";
+
+
+        Debug.Log(
+            $"[Merchant Spawn] 상인 생성 성공 : " +
+            $"{selectedMerchant.name} / " +
+            $"Room = {merchantRoom.name}"
+        );
     }
 }
