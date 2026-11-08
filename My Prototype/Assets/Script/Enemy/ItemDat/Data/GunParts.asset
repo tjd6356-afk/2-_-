@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: Item03
   itemTitle: "\uCD1D\uC758 \uC124\uACC4\uB3C4"
   itemDescription: "\uC774\uAC83\uC740 \uB9CC\uB4E0 \uC774\uB294 \uC778\uAC04\uC778\uAC00
-    \uC544\uB2C8\uBA74 \uC6B0\uB9AC\uB4E4 \uC778\uAC00 \uD604\uC7AC \uB85C\uC11C\uB294
+    \uC544\uB2C8\uBA74 \uC6B0\uB9AC\uB4E4 \uC778\uAC00 \uD604\uC7AC\uB85C\uC11C\uB294
     \uBAA8\uB978\uB2E4."
   itemIcon: {fileID: 9023577260674995161, guid: 4660189f766483c418e9c2759fe02670, type: 3}
   itemType: 2
