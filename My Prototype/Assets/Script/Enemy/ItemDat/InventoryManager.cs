@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -256,5 +256,16 @@ public class InventoryManager : MonoBehaviour
 
 
         return true;
+    }
+
+    // =========================================================
+    // Check Amount
+    // =========================================================
+    public int GetItemAmount(ItemData itemData)
+    {
+        if (itemData == null) return 0;
+
+        InventorySlot slot = FindSlot(itemData);
+        return slot != null ? slot.Amount : 0;
     }
 }
