@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinigunWeapon2
   weaponId: weapon_00002
-  weaponName: minigun2
+  weaponName: "\uD3ED\uBC1C\uD0C4 \uBBF8\uB2C8\uAC74"
   weaponType: 5
   firePoint: {fileID: 7969556516974125778}
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}

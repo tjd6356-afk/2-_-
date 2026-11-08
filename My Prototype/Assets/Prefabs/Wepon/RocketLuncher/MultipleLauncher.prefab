@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MultipleLauncherWeapon
   weaponId: weapon_0003
-  weaponName: MultipleLauncher
+  weaponName: "\uB2E4\uC5F0\uBC1C \uB7F0\uCC98"
   weaponType: 4
   firePoint: {fileID: 3813221830899585027}
   rocketPrefab: {fileID: 6359520086967549668, guid: ae65d7a48f653e94a896d172ee93d579, type: 3}

@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClusterLauncherWeapon
   weaponId: weapon_0002
-  weaponName: ClusterLauncher
+  weaponName: "\uD074\uB7EC\uC2A4\uD130 \uB7F0\uCC98"
   weaponType: 4
   firePoint: {fileID: 3813221830899585027}
   rocketPrefab: {fileID: 2810133765677862476, guid: 5ea2ee46f3496204fb1127123ef91ff6, type: 3}

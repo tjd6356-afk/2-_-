@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinigunWeapon
   weaponId: weapon_00001
-  weaponName: minigun
+  weaponName: "\uBBF8\uB2C8\uAC74"
   weaponType: 5
   firePoint: {fileID: 7969556516974125778}
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
@@ -57,7 +57,7 @@ MonoBehaviour:
   minSpoolToFire: 0
   barrelTransform: {fileID: 712647208601603101}
   maxBarrelRotationSpeed: 1000
-  barrelRotationAxis: {x: 0, y: 1, z: 0}
+  barrelRotationAxis: {x: 0, y: 0, z: 1}
   windUpCurve:
     serializedVersion: 2
     m_Curve:

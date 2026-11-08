@@ -77,7 +77,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShotgunWeapon
   weaponId: weapon_02
-  weaponName: shotgun
+  weaponName: "\uBC00\uC9D1 \uC0F7\uAC74"
   weaponType: 6
   firePoint: {fileID: 4014565773434977279}
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
