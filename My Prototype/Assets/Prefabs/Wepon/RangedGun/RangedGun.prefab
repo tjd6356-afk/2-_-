@@ -82,6 +82,11 @@ MonoBehaviour:
   weaponType: 2
   firePoint: {fileID: 7069245048539625619}
   projectilePrefab: {fileID: -8891868867189086975, guid: d89dc34741f1da746bd681324e79dd9f, type: 3}
+  damageMultiplier: 1
+  fireRateMultiplier: 1
+  targetKickPitch: 2
+  recoilDuration: 0.05
+  horizontalKickRatio: 0.5
   magazineSize: 30
   maxReserveMagazines: 0
   baseFullReloadTime: 2
