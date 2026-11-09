@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c1e48e15900f5d43a504dece5cb6c7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MinigunWeapon
-  weaponId: weapon_00001
+  weaponId: weapon_10000
   weaponName: "\uBBF8\uB2C8\uAC74"
   weaponType: 5
   firePoint: {fileID: 7969556516974125778}

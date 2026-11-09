@@ -77,7 +77,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a1d4279c423a544eb96708785b2ebb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MeleeWeapon
-  weaponId: weapon_001
+  weaponId: weapon_10
   weaponName: Weapon
   weaponType: 1
   playerStats: {fileID: 0}

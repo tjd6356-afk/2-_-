@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3536b7f9352c164d96b4e341d357cee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClusterLauncherWeapon
-  weaponId: weapon_0002
+  weaponId: weapon_2000
   weaponName: "\uD074\uB7EC\uC2A4\uD130 \uB7F0\uCC98"
   weaponType: 4
   firePoint: {fileID: 3813221830899585027}
