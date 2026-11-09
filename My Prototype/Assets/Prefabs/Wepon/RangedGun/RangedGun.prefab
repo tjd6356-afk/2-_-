@@ -82,8 +82,8 @@ MonoBehaviour:
   weaponType: 2
   firePoint: {fileID: 7069245048539625619}
   projectilePrefab: {fileID: -8891868867189086975, guid: d89dc34741f1da746bd681324e79dd9f, type: 3}
-  magazineSize: 5
-  maxReserveMagazines: 5
+  magazineSize: 30
+  maxReserveMagazines: 0
   baseFullReloadTime: 2
   autoFullReloadWhenEmpty: 1
   maxAimDistance: 100
