@@ -796,7 +796,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7419949454150433227
 RectTransform:
   m_ObjectHideFlags: 0
@@ -876,7 +876,7 @@ MonoBehaviour:
   weaponNameText: {fileID: 0}
   weaponIconImage: {fileID: 0}
   weaponDescText: {fileID: 0}
-  blueprintCostText: {fileID: 0}
+  materialCostText: {fileID: 0}
   actionButton: {fileID: 0}
   actionButtonText: {fileID: 0}
   weaponTrees:
@@ -887,13 +887,13 @@ MonoBehaviour:
       weaponPrefab: {fileID: 3282992401655324631, guid: 085ab4a87a9d71a4c836200b7cfb6e56, type: 3}
       weaponIcon: {fileID: 0}
       weaponDescription: 
-      requiredBlueprints: 0
+      requiredMaterials: []
       isUnlocked: 0
     - nodeButton: {fileID: 2881188208390131648}
       weaponPrefab: {fileID: 7251112462859544683, guid: e4c4beb2ce8c71f46869af6537adb534, type: 3}
       weaponIcon: {fileID: 0}
       weaponDescription: 
-      requiredBlueprints: 0
+      requiredMaterials: []
       isUnlocked: 0
   - weaponType: 4
     treeUIRoot: {fileID: 3610584220077140394}
@@ -902,13 +902,13 @@ MonoBehaviour:
       weaponPrefab: {fileID: 192013335984405070, guid: 2c8e3911176ad044aa5db75d7a4d4e16, type: 3}
       weaponIcon: {fileID: 0}
       weaponDescription: 
-      requiredBlueprints: 0
+      requiredMaterials: []
       isUnlocked: 0
     - nodeButton: {fileID: 3241397312842740719}
       weaponPrefab: {fileID: -2676240497628087340, guid: 2e3b6243770a1f748ba2025299a200ee, type: 3}
       weaponIcon: {fileID: 0}
       weaponDescription: 
-      requiredBlueprints: 0
+      requiredMaterials: []
       isUnlocked: 0
   - weaponType: 6
     treeUIRoot: {fileID: 7998600998794197630}
@@ -917,13 +917,13 @@ MonoBehaviour:
       weaponPrefab: {fileID: 4493051861238745717, guid: 0e52358e4a83762418c5dbfac0025d40, type: 3}
       weaponIcon: {fileID: 0}
       weaponDescription: 
-      requiredBlueprints: 0
+      requiredMaterials: []
       isUnlocked: 0
     - nodeButton: {fileID: 4471489143416760867}
       weaponPrefab: {fileID: 4493051861238745717, guid: 39924d2ff0afcbc4691bf31d4baedfa0, type: 3}
       weaponIcon: {fileID: 0}
       weaponDescription: 
-      requiredBlueprints: 0
+      requiredMaterials: []
       isUnlocked: 0
 --- !u!1 &2328790222424564359
 GameObject:

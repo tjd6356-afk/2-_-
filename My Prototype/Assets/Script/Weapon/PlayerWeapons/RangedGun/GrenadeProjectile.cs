@@ -26,6 +26,9 @@ public class GrenadeProjectile : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
+        rb.linearDamping = 0.5f;
+        rb.angularDamping = 3.5f;
+
         // 플레이어(발사자)와 수류탄의 충돌 무시 (던지자마자 플레이어 몸에 부딪혀 튕기는 것 방지)
         Collider grenadeCollider = GetComponent<Collider>();
         if (owner != null && grenadeCollider != null)
