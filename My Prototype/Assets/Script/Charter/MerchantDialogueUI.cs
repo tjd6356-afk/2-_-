@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -49,6 +50,20 @@ public class MerchantDialogueUI : MonoBehaviour
     [SerializeField]
     private Button quitButton;
 
+    // =========================================================
+    // Typing
+    // =========================================================
+
+    [Header("Typing")]
+
+    [Tooltip("글자가 하나씩 나타나는 속도")]
+    [SerializeField]
+    private float typingSpeed = 0.03f;
+
+
+    private bool isTyping;
+
+    private Coroutine typingCoroutine;
 
     // =========================================================
     // Shop
@@ -160,8 +175,11 @@ public class MerchantDialogueUI : MonoBehaviour
             return;
 
 
-        // 선택지가 나와있을 때는
-        // Space/Enter로 대사를 넘기지 않음
+        // =========================================================
+        // 선택지가 표시 중이면
+        // Space / Enter / Click으로 대사를 넘기지 않음
+        // =========================================================
+
         if (choiceRoot != null &&
             choiceRoot.activeSelf)
         {
@@ -169,7 +187,11 @@ public class MerchantDialogueUI : MonoBehaviour
         }
 
 
-        // Shop이 열려있으면 대화 입력 중지
+        // =========================================================
+        // Shop이 열려 있으면
+        // 대화 진행 입력 중지
+        // =========================================================
+
         if (shopUI != null &&
             shopUI.IsOpen)
         {
@@ -177,14 +199,36 @@ public class MerchantDialogueUI : MonoBehaviour
         }
 
 
-        if (Keyboard.current == null)
-            return;
-
-
         bool nextPressed =
-            Keyboard.current.spaceKey.wasPressedThisFrame ||
-            Keyboard.current.enterKey.wasPressedThisFrame ||
-            Keyboard.current.numpadEnterKey.wasPressedThisFrame;
+            false;
+
+
+        // =========================================================
+        // Keyboard
+        // =========================================================
+
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.spaceKey.wasPressedThisFrame ||
+                Keyboard.current.enterKey.wasPressedThisFrame ||
+                Keyboard.current.numpadEnterKey.wasPressedThisFrame)
+            {
+                nextPressed =
+                    true;
+            }
+        }
+
+
+        // =========================================================
+        // Mouse Left Click
+        // =========================================================
+
+        if (Mouse.current != null &&
+            Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            nextPressed =
+                true;
+        }
 
 
         if (nextPressed)
@@ -206,6 +250,20 @@ public class MerchantDialogueUI : MonoBehaviour
         if (isOpen)
             return;
 
+        isTyping =
+        false;
+
+
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(
+                typingCoroutine
+            );
+
+
+            typingCoroutine =
+                null;
+        }
 
         if (data == null)
             return;
@@ -333,10 +391,65 @@ public class MerchantDialogueUI : MonoBehaviour
         }
 
 
-        dialogueText.text =
-            currentLines[lineIndex];
+        // 기존 타이핑 중지
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(
+                typingCoroutine
+            );
+
+
+            typingCoroutine =
+                null;
+        }
+
+
+        typingCoroutine =
+            StartCoroutine(
+                TypeDialogue(
+                    currentLines[lineIndex]
+                )
+            );
     }
 
+    // =========================================================
+    // 한 글자씩 대사 표시
+    // =========================================================
+
+    private IEnumerator TypeDialogue(
+        string line
+    )
+    {
+        isTyping =
+            true;
+
+
+        dialogueText.text =
+            "";
+
+
+        foreach (
+            char letter
+            in line.ToCharArray())
+        {
+            dialogueText.text +=
+                letter;
+
+
+            yield return
+                new WaitForSeconds(
+                    typingSpeed
+                );
+        }
+
+
+        isTyping =
+            false;
+
+
+        typingCoroutine =
+            null;
+    }
 
     public void NextDialogue()
     {
@@ -344,11 +457,58 @@ public class MerchantDialogueUI : MonoBehaviour
             return;
 
 
+        if (currentLines == null)
+            return;
+
+
+        // =========================================================
+        // 1. 현재 글자가 출력 중
+        //
+        // → 다음 대사로 넘어가지 않고
+        //   현재 문장을 즉시 완성
+        // =========================================================
+
+        if (isTyping)
+        {
+            if (typingCoroutine != null)
+            {
+                StopCoroutine(
+                    typingCoroutine
+                );
+
+
+                typingCoroutine =
+                    null;
+            }
+
+
+            if (lineIndex >= 0 &&
+                lineIndex < currentLines.Count)
+            {
+                dialogueText.text =
+                    currentLines[lineIndex];
+            }
+
+
+            isTyping =
+                false;
+
+
+            return;
+        }
+
+
+        // =========================================================
+        // 2. 현재 문장이 이미 전부 나옴
+        //
+        // → 다음 문장
+        // =========================================================
+
         lineIndex++;
 
 
-        if (currentLines == null ||
-            lineIndex >= currentLines.Count)
+        if (lineIndex >=
+            currentLines.Count)
         {
             FinishCurrentSequence();
 
@@ -400,6 +560,21 @@ public class MerchantDialogueUI : MonoBehaviour
 
     private void ShowChoices()
     {
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(
+                typingCoroutine
+            );
+
+
+            typingCoroutine =
+                null;
+        }
+
+
+        isTyping =
+            false;
+
         currentLines =
             null;
 
@@ -561,6 +736,20 @@ public class MerchantDialogueUI : MonoBehaviour
         isOpen =
             false;
 
+        isTyping =
+        false;
+
+
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(
+                typingCoroutine
+            );
+
+
+            typingCoroutine =
+                null;
+        }
 
         currentData =
             null;

@@ -957,7 +957,7 @@ PrefabInstance:
     - target: {fileID: 5289103139993555833, guid: ecf274674f362be4db0c09c02fb64d24, type: 3}
       propertyPath: dialogueManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 748155304}
     - target: {fileID: 5289103139993555833, guid: ecf274674f362be4db0c09c02fb64d24, type: 3}
       propertyPath: interactionCamera
       value: 
@@ -1022,7 +1022,7 @@ PrefabInstance:
     - target: {fileID: 5289103139993555833, guid: a8f6e0bb80387bc41b5ac1c86e34f0ef, type: 3}
       propertyPath: dialogueManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 748155304}
     - target: {fileID: 5289103139993555833, guid: a8f6e0bb80387bc41b5ac1c86e34f0ef, type: 3}
       propertyPath: interactionCamera
       value: 
@@ -1087,7 +1087,7 @@ PrefabInstance:
     - target: {fileID: 5289103139993555833, guid: 6e1574a72ab38e14b99d0e26acd4e237, type: 3}
       propertyPath: dialogueManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 748155304}
     - target: {fileID: 5289103139993555833, guid: 6e1574a72ab38e14b99d0e26acd4e237, type: 3}
       propertyPath: interactionCamera
       value: 
@@ -1523,6 +1523,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &748155304 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7153976038040128896, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
+  m_PrefabInstance: {fileID: 6891813886822376370}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b807f62ef133a444baa51c7c094cb67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueManager
 --- !u!1 &758576491 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9164272282894803453, guid: 5090d6ba746e61541815ffd7fb010ead, type: 3}
@@ -2030,7 +2041,7 @@ PrefabInstance:
     - target: {fileID: 5289103139993555833, guid: 85cc784ba85c6514f80fc964098161e3, type: 3}
       propertyPath: dialogueManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 748155304}
     - target: {fileID: 5289103139993555833, guid: 85cc784ba85c6514f80fc964098161e3, type: 3}
       propertyPath: interactionCamera
       value: 
@@ -2244,7 +2255,7 @@ PrefabInstance:
     - target: {fileID: 5289103139993555833, guid: 69fed0e8788ba714a93e3bb6a5346da6, type: 3}
       propertyPath: dialogueManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 748155304}
     - target: {fileID: 5289103139993555833, guid: 69fed0e8788ba714a93e3bb6a5346da6, type: 3}
       propertyPath: interactionCamera
       value: 
@@ -2772,7 +2783,7 @@ PrefabInstance:
     - target: {fileID: 5289103139993555833, guid: 0cc4157aae45e2a43943f58b24b237de, type: 3}
       propertyPath: dialogueManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 748155304}
     - target: {fileID: 5289103139993555833, guid: 0cc4157aae45e2a43943f58b24b237de, type: 3}
       propertyPath: interactionCamera
       value: 
@@ -3263,7 +3274,7 @@ PrefabInstance:
     - target: {fileID: 5289103139993555833, guid: f553924073585ac46b6203c3ae23110b, type: 3}
       propertyPath: dialogueManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 748155304}
     - target: {fileID: 5289103139993555833, guid: f553924073585ac46b6203c3ae23110b, type: 3}
       propertyPath: interactionCamera
       value: 
