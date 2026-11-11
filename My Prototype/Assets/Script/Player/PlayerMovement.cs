@@ -610,4 +610,22 @@ public class PlayerMovement : MonoBehaviour
             );
         }
     }
+
+    // =========================================================
+    // ✨ 외부 충격(넉백, 로켓 점프 등) 적용
+    // =========================================================
+    public void AddKnockback(Vector3 force)
+    {
+        // Y축(위아래) 힘은 점프/중력 수치에 더함
+        verticalVelocity += force.y;
+
+        // X, Z축(수평) 힘은 와이어 관성(미끄러짐) 변수에 더함
+        wireHorizontalVelocity += new Vector3(force.x, 0f, force.z);
+
+        // 공중에 강제로 뜨게 만들어서 마찰력을 줄임 (부드럽게 밀려나도록)
+        if (force.y > 0.1f)
+        {
+            isGrounded = false;
+        }
+    }
 }

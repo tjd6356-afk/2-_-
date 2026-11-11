@@ -35,7 +35,11 @@ public class LauncherWeapon : WeaponBase, IAmmoWeapon
     [Tooltip("좌우 흔들림 비율")]
     [SerializeField] private float horizontalKickRatio = 0.5f;
 
-    
+    [Header("Player Knockback (발사 반동 밀림)")]
+    [Tooltip("발사 시 플레이어가 반대 방향으로 밀려나는 힘 (0이면 안 밀림)")]
+    [SerializeField] private float playerKnockbackForce = 5f;
+
+
 
     // Runtime variables
     private int currentAmmo;
@@ -113,6 +117,19 @@ public class LauncherWeapon : WeaponBase, IAmmoWeapon
             ? hit.point : aimRay.GetPoint(maxAimDistance);
 
         Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+
+        if (playerKnockbackForce > 0f)
+        {
+            // 발사 방향의 정반대(-shootDirection)로 밀어냅니다.
+            Vector3 knockbackDir = -shootDirection;
+
+            // 플레이어의 PlayerMovement 컴포넌트를 찾아서 힘을 전달
+            PlayerMovement movement = WeaponManager.GetComponent<PlayerMovement>();
+            if (movement != null)
+            {
+                movement.AddKnockback(knockbackDir * playerKnockbackForce);
+            }
+        }
 
         RocketProjectile rocket = Instantiate(rocketPrefab, firePoint.position, Quaternion.LookRotation(shootDirection));
 
