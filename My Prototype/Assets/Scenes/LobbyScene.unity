@@ -3632,8 +3632,17 @@ MonoBehaviour:
   closedAngle: 0
   openAngle: 90
   rotationSpeed: 180
+  shotAngularVelocityMultiplier: 8
+  minimumShotAngularVelocity: 120
+  maximumShotAngularVelocity: 500
+  shotAngularDrag: 3
+  shotBounce: 0.35
+  minimumShotAngle: -90
+  maximumShotAngle: 120
+  settleAngularVelocity: 2
+  fullForceLeverDistance: 0.8
   allowPlayerInteraction: 1
-  openWhenShot: 1
+  reactToProjectile: 1
 --- !u!1001 &2049349569
 PrefabInstance:
   m_ObjectHideFlags: 0
