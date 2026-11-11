@@ -614,8 +614,15 @@ public class PlayerMovement : MonoBehaviour
     // =========================================================
     // ✨ 외부 충격(넉백, 로켓 점프 등) 적용
     // =========================================================
-    public void AddKnockback(Vector3 force)
+    public void AddKnockback(Vector3 force, bool resetMomentum = false)
     {
+        // ✨ 핵심: 스위치가 켜져있으면 기존에 떨어지거나 날아가던 속도를 0으로 초기화
+        if (resetMomentum)
+        {
+            verticalVelocity = 0f;
+            wireHorizontalVelocity = Vector3.zero;
+        }
+
         // Y축(위아래) 힘은 점프/중력 수치에 더함
         verticalVelocity += force.y;
 
