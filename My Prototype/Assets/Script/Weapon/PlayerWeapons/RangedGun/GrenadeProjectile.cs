@@ -13,8 +13,15 @@ public class GrenadeProjectile : MonoBehaviour
     private float damage;
     private GameObject owner;
 
+    private Rigidbody rb;
     private bool hasImpacted = false;
     private bool hasExploded = false;
+
+    private void Awake()
+    {
+        rb =
+            GetComponent<Rigidbody>();
+    }
 
     // 무기 스크립트에서 수류탄을 던질 때 호출하는 함수
     public void Launch(Vector3 direction, float throwForce, float throwDamage, GameObject thrower)
@@ -22,12 +29,18 @@ public class GrenadeProjectile : MonoBehaviour
         damage = throwDamage;
         owner = thrower;
 
-        Rigidbody rb = GetComponent<Rigidbody>();
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        rb.linearDamping = 0.5f;
-        rb.angularDamping = 3.5f;
+        rb.interpolation =
+        RigidbodyInterpolation.Interpolate;
+
+        rb.collisionDetectionMode =
+            CollisionDetectionMode.Continuous;
+
+        rb.linearDamping =
+            0.5f;
+
+        rb.angularDamping =
+            3.5f;
 
         // 플레이어(발사자)와 수류탄의 충돌 무시 (던지자마자 플레이어 몸에 부딪혀 튕기는 것 방지)
         Collider grenadeCollider = GetComponent<Collider>();
@@ -47,17 +60,75 @@ public class GrenadeProjectile : MonoBehaviour
         rb.AddTorque(Random.insideUnitSphere * (throwForce * 0.5f), ForceMode.Impulse);
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(
+    Collision collision
+)
     {
-        if (hasImpacted || hasExploded) return;
-
-        // 발사자 자신과의 충돌은 타이머를 시작하지 않음
-        if (owner != null && (collision.gameObject == owner || collision.transform.IsChildOf(owner.transform)))
+        if (hasImpacted ||
+            hasExploded)
+        {
             return;
+        }
 
-        // 어딘가에 부딪히는 순간 타이머 시작
-        hasImpacted = true;
-        Invoke(nameof(Explode), explodeDelay);
+
+        // =====================================================
+        // 발사자 자신 무시
+        // =====================================================
+
+        if (owner != null &&
+            (
+                collision.gameObject == owner ||
+                collision.transform.IsChildOf(
+                    owner.transform
+                )
+            ))
+        {
+            return;
+        }
+
+
+        // =====================================================
+        // Door 충돌
+        // =====================================================
+
+        DoorController door =
+            collision.collider
+                .GetComponentInParent<DoorController>();
+
+
+        if (door != null)
+        {
+            Vector3 grenadeVelocity =
+                rb != null
+                ? rb.linearVelocity
+                : Vector3.zero;
+
+
+            Vector3 hitPoint =
+                collision.contactCount > 0
+                ? collision.GetContact(0).point
+                : transform.position;
+
+
+            door.HitByProjectile(
+                grenadeVelocity,
+                hitPoint
+            );
+        }
+
+
+        // =====================================================
+        // 어딘가에 처음 부딪힌 순간 폭발 Timer 시작
+        // =====================================================
+
+        hasImpacted =
+            true;
+
+
+        Invoke(
+            nameof(Explode),
+            explodeDelay
+        );
     }
 
     private void Explode()
