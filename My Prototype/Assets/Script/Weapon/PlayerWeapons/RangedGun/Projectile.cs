@@ -96,6 +96,26 @@ public class Projectile : MonoBehaviour
         GameObject hitObject =
             collision.gameObject;
 
+        // =====================================================
+        // Door 명중
+        // =====================================================
+
+        DoorController door =
+            hitObject.GetComponentInParent<DoorController>();
+
+
+        if (door != null)
+        {
+            door.OpenFromShot();
+
+
+            Destroy(
+                gameObject
+            );
+
+
+            return;
+        }
 
         // =====================================================
         // 자기 자신을 쏘는 것 방지
