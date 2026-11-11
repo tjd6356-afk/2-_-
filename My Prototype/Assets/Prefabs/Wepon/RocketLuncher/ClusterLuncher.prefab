@@ -62,6 +62,9 @@ MonoBehaviour:
   targetKickPitch: 15
   recoilDuration: 0.05
   horizontalKickRatio: 0.5
+  playerKnockbackForce: 30
+  verticalKnockbackMultiplier: 0.2
+  airborneHorizontalMultiplier: 0.4
 --- !u!1 &2732468056764597543
 GameObject:
   m_ObjectHideFlags: 0

@@ -62,8 +62,11 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   targetKickPitch: 5
-  recoilDuration: 0.02
+  recoilDuration: 0.03
   horizontalKickRatio: 0.5
+  playerKnockbackForce: 15
+  verticalKnockbackMultiplier: 0.2
+  airborneHorizontalMultiplier: 0.4
 --- !u!1 &2732468056764597543
 GameObject:
   m_ObjectHideFlags: 0

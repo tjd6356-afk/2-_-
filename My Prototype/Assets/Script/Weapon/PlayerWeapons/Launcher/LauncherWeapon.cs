@@ -40,7 +40,7 @@ public class LauncherWeapon : WeaponBase, IAmmoWeapon
     [SerializeField] private float playerKnockbackForce = 5f;
 
     [Tooltip("위(Y축)로 솟아오르는 힘의 비율 (1 = 100%, 0.3 = 30%만 적용)")]
-    [SerializeField, Range(0f, 1f)] private float verticalKnockbackMultiplier = 0.3f;
+    [SerializeField, Range(0f, 1f)] private float verticalKnockbackMultiplier = 0.2f;
 
     [Tooltip("공중에 있을 때 수평(X, Z축)으로 밀리는 힘의 비율 (0.5 = 50%만 밀림)")]
     [SerializeField, Range(0f, 1f)] private float airborneHorizontalMultiplier = 0.4f;

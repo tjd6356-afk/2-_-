@@ -35,6 +35,17 @@ public class ClusterLauncherWeapon : WeaponBase, IAmmoWeapon
     [Tooltip("좌우 흔들림 비율")]
     [SerializeField] private float horizontalKickRatio = 0.5f;
 
+    [Header("Player Knockback (발사 반동 밀림)")]
+    [Tooltip("발사 시 플레이어가 반대 방향으로 밀려나는 힘 (0이면 안 밀림)")]
+    [SerializeField] private float playerKnockbackForce = 5f;
+
+    [Tooltip("위(Y축)로 솟아오르는 힘의 비율 (1 = 100%, 0.3 = 30%만 적용)")]
+    [SerializeField, Range(0f, 1f)] private float verticalKnockbackMultiplier = 0.2f;
+
+    [Tooltip("공중에 있을 때 수평(X, Z축)으로 밀리는 힘의 비율 (0.5 = 50%만 밀림)")]
+    [SerializeField, Range(0f, 1f)] private float airborneHorizontalMultiplier = 0.4f;
+
+
     // Runtime variables
     private int currentAmmo;
     private int reserveMagazines;
@@ -111,6 +122,32 @@ public class ClusterLauncherWeapon : WeaponBase, IAmmoWeapon
             ? hit.point : aimRay.GetPoint(maxAimDistance);
 
         Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
+
+        if (playerKnockbackForce > 0f)
+        {
+            Vector3 knockbackDir = -shootDirection;
+
+            // 공중인지 체크
+            bool isAirborne = PlayerController != null && !PlayerController.isGrounded;
+
+            if (isAirborne)
+            {
+                knockbackDir.x *= airborneHorizontalMultiplier;
+                knockbackDir.z *= airborneHorizontalMultiplier;
+            }
+
+            if (knockbackDir.y > 0)
+            {
+                knockbackDir.y *= verticalKnockbackMultiplier;
+            }
+
+            PlayerMovement movement = WeaponManager.GetComponent<PlayerMovement>();
+            if (movement != null)
+            {
+                // ✨ 핵심: 공중(isAirborne)일 경우 기존 속도를 지워버리라고 2번째 인자로 전달
+                movement.AddKnockback(knockbackDir * playerKnockbackForce, isAirborne);
+            }
+        }
 
         ClusterRocketProjectile rocket = Instantiate(rocketPrefab, firePoint.position, Quaternion.LookRotation(shootDirection));
 
