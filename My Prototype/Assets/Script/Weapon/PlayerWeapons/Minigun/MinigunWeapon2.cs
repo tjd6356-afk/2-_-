@@ -62,6 +62,12 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
     [SerializeField] private float maxAimDistance = 150f;
     [SerializeField] private LayerMask aimMask = ~0;
 
+    [Header("Door Impact")]
+
+    [Tooltip("미니건 한 발이 문에 전달하는 가상의 탄속")]
+    [SerializeField]
+    private float doorImpactSpeed = 45f;
+
     // Runtime Variables
     private int currentAmmo;
     private int reserveMagazines;
@@ -186,6 +192,28 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
         {
             targetPoint = hit.point;
 
+            // =====================================================
+            // Door 직접 명중
+            // =====================================================
+
+            DoorController door =
+                hit.collider
+                    .GetComponentInParent<DoorController>();
+
+
+            if (door != null)
+            {
+                Vector3 fakeProjectileVelocity =
+                    aimRay.direction.normalized *
+                    doorImpactSpeed;
+
+
+                door.HitByProjectile(
+                    fakeProjectileVelocity,
+                    hit.point
+                );
+            }
+
             IHealth directHitTarget = hit.collider.GetComponentInParent<IHealth>();
             if (directHitTarget != null && !directHitTarget.IsDead)
             {
@@ -216,6 +244,7 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
 
         Collider[] hitColliders = Physics.OverlapSphere(targetPoint, explosionRadius, aimMask, QueryTriggerInteraction.Ignore);
         HashSet<IHealth> damagedTargets = new HashSet<IHealth>();
+        HashSet<DoorController> affectedDoors = new HashSet<DoorController>();
 
         foreach (Collider col in hitColliders)
         {

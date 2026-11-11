@@ -59,6 +59,12 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
     [SerializeField] private float maxAimDistance = 150f;
     [SerializeField] private LayerMask aimMask = ~0;
 
+    [Header("Door Impact")]
+
+    [Tooltip("미니건 한 발이 문에 전달하는 가상의 탄속")]
+    [SerializeField]
+    private float doorImpactSpeed = 45f;
+
     // Runtime Variables
     private int currentAmmo;
     private int reserveMagazines;
@@ -232,6 +238,27 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
             targetPoint =
                 hit.point;
 
+            // =====================================================
+            // Door 명중
+            // =====================================================
+
+            DoorController door =
+                hit.collider
+                    .GetComponentInParent<DoorController>();
+
+
+            if (door != null)
+            {
+                Vector3 fakeProjectileVelocity =
+                    aimRay.direction.normalized *
+                    doorImpactSpeed;
+
+
+                door.HitByProjectile(
+                    fakeProjectileVelocity,
+                    hit.point
+                );
+            }
 
             // =====================================================
             // Enemy / NPC 공통 체력 검색
