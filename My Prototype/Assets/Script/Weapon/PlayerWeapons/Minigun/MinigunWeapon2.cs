@@ -246,16 +246,87 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
         HashSet<IHealth> damagedTargets = new HashSet<IHealth>();
         HashSet<DoorController> affectedDoors = new HashSet<DoorController>();
 
-        foreach (Collider col in hitColliders)
+        foreach (
+        Collider col
+        in hitColliders)
         {
-            IHealth health = col.GetComponentInParent<IHealth>();
-            if (health != null && !health.IsDead)
-            {
-                if (damagedTargets.Add(health))
-                {
-                    health.TakeDamage(splashDamage);
+            if (col == null)
+                continue;
 
-                    // Debug.Log($"[Explosive Minigun] Splash Hit! Damage: {splashDamage}");
+
+            // =====================================================
+            // Door Splash 충격
+            // =====================================================
+
+            DoorController door =
+                col.GetComponentInParent<DoorController>();
+
+
+            if (door != null &&
+                affectedDoors.Add(door))
+            {
+                Vector3 doorHitPoint =
+                    col.ClosestPoint(
+                        targetPoint
+                    );
+
+
+                if (
+                    (
+                        doorHitPoint -
+                        targetPoint
+                    ).sqrMagnitude <
+                    0.0001f
+                )
+                {
+                    doorHitPoint =
+                        col.bounds.center;
+                }
+
+
+                float distance =
+                    Vector3.Distance(
+                        targetPoint,
+                        doorHitPoint
+                    );
+
+
+                float strength =
+                    1f -
+                    Mathf.Clamp01(
+                        distance /
+                        Mathf.Max(
+                            0.01f,
+                            explosionRadius
+                        )
+                    );
+
+
+                door.HitByExplosion(
+                    targetPoint,
+                    doorHitPoint,
+                    strength
+                );
+            }
+
+
+            // =====================================================
+            // Health Splash Damage
+            // =====================================================
+
+            IHealth health =
+                col.GetComponentInParent<IHealth>();
+
+
+            if (health != null &&
+                !health.IsDead)
+            {
+                if (damagedTargets.Add(
+                        health))
+                {
+                    health.TakeDamage(
+                        splashDamage
+                    );
                 }
             }
         }
