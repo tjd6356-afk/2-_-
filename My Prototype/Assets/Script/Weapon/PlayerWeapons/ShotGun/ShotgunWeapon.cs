@@ -54,6 +54,11 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
     [SerializeField] private float maxAimDistance = 50f;
     [SerializeField] private LayerMask aimMask = ~0;
 
+    [Header("Door Impact")]
+
+    [Tooltip("산탄 한 발이 문에 전달하는 가상의 탄속")]
+    [SerializeField]
+    private float doorImpactSpeedPerPellet = 10f;
 
     // =========================================================
     // Runtime Variables
@@ -188,27 +193,74 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
             Ray pelletRay = new Ray(centerRay.origin, spreadDirection);
             Vector3 targetPoint;
 
-            if (Physics.Raycast(pelletRay, out RaycastHit hit, maxAimDistance, aimMask, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(
+            pelletRay,
+            out RaycastHit hit,
+            maxAimDistance,
+            aimMask,
+            QueryTriggerInteraction.Ignore))
             {
-                targetPoint = hit.point;
+                targetPoint =
+                    hit.point;
 
-                IHealth targetHealth = hit.collider.GetComponentInParent<IHealth>();
-                if (targetHealth != null && !targetHealth.IsDead)
+
+                // =====================================================
+                // Door 명중
+                // =====================================================
+
+                DoorController door =
+                    hit.collider
+                        .GetComponentInParent<DoorController>();
+
+
+                if (door != null)
                 {
-                    // 즉시 데미지를 주지 않고, 딕셔너리에 대상과 데미지를 누적시킵니다.
-                    if (damageMap.ContainsKey(targetHealth))
+                    Vector3 fakeProjectileVelocity =
+                        spreadDirection *
+                        doorImpactSpeedPerPellet;
+
+
+                    door.HitByProjectile(
+                        fakeProjectileVelocity,
+                        hit.point
+                    );
+                }
+
+
+                // =====================================================
+                // Enemy / NPC Damage
+                // =====================================================
+
+                IHealth targetHealth =
+                    hit.collider
+                        .GetComponentInParent<IHealth>();
+
+
+                if (targetHealth != null &&
+                    !targetHealth.IsDead)
+                {
+                    // 즉시 데미지를 주는 게 아니라
+                    // 같은 대상에게 맞은 Pellet Damage를 합산
+
+                    if (damageMap.ContainsKey(
+                            targetHealth))
                     {
-                        damageMap[targetHealth] += damagePerPellet;
+                        damageMap[targetHealth] +=
+                            damagePerPellet;
                     }
                     else
                     {
-                        damageMap[targetHealth] = damagePerPellet;
+                        damageMap[targetHealth] =
+                            damagePerPellet;
                     }
                 }
             }
             else
             {
-                targetPoint = pelletRay.GetPoint(maxAimDistance);
+                targetPoint =
+                    pelletRay.GetPoint(
+                        maxAimDistance
+                    );
             }
 
             // 시각 효과 생성
