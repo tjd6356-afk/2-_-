@@ -90,6 +90,9 @@ MonoBehaviour:
   antiClumpFactor: 0.01
   kickPitch: 3
   kickYaw: 1
+  playerKnockbackForce: 8
+  verticalKnockbackMultiplier: 0.2
+  airborneHorizontalMultiplier: 0.6
   magazineSize: 6
   maxReserveMagazines: 5
   baseFullReloadTime: 3
@@ -97,6 +100,7 @@ MonoBehaviour:
   aimMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  doorImpactSpeedPerPellet: 10
 --- !u!1 &8708724267448052290
 GameObject:
   m_ObjectHideFlags: 0

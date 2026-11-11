@@ -46,6 +46,16 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
     [Tooltip("발사 시 카메라가 좌우로 무작위로 흔들리는 힘")]
     [SerializeField] private float kickYaw = 1.0f;
 
+    [Header("Player Knockback (발사 반동 밀림)")]
+    [Tooltip("발사 시 플레이어가 반대 방향으로 밀려나는 힘 (0이면 안 밀림)")]
+    [SerializeField] private float playerKnockbackForce = 10f;
+
+    [Tooltip("위(Y축)로 솟아오르는 힘의 비율 (1 = 100%, 0.3 = 30%만 적용)")]
+    [SerializeField, Range(0f, 1f)] private float verticalKnockbackMultiplier = 0.3f;
+
+    [Tooltip("공중에 있을 때 수평(X, Z축)으로 밀리는 힘의 비율 (0.5 = 50%만 밀림)")]
+    [SerializeField, Range(0f, 1f)] private float airborneHorizontalMultiplier = 0.4f;
+
 
     [Header("Ammo & Aim")]
     [SerializeField] private int magazineSize = 6;
@@ -175,6 +185,32 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
         float damagePerPellet = totalDamage / pelletCount;
 
         Ray centerRay = PlayerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+        if (playerKnockbackForce > 0f)
+        {
+            // 중앙 조준점(centerRay)을 기준으로 발사 반대 방향 계산
+            Vector3 knockbackDir = -centerRay.direction;
+
+            bool isAirborne = PlayerController != null && !PlayerController.isGrounded;
+
+            if (isAirborne)
+            {
+                knockbackDir.x *= airborneHorizontalMultiplier;
+                knockbackDir.z *= airborneHorizontalMultiplier;
+            }
+
+            if (knockbackDir.y > 0)
+            {
+                knockbackDir.y *= verticalKnockbackMultiplier;
+            }
+
+            PlayerMovement movement = WeaponManager.GetComponent<PlayerMovement>();
+            if (movement != null)
+            {
+                movement.AddKnockback(knockbackDir * playerKnockbackForce, isAirborne);
+            }
+        }
+
         List<Vector2> pelletOffsets = GenerateAntiClumpOffsets(currentSpreadRadius);
 
         // ✨ 데미지 합산용 딕셔너리 (이번 발사에서 맞은 대상과 누적 데미지 기록) ✨
