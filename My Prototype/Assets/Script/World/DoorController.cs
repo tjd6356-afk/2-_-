@@ -10,46 +10,98 @@ public class DoorController : MonoBehaviour
 
     [Header("References")]
 
-    [Tooltip("실제로 회전할 문 또는 HingePivot")]
+    [Tooltip("실제로 회전할 Hinge Pivot")]
     [SerializeField]
     private Transform doorPivot;
 
 
     // =========================================================
-    // Rotation
+    // Normal Interaction
     // =========================================================
 
-    [Header("Door Rotation")]
+    [Header("Normal Door")]
 
-    [Tooltip("닫힌 상태의 Local Y 회전")]
+    [Tooltip("닫힌 상태 각도")]
     [SerializeField]
     private float closedAngle = 0f;
 
 
-    [Tooltip("열린 상태의 Local Y 회전")]
+    [Tooltip("E키로 열었을 때 각도")]
     [SerializeField]
     private float openAngle = 90f;
 
 
-    [Tooltip("문 회전 속도")]
+    [Tooltip("E키로 열고 닫는 회전 속도")]
     [SerializeField]
     private float rotationSpeed = 180f;
 
 
     // =========================================================
-    // Settings
+    // Shot Physics
     // =========================================================
 
-    [Header("Settings")]
+    [Header("Shot Reaction")]
 
-    [Tooltip("플레이어가 E키로 문을 사용할 수 있는가")]
+    [Tooltip("총알 속도를 문의 회전속도로 바꾸는 배율")]
+    [SerializeField]
+    private float shotAngularVelocityMultiplier = 8f;
+
+
+    [Tooltip("총알에 맞았을 때 최소 회전속도")]
+    [SerializeField]
+    private float minimumShotAngularVelocity = 120f;
+
+
+    [Tooltip("총알에 의한 최대 회전속도")]
+    [SerializeField]
+    private float maximumShotAngularVelocity = 500f;
+
+
+    [Tooltip("문이 총알 충격 이후 감속되는 정도")]
+    [SerializeField]
+    private float shotAngularDrag = 3f;
+
+
+    [Tooltip("문이 최대 각도에 도달했을 때 남는 반동 비율")]
+    [SerializeField, Range(0f, 1f)]
+    private float shotBounce = 0.35f;
+
+
+    [Tooltip("총알에 의해 문이 돌아갈 수 있는 최소 각도")]
+    [SerializeField]
+    private float minimumShotAngle = -105f;
+
+
+    [Tooltip("총알에 의해 문이 돌아갈 수 있는 최대 각도")]
+    [SerializeField]
+    private float maximumShotAngle = 105f;
+
+
+    [Tooltip("이 속도보다 느려지면 총알 반응 종료")]
+    [SerializeField]
+    private float settleAngularVelocity = 2f;
+
+
+    [Tooltip(
+        "문의 경첩에서 이 거리 정도 떨어진 곳을 맞으면 " +
+        "충격이 100% 전달됨"
+    )]
+    [SerializeField]
+    private float fullForceLeverDistance = 0.8f;
+
+
+    // =========================================================
+    // Interaction
+    // =========================================================
+
+    [Header("Interaction")]
+
     [SerializeField]
     private bool allowPlayerInteraction = true;
 
 
-    [Tooltip("총알에 맞으면 문이 열리는가")]
     [SerializeField]
-    private bool openWhenShot = true;
+    private bool reactToProjectile = true;
 
 
     // =========================================================
@@ -60,7 +112,17 @@ public class DoorController : MonoBehaviour
 
     private bool isOpen;
 
-    private bool isMoving;
+    private bool isManualMoving;
+
+    private bool isShotSwinging;
+
+
+    // 현재 총알로 인해 남아있는 회전속도
+    // 단위 : degree / second
+    private float shotAngularVelocity;
+
+
+    private Coroutine manualRoutine;
 
 
     public bool IsOpen =>
@@ -76,7 +138,7 @@ public class DoorController : MonoBehaviour
         if (doorPivot == null)
         {
             Debug.LogError(
-                $"[Door] {gameObject.name} : Door Pivot이 없습니다."
+                $"[Door] {name} : Door Pivot이 없습니다."
             );
 
             return;
@@ -94,11 +156,22 @@ public class DoorController : MonoBehaviour
 
 
     // =========================================================
-    // Input
+    // Update
     // =========================================================
 
     private void Update()
     {
+        // =====================================================
+        // 총알에 의한 물리 회전
+        // =====================================================
+
+        UpdateShotSwing();
+
+
+        // =====================================================
+        // Player Interaction
+        // =====================================================
+
         if (!allowPlayerInteraction)
             return;
 
@@ -119,16 +192,33 @@ public class DoorController : MonoBehaviour
 
 
     // =========================================================
-    // Toggle
+    // Player Toggle
     // =========================================================
 
     public void ToggleDoor()
     {
-        if (isMoving)
+        if (doorPivot == null)
             return;
 
 
-        if (isOpen)
+        // 현재 실제 각도를 보고
+        // 열렸는지 판단
+        float currentAngle =
+            NormalizeAngle(
+                doorPivot.localEulerAngles.y
+            );
+
+
+        float distanceFromClosed =
+            Mathf.Abs(
+                Mathf.DeltaAngle(
+                    currentAngle,
+                    closedAngle
+                )
+            );
+
+
+        if (distanceFromClosed > 20f)
         {
             CloseDoor();
         }
@@ -140,72 +230,354 @@ public class DoorController : MonoBehaviour
 
 
     // =========================================================
-    // Open
+    // Normal Open
     // =========================================================
 
     public void OpenDoor()
     {
-        if (isOpen ||
-            isMoving)
-        {
-            return;
-        }
-
-
-        StartCoroutine(
-            RotateDoorRoutine(
-                openAngle,
-                true
-            )
+        StartManualRotation(
+            openAngle,
+            true
         );
     }
 
 
     // =========================================================
-    // Close
+    // Normal Close
     // =========================================================
 
     public void CloseDoor()
     {
-        if (!isOpen ||
-            isMoving)
+        StartManualRotation(
+            closedAngle,
+            false
+        );
+    }
+
+
+    private void StartManualRotation(
+        float targetAngle,
+        bool opening
+    )
+    {
+        // 총알 반응 중지
+        isShotSwinging =
+            false;
+
+
+        shotAngularVelocity =
+            0f;
+
+
+        if (manualRoutine != null)
         {
-            return;
+            StopCoroutine(
+                manualRoutine
+            );
         }
 
 
-        StartCoroutine(
-            RotateDoorRoutine(
-                closedAngle,
-                false
-            )
+        manualRoutine =
+            StartCoroutine(
+                RotateDoorRoutine(
+                    targetAngle,
+                    opening
+                )
+            );
+    }
+
+
+    // =========================================================
+    // Projectile Hit
+    // =========================================================
+
+    public void HitByProjectile(
+        Vector3 projectileVelocity,
+        Vector3 hitPoint
+    )
+    {
+        if (!reactToProjectile)
+            return;
+
+
+        if (doorPivot == null)
+            return;
+
+
+        // ==========================================
+        // E키 애니메이션이 진행 중이라면 중단
+        // ==========================================
+
+        if (manualRoutine != null)
+        {
+            StopCoroutine(
+                manualRoutine
+            );
+
+
+            manualRoutine =
+                null;
+        }
+
+
+        isManualMoving =
+            false;
+
+
+        // ==========================================
+        // 총알 속도
+        // ==========================================
+
+        float projectileSpeed =
+            projectileVelocity.magnitude;
+
+
+        if (projectileSpeed <= 0.01f)
+            return;
+
+
+        Vector3 forceDirection =
+            projectileVelocity.normalized;
+
+
+        // 수직 성분은 문의 좌우 회전에 필요 없음
+        forceDirection.y =
+            0f;
+
+
+        if (forceDirection.sqrMagnitude <= 0.001f)
+            return;
+
+
+        forceDirection.Normalize();
+
+
+        // ==========================================
+        // 경첩 → 총알 맞은 위치
+        // ==========================================
+
+        Vector3 lever =
+            hitPoint -
+            doorPivot.position;
+
+
+        lever.y =
+            0f;
+
+
+        // ==========================================
+        // 경첩에서 먼 곳을 맞을수록 더 강하게
+        // ==========================================
+
+        float leverStrength =
+            Mathf.Clamp01(
+                lever.magnitude /
+                Mathf.Max(
+                    0.01f,
+                    fullForceLeverDistance
+                )
+            );
+
+
+        // ==========================================
+        // 회전 방향 계산
+        //
+        // r × F 의 Y 방향
+        // ==========================================
+
+        float torque =
+            Vector3.Cross(
+                lever,
+                forceDirection
+            ).y;
+
+
+        float directionSign =
+            Mathf.Sign(
+                torque
+            );
+
+
+        // 거의 정확히 경첩을 맞은 특수 상황
+        if (Mathf.Abs(torque) <
+            0.001f)
+        {
+            directionSign =
+                1f;
+        }
+
+
+        // ==========================================
+        // 탄속 → 문 각속도
+        // ==========================================
+
+        float impactAngularVelocity =
+            projectileSpeed *
+            shotAngularVelocityMultiplier *
+            Mathf.Max(
+                0.25f,
+                leverStrength
+            );
+
+
+        impactAngularVelocity =
+            Mathf.Clamp(
+                impactAngularVelocity,
+                minimumShotAngularVelocity,
+                maximumShotAngularVelocity
+            );
+
+
+        // 기존에 문이 움직이고 있었다면
+        // 기존 힘에 새 총알 힘을 추가
+        shotAngularVelocity +=
+            directionSign *
+            impactAngularVelocity;
+
+
+        shotAngularVelocity =
+            Mathf.Clamp(
+                shotAngularVelocity,
+                -maximumShotAngularVelocity,
+                maximumShotAngularVelocity
+            );
+
+
+        isShotSwinging =
+            true;
+
+
+        Debug.Log(
+            $"[Door] Projectile Hit / " +
+            $"Speed={projectileSpeed:F1} / " +
+            $"Angular={shotAngularVelocity:F1}"
         );
     }
 
 
     // =========================================================
-    // Shot
+    // Projectile Physics Update
     // =========================================================
 
-    public void OpenFromShot()
+    private void UpdateShotSwing()
     {
-        if (!openWhenShot)
+        if (!isShotSwinging)
             return;
 
 
-        if (isOpen ||
-            isMoving)
+        if (doorPivot == null)
+            return;
+
+
+        float currentAngle =
+            NormalizeAngle(
+                doorPivot.localEulerAngles.y
+            );
+
+
+        // ==========================================
+        // 현재 힘만큼 회전
+        // ==========================================
+
+        float nextAngle =
+            currentAngle +
+            shotAngularVelocity *
+            Time.deltaTime;
+
+
+        // ==========================================
+        // 최대 각도 충돌
+        //
+        // 남아있는 힘으로 반대쪽으로 튕김
+        // ==========================================
+
+        if (nextAngle >
+            maximumShotAngle)
         {
-            return;
+            nextAngle =
+                maximumShotAngle;
+
+
+            if (shotAngularVelocity > 0f)
+            {
+                shotAngularVelocity =
+                    -shotAngularVelocity *
+                    shotBounce;
+            }
         }
 
 
-        OpenDoor();
+        // ==========================================
+        // 최소 각도 충돌
+        // ==========================================
+
+        if (nextAngle <
+            minimumShotAngle)
+        {
+            nextAngle =
+                minimumShotAngle;
+
+
+            if (shotAngularVelocity < 0f)
+            {
+                shotAngularVelocity =
+                    -shotAngularVelocity *
+                    shotBounce;
+            }
+        }
+
+
+        SetDoorRotation(
+            nextAngle
+        );
+
+
+        // ==========================================
+        // 마찰
+        // ==========================================
+
+        shotAngularVelocity *=
+            Mathf.Exp(
+                -shotAngularDrag *
+                Time.deltaTime
+            );
+
+
+        // ==========================================
+        // 충분히 느려지면 정지
+        // ==========================================
+
+        if (Mathf.Abs(
+                shotAngularVelocity
+            ) <= settleAngularVelocity)
+        {
+            shotAngularVelocity =
+                0f;
+
+
+            isShotSwinging =
+                false;
+
+
+            float finalAngle =
+                NormalizeAngle(
+                    doorPivot.localEulerAngles.y
+                );
+
+
+            isOpen =
+                Mathf.Abs(
+                    Mathf.DeltaAngle(
+                        finalAngle,
+                        closedAngle
+                    )
+                ) > 20f;
+        }
     }
 
 
     // =========================================================
-    // Rotation
+    // Normal Rotation
     // =========================================================
 
     private IEnumerator RotateDoorRoutine(
@@ -213,46 +585,35 @@ public class DoorController : MonoBehaviour
         bool opening
     )
     {
-        if (doorPivot == null)
-            yield break;
-
-
-        isMoving =
+        isManualMoving =
             true;
 
 
         while (true)
         {
-            Vector3 currentEuler =
-                doorPivot.localEulerAngles;
-
-
-            float currentY =
+            float currentAngle =
                 NormalizeAngle(
-                    currentEuler.y
+                    doorPivot.localEulerAngles.y
                 );
 
 
-            float newY =
+            float nextAngle =
                 Mathf.MoveTowardsAngle(
-                    currentY,
+                    currentAngle,
                     targetAngle,
                     rotationSpeed *
                     Time.deltaTime
                 );
 
 
-            doorPivot.localRotation =
-                Quaternion.Euler(
-                    currentEuler.x,
-                    newY,
-                    currentEuler.z
-                );
+            SetDoorRotation(
+                nextAngle
+            );
 
 
             if (Mathf.Abs(
                     Mathf.DeltaAngle(
-                        newY,
+                        nextAngle,
                         targetAngle
                     )
                 ) < 0.1f)
@@ -274,8 +635,12 @@ public class DoorController : MonoBehaviour
             opening;
 
 
-        isMoving =
+        isManualMoving =
             false;
+
+
+        manualRoutine =
+            null;
     }
 
 
@@ -318,7 +683,7 @@ public class DoorController : MonoBehaviour
 
 
     // =========================================================
-    // Utility
+    // Rotation Utility
     // =========================================================
 
     private void SetDoorRotation(

@@ -101,12 +101,28 @@ public class Projectile : MonoBehaviour
         // =====================================================
 
         DoorController door =
-            hitObject.GetComponentInParent<DoorController>();
+            collision.collider
+                .GetComponentInParent<DoorController>();
 
 
         if (door != null)
         {
-            door.OpenFromShot();
+            Vector3 projectileVelocity =
+                rb != null
+                ? rb.linearVelocity
+                : transform.forward * speed;
+
+
+            Vector3 hitPoint =
+                collision.contactCount > 0
+                ? collision.GetContact(0).point
+                : transform.position;
+
+
+            door.HitByProjectile(
+                projectileVelocity,
+                hitPoint
+            );
 
 
             Destroy(
