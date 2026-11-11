@@ -10,6 +10,7 @@ public class GrenadeProjectile : MonoBehaviour
     [SerializeField] private float explosionRadius = 4f;
     [SerializeField] private GameObject explosionVFX;
 
+
     private float damage;
     private GameObject owner;
 
@@ -158,17 +159,114 @@ public class GrenadeProjectile : MonoBehaviour
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, explosionRadius);
         HashSet<IHealth> damagedTargets = new HashSet<IHealth>();
 
+        HashSet<DoorController> affectedDoors = new HashSet<DoorController>();
+
         foreach (Collider hit in hitColliders)
         {
-            if (owner != null && (hit.gameObject == owner || hit.transform.IsChildOf(owner.transform)))
+            if (hit == null)
                 continue;
 
-            IHealth health = hit.GetComponentInParent<IHealth>();
-            if (health != null && !health.IsDead)
+
+            // =====================================================
+            // 발사자 자신 제외
+            // =====================================================
+
+            if (owner != null &&
+                (
+                    hit.gameObject == owner ||
+                    hit.transform.IsChildOf(
+                        owner.transform
+                    )
+                ))
             {
-                if (damagedTargets.Add(health))
+                continue;
+            }
+
+
+            // =====================================================
+            // Door 폭발 반응
+            // =====================================================
+
+            DoorController door =
+                hit.GetComponentInParent<DoorController>();
+
+
+            if (door != null &&
+                affectedDoors.Add(door))
+            {
+                // ==========================================
+                // 폭발 중심에서 가장 가까운 Collider 지점
+                // ==========================================
+
+                Vector3 hitPoint =
+                    hit.ClosestPoint(
+                        transform.position
+                    );
+
+
+                // 폭발 중심이 Collider 안쪽에 있는 경우 등에 대비
+                if (
+                    (
+                        hitPoint -
+                        transform.position
+                    ).sqrMagnitude <
+                    0.0001f
+                )
                 {
-                    health.TakeDamage(damage);
+                    hitPoint =
+                        hit.bounds.center;
+                }
+
+
+                // ==========================================
+                // 거리 계산
+                // ==========================================
+
+                float distance =
+                    Vector3.Distance(
+                        transform.position,
+                        hitPoint
+                    );
+
+
+                // ==========================================
+                // 0 = 폭발 끝부분
+                // 1 = 폭발 중심
+                // ==========================================
+
+                float strength =
+                    1f -
+                    Mathf.Clamp01(
+                        distance /
+                        explosionRadius
+                    );
+
+
+                door.HitByExplosion(
+                    transform.position,
+                    hitPoint,
+                    strength
+                );
+            }
+
+
+            // =====================================================
+            // 기존 Damage
+            // =====================================================
+
+            IHealth health =
+                hit.GetComponentInParent<IHealth>();
+
+
+            if (health != null &&
+                !health.IsDead)
+            {
+                if (damagedTargets.Add(
+                        health))
+                {
+                    health.TakeDamage(
+                        damage
+                    );
                 }
             }
         }

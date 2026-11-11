@@ -192,8 +192,20 @@ public class RocketProjectile : MonoBehaviour
         Collider other
     )
     {
+        if (other == null)
+            return;
+
+
+        Vector3 hitPoint =
+            other.ClosestPoint(
+                transform.position
+            );
+
+
         CheckImpact(
-            other.gameObject
+            other.gameObject,
+            other,
+            hitPoint
         );
     }
 
@@ -206,8 +218,20 @@ public class RocketProjectile : MonoBehaviour
         Collision collision
     )
     {
+        if (collision == null)
+            return;
+
+
+        Vector3 hitPoint =
+            collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : transform.position;
+
+
         CheckImpact(
-            collision.gameObject
+            collision.gameObject,
+            collision.collider,
+            hitPoint
         );
     }
 
@@ -217,7 +241,9 @@ public class RocketProjectile : MonoBehaviour
     // =========================================================
 
     private void CheckImpact(
-        GameObject hitObject
+        GameObject hitObject,
+        Collider hitCollider,
+        Vector3 hitPoint
     )
     {
         if (hasExploded)
@@ -245,8 +271,37 @@ public class RocketProjectile : MonoBehaviour
 
 
         // ==========================================
-        // Enemy / NPC처럼
-        // IHealth가 있으면 바로 폭발
+        // Door 직접 명중
+        // ==========================================
+
+        DoorController door =
+            hitCollider != null
+            ? hitCollider.GetComponentInParent<DoorController>()
+            : hitObject.GetComponentInParent<DoorController>();
+
+
+        if (door != null)
+        {
+            Vector3 rocketVelocity =
+                transform.forward *
+                currentSpeed;
+
+
+            door.HitByProjectile(
+                rocketVelocity,
+                hitPoint
+            );
+
+
+            // 문에 맞았으면 바로 폭발
+            Explode();
+
+            return;
+        }
+
+
+        // ==========================================
+        // Enemy / NPC
         // ==========================================
 
         IHealth health =
@@ -262,7 +317,7 @@ public class RocketProjectile : MonoBehaviour
 
 
         // ==========================================
-        // Wall / Floor 등의 지정 Tag
+        // Wall / Floor
         // ==========================================
 
         if (impactTags.Contains(
@@ -331,9 +386,11 @@ public class RocketProjectile : MonoBehaviour
         HashSet<IHealth> damagedTargets =
             new HashSet<IHealth>();
 
+        HashSet<DoorController> affectedDoors =
+        new HashSet<DoorController>();
 
         foreach (
-            Collider hit in hitColliders)
+        Collider hit in hitColliders)
         {
             if (hit == null)
                 continue;
@@ -355,9 +412,66 @@ public class RocketProjectile : MonoBehaviour
             }
 
 
-            // ==========================================
-            // IHealth 탐색
-            // ==========================================
+            // =====================================================
+            // Door 폭발 충격
+            // =====================================================
+
+            DoorController door =
+                hit.GetComponentInParent<DoorController>();
+
+
+            if (door != null &&
+                affectedDoors.Add(door))
+            {
+                Vector3 doorHitPoint =
+                    hit.ClosestPoint(
+                        transform.position
+                    );
+
+
+                // 폭발 중심이 Collider 내부인 경우
+                if (
+                    (
+                        doorHitPoint -
+                        transform.position
+                    ).sqrMagnitude <
+                    0.0001f
+                )
+                {
+                    doorHitPoint =
+                        hit.bounds.center;
+                }
+
+
+                float distance =
+                    Vector3.Distance(
+                        transform.position,
+                        doorHitPoint
+                    );
+
+
+                float strength =
+                    1f -
+                    Mathf.Clamp01(
+                        distance /
+                        Mathf.Max(
+                            0.01f,
+                            explosionRadius
+                        )
+                    );
+
+
+                door.HitByExplosion(
+                    transform.position,
+                    doorHitPoint,
+                    strength
+                );
+            }
+
+
+            // =====================================================
+            // 기존 Health Damage
+            // =====================================================
 
             IHealth health =
                 hit.GetComponentInParent<IHealth>();
@@ -371,20 +485,12 @@ public class RocketProjectile : MonoBehaviour
                 continue;
 
 
-            // ==========================================
-            // 같은 대상 중복 피해 방지
-            // ==========================================
-
             if (!damagedTargets.Add(
                     health))
             {
                 continue;
             }
 
-
-            // ==========================================
-            // 데미지
-            // ==========================================
 
             health.TakeDamage(
                 damage

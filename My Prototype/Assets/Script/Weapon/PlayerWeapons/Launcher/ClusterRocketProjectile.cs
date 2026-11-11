@@ -78,20 +78,117 @@ public class ClusterRocketProjectile : MonoBehaviour
         transform.position += transform.forward * currentSpeed * Time.deltaTime;
     }
 
-    private void OnTriggerEnter(Collider other) => CheckImpact(other.gameObject);
-    private void OnCollisionEnter(Collision collision) => CheckImpact(collision.gameObject);
-
-    private void CheckImpact(GameObject hitObject)
+    private void OnTriggerEnter(
+    Collider other
+)
     {
-        if (hasExploded || hitObject == null) return;
+        if (other == null)
+            return;
+
+
+        Vector3 hitPoint =
+            other.ClosestPoint(
+                transform.position
+            );
+
+
+        CheckImpact(
+            other.gameObject,
+            other,
+            hitPoint
+        );
+    }
+
+
+    private void OnCollisionEnter(
+        Collision collision
+    )
+    {
+        if (collision == null)
+            return;
+
+
+        Vector3 hitPoint =
+            collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : transform.position;
+
+
+        CheckImpact(
+            collision.gameObject,
+            collision.collider,
+            hitPoint
+        );
+    }
+
+    private void CheckImpact(
+    GameObject hitObject,
+    Collider hitCollider,
+    Vector3 hitPoint
+)
+    {
+        if (hasExploded ||
+            hitObject == null)
+        {
+            return;
+        }
+
+
+        // ==========================================
+        // 발사자 자신 제외
+        // ==========================================
 
         if (owner != null)
         {
-            if (hitObject == owner || hitObject.transform.IsChildOf(owner.transform)) return;
+            if (hitObject == owner ||
+                hitObject.transform.IsChildOf(
+                    owner.transform
+                ))
+            {
+                return;
+            }
         }
 
-        IHealth health = hitObject.GetComponentInParent<IHealth>();
-        if (health != null || impactTags.Contains(hitObject.tag))
+
+        // ==========================================
+        // Door 직접 명중
+        // ==========================================
+
+        DoorController door =
+            hitCollider != null
+            ? hitCollider.GetComponentInParent<DoorController>()
+            : hitObject.GetComponentInParent<DoorController>();
+
+
+        if (door != null)
+        {
+            Vector3 rocketVelocity =
+                transform.forward *
+                currentSpeed;
+
+
+            door.HitByProjectile(
+                rocketVelocity,
+                hitPoint
+            );
+
+
+            Explode();
+
+            return;
+        }
+
+
+        // ==========================================
+        // Health / 지정 Tag
+        // ==========================================
+
+        IHealth health =
+            hitObject.GetComponentInParent<IHealth>();
+
+        if (health != null ||
+            impactTags.Contains(
+                hitObject.tag))
         {
             Explode();
         }
@@ -115,18 +212,108 @@ public class ClusterRocketProjectile : MonoBehaviour
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, explosionRadius);
         HashSet<IHealth> damagedTargets = new HashSet<IHealth>();
 
-        foreach (Collider hit in hitColliders)
+        HashSet<DoorController> affectedDoors = new HashSet<DoorController>();
+
+        foreach (
+        Collider hit in hitColliders)
         {
-            if (hit == null) continue;
+            if (hit == null)
+                continue;
 
-            if (owner != null && (hit.gameObject == owner || hit.transform.IsChildOf(owner.transform))) continue;
 
-            IHealth health = hit.GetComponentInParent<IHealth>();
-            if (health == null || health.IsDead) continue;
+            // ==========================================
+            // 발사자 제외
+            // ==========================================
 
-            if (damagedTargets.Add(health))
+            if (owner != null &&
+                (
+                    hit.gameObject == owner ||
+                    hit.transform.IsChildOf(
+                        owner.transform
+                    )
+                ))
             {
-                health.TakeDamage(damage);
+                continue;
+            }
+
+
+            // =====================================================
+            // Door 폭발 충격
+            // =====================================================
+
+            DoorController door =
+                hit.GetComponentInParent<DoorController>();
+
+
+            if (door != null &&
+                affectedDoors.Add(door))
+            {
+                Vector3 doorHitPoint =
+                    hit.ClosestPoint(
+                        transform.position
+                    );
+
+
+                if (
+                    (
+                        doorHitPoint -
+                        transform.position
+                    ).sqrMagnitude <
+                    0.0001f
+                )
+                {
+                    doorHitPoint =
+                        hit.bounds.center;
+                }
+
+
+                float distance =
+                    Vector3.Distance(
+                        transform.position,
+                        doorHitPoint
+                    );
+
+
+                float strength =
+                    1f -
+                    Mathf.Clamp01(
+                        distance /
+                        Mathf.Max(
+                            0.01f,
+                            explosionRadius
+                        )
+                    );
+
+
+                door.HitByExplosion(
+                    transform.position,
+                    doorHitPoint,
+                    strength
+                );
+            }
+
+
+            // =====================================================
+            // 기존 Damage
+            // =====================================================
+
+            IHealth health =
+                hit.GetComponentInParent<IHealth>();
+
+
+            if (health == null ||
+                health.IsDead)
+            {
+                continue;
+            }
+
+
+            if (damagedTargets.Add(
+                    health))
+            {
+                health.TakeDamage(
+                    damage
+                );
             }
         }
 

@@ -89,6 +89,30 @@ public class DoorController : MonoBehaviour
     [SerializeField]
     private float fullForceLeverDistance = 0.8f;
 
+    // =========================================================
+    // Explosion Reaction
+    // =========================================================
+
+    [Header("Explosion Reaction")]
+
+    [Tooltip("폭발에 의해 문이 움직일 수 있는가")]
+    [SerializeField]
+    private bool reactToExplosion = true;
+
+
+    [Tooltip("폭발 중심에 매우 가까울 때 문의 최대 회전속도")]
+    [SerializeField]
+    private float maximumExplosionAngularVelocity = 650f;
+
+
+    [Tooltip("약한 폭발에도 적용되는 최소 회전속도")]
+    [SerializeField]
+    private float minimumExplosionAngularVelocity = 60f;
+
+
+    [Tooltip("폭발 힘 전체 배율")]
+    [SerializeField]
+    private float explosionForceMultiplier = 1f;
 
     // =========================================================
     // Interaction
@@ -454,6 +478,196 @@ public class DoorController : MonoBehaviour
         );
     }
 
+
+    // =========================================================
+    // Explosion Hit
+    // =========================================================
+
+    public void HitByExplosion(
+        Vector3 explosionCenter,
+        Vector3 hitPoint,
+        float normalizedStrength
+    )
+    {
+        if (!reactToExplosion)
+            return;
+
+
+        if (doorPivot == null)
+            return;
+
+
+        normalizedStrength =
+            Mathf.Clamp01(
+                normalizedStrength
+            );
+
+
+        if (normalizedStrength <= 0.001f)
+            return;
+
+
+        // =====================================================
+        // E키로 열리고 있었다면 중단
+        // =====================================================
+
+        if (manualRoutine != null)
+        {
+            StopCoroutine(
+                manualRoutine
+            );
+
+
+            manualRoutine =
+                null;
+        }
+
+
+        isManualMoving =
+            false;
+
+
+        // =====================================================
+        // 폭발 중심 → 문 방향
+        //
+        // 폭발에서 바깥쪽으로 밀려남
+        // =====================================================
+
+        Vector3 forceDirection =
+            hitPoint -
+            explosionCenter;
+
+
+        forceDirection.y =
+            0f;
+
+
+        if (forceDirection.sqrMagnitude <
+            0.001f)
+        {
+            forceDirection =
+                -doorPivot.forward;
+        }
+        else
+        {
+            forceDirection.Normalize();
+        }
+
+
+        // =====================================================
+        // 경첩 → 충격 위치
+        // =====================================================
+
+        Vector3 lever =
+            hitPoint -
+            doorPivot.position;
+
+
+        lever.y =
+            0f;
+
+
+        float leverStrength =
+            Mathf.Clamp01(
+                lever.magnitude /
+                Mathf.Max(
+                    0.01f,
+                    fullForceLeverDistance
+                )
+            );
+
+
+        // =====================================================
+        // 어느 방향으로 문을 돌릴 것인가
+        // =====================================================
+
+        float torque =
+            Vector3.Cross(
+                lever,
+                forceDirection
+            ).y;
+
+
+        float directionSign;
+
+
+        if (Mathf.Abs(torque) >
+            0.001f)
+        {
+            directionSign =
+                Mathf.Sign(
+                    torque
+                );
+        }
+        else
+        {
+            // 특수한 경우:
+            // 충격 방향과 경첩 위치가 거의 일직선
+            float side =
+                Vector3.Dot(
+                    forceDirection,
+                    doorPivot.forward
+                );
+
+
+            directionSign =
+                side >= 0f
+                ? 1f
+                : -1f;
+        }
+
+
+        // =====================================================
+        // 폭발 거리 기반 회전력
+        // =====================================================
+
+        float angularVelocity =
+            Mathf.Lerp(
+                minimumExplosionAngularVelocity,
+                maximumExplosionAngularVelocity,
+                normalizedStrength
+            );
+
+
+        angularVelocity *=
+            explosionForceMultiplier;
+
+
+        // 문의 끝부분을 맞을수록 강함
+        angularVelocity *=
+            Mathf.Max(
+                0.25f,
+                leverStrength
+            );
+
+
+        // =====================================================
+        // 기존에 남아있는 회전력에 폭발 힘 추가
+        // =====================================================
+
+        shotAngularVelocity +=
+            directionSign *
+            angularVelocity;
+
+
+        shotAngularVelocity =
+            Mathf.Clamp(
+                shotAngularVelocity,
+                -maximumExplosionAngularVelocity,
+                maximumExplosionAngularVelocity
+            );
+
+
+        isShotSwinging =
+            true;
+
+
+        Debug.Log(
+            $"[Door] Explosion Hit / " +
+            $"Strength={normalizedStrength:F2} / " +
+            $"Angular={shotAngularVelocity:F1}"
+        );
+    }
 
     // =========================================================
     // Projectile Physics Update
