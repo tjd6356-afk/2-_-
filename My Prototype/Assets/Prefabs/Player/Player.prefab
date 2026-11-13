@@ -82,7 +82,7 @@ MonoBehaviour:
   rotationSpeed: 10
   playerStats: {fileID: 5351818697115213627}
   jumpHeight: 1.5
-  gravity: -20
+  gravity: -10
   glideGravity: -4
   maxGlideDuration: 3
   maxGlideFallSpeed: -2.5
