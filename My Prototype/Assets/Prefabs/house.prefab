@@ -73,7 +73,7 @@ MonoBehaviour:
   rotationSpeed: 180
   shotAngularVelocityMultiplier: 8
   minimumShotAngularVelocity: 120
-  maximumShotAngularVelocity: 500
+  maximumShotAngularVelocity: 200
   shotAngularDrag: 3
   shotBounce: 0.35
   minimumShotAngle: -90
