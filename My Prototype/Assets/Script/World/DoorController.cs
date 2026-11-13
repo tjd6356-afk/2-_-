@@ -35,6 +35,9 @@ public class DoorController : MonoBehaviour
     [SerializeField]
     private float rotationSpeed = 180f;
 
+    [Tooltip("총알 충격으로 열리는 방향이 반대일 경우 체크")]
+    [SerializeField]
+    private bool invertProjectileDirection = false;
 
     // =========================================================
     // Shot Physics
@@ -403,31 +406,55 @@ public class DoorController : MonoBehaviour
             );
 
 
-        // ==========================================
-        // 회전 방향 계산
-        //
-        // r × F 의 Y 방향
-        // ==========================================
+        // =====================================================
+        // Door Pivot의 Local 좌표 기준으로 회전 방향 계산
+        // =====================================================
 
-        float torque =
-            Vector3.Cross(
-                lever,
-                forceDirection
-            ).y;
-
-
-        float directionSign =
-            Mathf.Sign(
-                torque
+        Vector3 localLever =
+            doorPivot.InverseTransformDirection(
+                lever
             );
 
 
-        // 거의 정확히 경첩을 맞은 특수 상황
-        if (Mathf.Abs(torque) <
+        Vector3 localForceDirection =
+            doorPivot.InverseTransformDirection(
+                forceDirection
+            );
+
+
+        float torque =
+            Vector3.Cross(
+                localLever,
+                localForceDirection
+            ).y;
+
+
+        float directionSign;
+
+
+        if (Mathf.Abs(torque) >
             0.001f)
         {
             directionSign =
+                Mathf.Sign(
+                    torque
+                );
+        }
+        else
+        {
+            directionSign =
                 1f;
+        }
+
+
+        // =====================================================
+        // 모델의 회전축 방향이 반대일 경우 보정
+        // =====================================================
+
+        if (invertProjectileDirection)
+        {
+            directionSign *=
+                -1f;
         }
 
 
