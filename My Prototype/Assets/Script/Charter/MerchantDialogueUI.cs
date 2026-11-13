@@ -83,7 +83,7 @@ public class MerchantDialogueUI : MonoBehaviour
 
     private PlayerGameplayControl playerControl;
 
-
+    private MerchantShopViewPoint currentShopViewPoint;
     private IReadOnlyList<string> currentLines;
 
     private int lineIndex;
@@ -243,8 +243,9 @@ public class MerchantDialogueUI : MonoBehaviour
     // =========================================================
 
     public void BeginConversation(
-        MerchantNPCData data,
-        PlayerGameplayControl control
+       MerchantNPCData data,
+       PlayerGameplayControl control,
+       MerchantShopViewPoint shopViewPoint
     )
     {
         if (isOpen)
@@ -276,6 +277,8 @@ public class MerchantDialogueUI : MonoBehaviour
         playerControl =
             control;
 
+        currentShopViewPoint =
+            shopViewPoint;
 
         isOpen =
             true;
@@ -630,7 +633,8 @@ public class MerchantDialogueUI : MonoBehaviour
         {
             shopUI.Open(
                 currentData,
-                OnShopClosed
+                OnShopClosed,
+                currentShopViewPoint
             );
         }
     }
@@ -782,6 +786,9 @@ public class MerchantDialogueUI : MonoBehaviour
 
 
         playerControl =
+            null;
+
+        currentShopViewPoint =
             null;
     }
 }

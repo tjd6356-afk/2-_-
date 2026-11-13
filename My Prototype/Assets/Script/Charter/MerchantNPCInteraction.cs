@@ -32,6 +32,7 @@ public class MerchantNPCInteraction : MonoBehaviour
 
     private PlayerGameplayControl playerControl;
 
+    private MerchantShopViewPoint shopViewPoint;
 
     private void Awake()
     {
@@ -41,6 +42,12 @@ public class MerchantNPCInteraction : MonoBehaviour
                 FindFirstObjectByType<MerchantDialogueUI>(
                     FindObjectsInactive.Include
                 );
+        }
+
+        if (shopViewPoint == null)
+        {
+            shopViewPoint =
+            GetComponent<MerchantShopViewPoint>();
         }
     }
 
@@ -67,7 +74,8 @@ public class MerchantNPCInteraction : MonoBehaviour
         {
             dialogueUI.BeginConversation(
                 merchantData,
-                playerControl
+                playerControl,
+                shopViewPoint
             );
         }
     }

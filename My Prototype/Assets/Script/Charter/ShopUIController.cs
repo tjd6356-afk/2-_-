@@ -62,6 +62,11 @@ public class ShopUIController : MonoBehaviour
 
     private Action<bool> onShopClosed;
 
+    // =========================================================
+    // Merchant Camera
+    // =========================================================
+
+    private MerchantShopViewPoint currentViewPoint;
 
     private bool purchasedAnyItem;
 
@@ -125,9 +130,14 @@ public class ShopUIController : MonoBehaviour
     // Open
     // =========================================================
 
+    // =========================================================
+    // Open + Merchant Camera
+    // =========================================================
+
     public void Open(
         MerchantNPCData merchant,
-        Action<bool> closedCallback
+        Action<bool> closedCallback,
+        MerchantShopViewPoint viewPoint
     )
     {
         if (merchant == null)
@@ -142,6 +152,10 @@ public class ShopUIController : MonoBehaviour
             closedCallback;
 
 
+        currentViewPoint =
+            viewPoint;
+
+
         purchasedAnyItem =
             false;
 
@@ -153,6 +167,10 @@ public class ShopUIController : MonoBehaviour
         ClearSelection();
 
 
+        // =====================================================
+        // 상점 UI 활성화
+        // =====================================================
+
         if (shopRoot != null)
         {
             shopRoot.SetActive(
@@ -163,6 +181,23 @@ public class ShopUIController : MonoBehaviour
             shopRoot.transform.SetAsLastSibling();
         }
 
+
+        // =====================================================
+        // 상인 전용 카메라 구도로 전환
+        // =====================================================
+
+        if (ShopCameraDirector.Instance != null &&
+            currentViewPoint != null)
+        {
+            ShopCameraDirector.Instance.EnterShopView(
+                currentViewPoint
+            );
+        }
+
+
+        // =====================================================
+        // 상품 목록 생성
+        // =====================================================
 
         BuildShop();
     }
@@ -463,6 +498,10 @@ public class ShopUIController : MonoBehaviour
             false;
 
 
+        // =====================================================
+        // Shop UI 종료
+        // =====================================================
+
         if (shopRoot != null)
         {
             shopRoot.SetActive(
@@ -476,6 +515,21 @@ public class ShopUIController : MonoBehaviour
         ClearGeneratedIcons();
 
 
+        // =====================================================
+        // 카메라 원래 위치로 복귀
+        // =====================================================
+
+        if (ShopCameraDirector.Instance != null &&
+            currentViewPoint != null)
+        {
+            ShopCameraDirector.Instance.ExitShopView();
+        }
+
+
+        // =====================================================
+        // 기존 Callback 정보 저장
+        // =====================================================
+
         Action<bool> callback =
             onShopClosed;
 
@@ -484,7 +538,15 @@ public class ShopUIController : MonoBehaviour
             purchasedAnyItem;
 
 
+        // =====================================================
+        // Runtime 초기화
+        // =====================================================
+
         currentMerchant =
+            null;
+
+
+        currentViewPoint =
             null;
 
 
@@ -495,6 +557,10 @@ public class ShopUIController : MonoBehaviour
         purchasedAnyItem =
             false;
 
+
+        // =====================================================
+        // 상점 종료 알림
+        // =====================================================
 
         callback?.Invoke(
             purchased
