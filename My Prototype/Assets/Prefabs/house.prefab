@@ -77,7 +77,7 @@ MonoBehaviour:
   shotAngularDrag: 3
   shotBounce: 0.35
   minimumShotAngle: -90
-  maximumShotAngle: 120
+  maximumShotAngle: 90
   settleAngularVelocity: 2
   fullForceLeverDistance: 0.8
   reactToExplosion: 1
