@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85a97b96b4f584d4f891c0490aa88ef7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MerchantNPCInteraction
-  merchantData: {fileID: 11400000, guid: 685a5eaaba403fd4fbe881bf67085f11, type: 2}
+  merchantData: {fileID: 11400000, guid: 17b8ed01b10e8ea4aabb4a580d5369d9, type: 2}
   dialogueUI: {fileID: 0}
 --- !u!1 &2520775200313140880
 GameObject:

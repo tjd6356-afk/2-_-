@@ -12,10 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d69026d5c9652214da09cf7c1ae8f158, type: 3}
   m_Name: ShopNPC_02
   m_EditorClassIdentifier: Assembly-CSharp::MerchantNPCData
-  merchantName: Merchant
+  merchantName: "\uC0AC\uB098"
   merchantPortrait: {fileID: 0}
-  startDialogue: []
-  aboutDialogue: []
-  purchaseDialogue: []
-  noPurchaseDialogue: []
-  shopItems: []
+  startDialogue:
+  - "\uC0B4\uCDA9\uC81C \uBA39\uC744\uB798?"
+  aboutDialogue:
+  - "\uC65C \uBC8C\uB798\uC778\uB370 \uC0B4\uCDA9\uC81C \uD30C\uB0D0\uACE0? "
+  - "\uB10C \uBA39\uC5B4\uB3C4 \uAD1C\uCC2E\uC544 \uBCF4\uC774\uB294\uB370? "
+  purchaseDialogue:
+  - "\uD6A8\uACFC\uB294 \uBCF4\uC7A5 \uD560\uAC8C"
+  noPurchaseDialogue:
+  - "\uC65C? \uADF8\uB9CC \uB458\uB824\uACE0?"
+  shopItems:
+  - itemData: {fileID: 11400000, guid: 0c1c84326bc2ac74d8140c0a5c0b0b29, type: 2}
+    amount: 1
+    requirements:
+    - requiredItem: {fileID: 11400000, guid: 0f3e274865e54c442886333ca7a8943a, type: 2}
+      requiredAmount: 5
