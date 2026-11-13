@@ -25,6 +25,13 @@ public class DoorController : MonoBehaviour
     [SerializeField]
     private float closedAngle = 0f;
 
+    [Tooltip("문 기준 건물 내부 방향을 알려주는 Transform")]
+    [SerializeField]
+    private Transform insideReference;
+
+    [Tooltip("안/밖 열림 방향이 반대로 나온다면 체크")]
+    [SerializeField]
+    private bool invertManualOpenDirection = false;
 
     [Tooltip("E키로 열었을 때 각도")]
     [SerializeField]
@@ -142,6 +149,8 @@ public class DoorController : MonoBehaviour
     private bool isManualMoving;
 
     private bool isShotSwinging;
+
+    private Transform currentPlayer;
 
 
     // 현재 총알로 인해 남아있는 회전속도
@@ -262,8 +271,105 @@ public class DoorController : MonoBehaviour
 
     public void OpenDoor()
     {
+        if (doorPivot == null)
+            return;
+
+
+        // =====================================================
+        // 기본값
+        //
+        // 플레이어가 밖에 있을 때는
+        // 지금까지 사용하던 기존 Open Angle 그대로 사용
+        // =====================================================
+
+        float targetAngle =
+            openAngle;
+
+
+        // =====================================================
+        // 플레이어가 건물 안쪽에 있는지 검사
+        // =====================================================
+
+        if (currentPlayer != null &&
+            insideReference != null)
+        {
+            Vector3 insideDirection =
+                insideReference.position -
+                doorPivot.position;
+
+
+            Vector3 playerDirection =
+                currentPlayer.position -
+                doorPivot.position;
+
+
+            // 높이 무시
+            insideDirection.y =
+                0f;
+
+
+            playerDirection.y =
+                0f;
+
+
+            if (insideDirection.sqrMagnitude >
+                    0.001f &&
+                playerDirection.sqrMagnitude >
+                    0.001f)
+            {
+                insideDirection.Normalize();
+
+                playerDirection.Normalize();
+
+
+                // =============================================
+                // 같은 방향이면 Player가 건물 내부에 있음
+                // =============================================
+
+                float side =
+                    Vector3.Dot(
+                        insideDirection,
+                        playerDirection
+                    );
+
+
+                bool playerIsInside =
+                    side > 0f;
+
+
+                // =============================================
+                // 실내에서 사용하면
+                // 기존 열림 방향의 반대로 열기
+                // =============================================
+
+                if (playerIsInside)
+                {
+                    targetAngle =
+                        -openAngle;
+                }
+
+
+                Debug.Log(
+                    $"[Door] Player Inside = {playerIsInside} / " +
+                    $"Target Angle = {targetAngle}"
+                );
+            }
+        }
+
+
+        // =====================================================
+        // Prefab 자체 축이 반대인 경우 보정
+        // =====================================================
+
+        if (invertManualOpenDirection)
+        {
+            targetAngle *=
+                -1f;
+        }
+
+
         StartManualRotation(
-            openAngle,
+            targetAngle,
             true
         );
     }
@@ -903,6 +1009,10 @@ public class DoorController : MonoBehaviour
 
         playerInside =
             true;
+
+
+        currentPlayer =
+            player.transform;
     }
 
 
@@ -920,6 +1030,14 @@ public class DoorController : MonoBehaviour
 
         playerInside =
             false;
+
+
+        if (currentPlayer ==
+            player.transform)
+        {
+            currentPlayer =
+                null;
+        }
     }
 
 
