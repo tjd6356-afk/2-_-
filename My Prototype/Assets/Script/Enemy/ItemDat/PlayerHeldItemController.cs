@@ -41,6 +41,11 @@ public class PlayerHeldItemController : MonoBehaviour
     public int HeldCount =>
         heldItems.Count;
 
+    // =========================================================
+    // Farm
+    // =========================================================
+
+    private FarmGrowSlot currentFarmSlot;
 
     private void Awake()
     {
@@ -92,11 +97,30 @@ public class PlayerHeldItemController : MonoBehaviour
 
 
         // ==========================================
-        // E = 들고 있는 모든 Item 다시 Inventory
+        // E
         // ==========================================
 
         if (Keyboard.current.eKey.wasPressedThisFrame)
         {
+            // ======================================
+            // Farm Grow Slot 안에 있다면
+            // 농사 상호작용을 우선한다.
+            // ======================================
+
+            if (currentFarmSlot != null)
+            {
+                currentFarmSlot.TryPlantFromHeld(
+                    this
+                );
+
+                return;
+            }
+
+
+            // ======================================
+            // Farm이 아니면 기존 기능
+            // ======================================
+
             ReturnAllToInventory();
         }
     }
@@ -372,5 +396,152 @@ public class PlayerHeldItemController : MonoBehaviour
         Debug.Log(
             "[HeldItem] 모든 Item Inventory로 회수"
         );
+    }
+
+    // =========================================================
+    // Farm Slot 등록
+    // =========================================================
+
+    public void RegisterFarmSlot(
+        FarmGrowSlot farmSlot
+    )
+    {
+        if (farmSlot == null)
+            return;
+
+
+        currentFarmSlot =
+            farmSlot;
+    }
+
+
+    // =========================================================
+    // Farm Slot 해제
+    // =========================================================
+
+    public void UnregisterFarmSlot(
+        FarmGrowSlot farmSlot
+    )
+    {
+        if (currentFarmSlot !=
+            farmSlot)
+        {
+            return;
+        }
+
+
+        currentFarmSlot =
+            null;
+    }
+
+    // =========================================================
+    // 손에 든 첫 번째 Item 하나 가져가기
+    //
+    // Farm 등의 외부 시스템에서 사용
+    // =========================================================
+
+    public bool TryTakeFirstHeldItem(
+        out ItemData itemData
+    )
+    {
+        itemData =
+            null;
+
+
+        if (heldItems.Count <= 0)
+            return false;
+
+
+        HeldItem held =
+            heldItems[0];
+
+
+        if (held == null ||
+            held.data == null)
+        {
+            return false;
+        }
+
+
+        itemData =
+            held.data;
+
+
+        // ==========================================
+        // 손에 보이던 Visual 제거
+        // ==========================================
+
+        if (held.visual != null)
+        {
+            Destroy(
+                held.visual
+            );
+        }
+
+
+        // ==========================================
+        // Held List에서도 제거
+        // ==========================================
+
+        heldItems.RemoveAt(
+            0
+        );
+
+
+        // 나머지 Item 위치 재정렬
+        RepositionHeldItems();
+
+
+        Debug.Log(
+            $"[HeldItem] 외부 시스템에 Item 전달 : " +
+            $"{itemData.ItemTitle}"
+        );
+
+
+        return true;
+    }
+
+    // =========================================================
+    // Hold Point 재정렬
+    // =========================================================
+
+    private void RepositionHeldItems()
+    {
+        for (int i = 0;
+             i < heldItems.Count;
+             i++)
+        {
+            if (i >= holdPoints.Count)
+                break;
+
+
+            HeldItem held =
+                heldItems[i];
+
+
+            if (held == null ||
+                held.visual == null)
+            {
+                continue;
+            }
+
+
+            Transform point =
+                holdPoints[i];
+
+
+            held.visual.transform.SetParent(
+                point,
+                false
+            );
+
+
+            held.visual.transform.localPosition =
+                Vector3.zero;
+
+
+            held.visual.transform.localRotation =
+                Quaternion.identity;
+        }
     }
 }
