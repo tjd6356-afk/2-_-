@@ -96,7 +96,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
   itemData: {fileID: 11400000, guid: 0c1c84326bc2ac74d8140c0a5c0b0b29, type: 2}
-  amount: 1
+  amount: 99
 --- !u!1 &7526803598353474808
 GameObject:
   m_ObjectHideFlags: 0
