@@ -1277,9 +1277,17 @@ PrefabInstance:
       value: GameScenePortal
       objectReference: {fileID: 0}
     - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+      propertyPath: mainCamera
+      value: 
+      objectReference: {fileID: 1817718639}
+    - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
       propertyPath: transitionPanel
       value: 
       objectReference: {fileID: 64689913}
+    - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+      propertyPath: thirdPersonCamera
+      value: 
+      objectReference: {fileID: 1817718642}
     - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
       propertyPath: destinationSceneName
       value: LobbyScene

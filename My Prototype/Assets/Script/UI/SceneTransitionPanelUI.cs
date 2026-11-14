@@ -4,23 +4,41 @@ using UnityEngine.UI;
 
 public class SceneTransitionPanelUI : MonoBehaviour
 {
+    // =========================================================
+    // UI
+    // =========================================================
+
     [Header("UI")]
+
     [SerializeField]
     private GameObject panelRoot;
+
 
     [SerializeField]
     private TMP_Text destinationText;
 
+
     [SerializeField]
     private Button moveButton;
+
 
     [SerializeField]
     private Button cancelButton;
 
 
+    // =========================================================
+    // Runtime
+    // =========================================================
+
     private string targetSceneName;
 
+
     private PlayerGameplayControl currentPlayerControl;
+
+
+    // 현재 이 UI를 연 Portal
+    private ScenePortal currentPortal;
+
 
     private bool isOpen;
 
@@ -28,16 +46,22 @@ public class SceneTransitionPanelUI : MonoBehaviour
     public bool IsOpen =>
         isOpen;
 
+
     public static bool IsTransitionUIOpen
     {
         get;
         private set;
     }
 
+
+    // =========================================================
+    // Awake
+    // =========================================================
+
     private void Awake()
     {
         // ==========================================
-        // 버튼 자동 연결
+        // Move Button
         // ==========================================
 
         if (moveButton != null)
@@ -46,6 +70,7 @@ public class SceneTransitionPanelUI : MonoBehaviour
                 OnMoveButtonClicked
             );
 
+
             moveButton.onClick.AddListener(
                 OnMoveButtonClicked
             );
@@ -53,16 +78,22 @@ public class SceneTransitionPanelUI : MonoBehaviour
         else
         {
             Debug.LogError(
-                "[SceneTransitionPanelUI] Move Button이 연결되지 않았습니다."
+                "[SceneTransitionPanelUI] " +
+                "Move Button이 연결되지 않았습니다."
             );
         }
 
+
+        // ==========================================
+        // Cancel Button
+        // ==========================================
 
         if (cancelButton != null)
         {
             cancelButton.onClick.RemoveListener(
                 OnCancelButtonClicked
             );
+
 
             cancelButton.onClick.AddListener(
                 OnCancelButtonClicked
@@ -71,10 +102,15 @@ public class SceneTransitionPanelUI : MonoBehaviour
         else
         {
             Debug.LogError(
-                "[SceneTransitionPanelUI] Cancel Button이 연결되지 않았습니다."
+                "[SceneTransitionPanelUI] " +
+                "Cancel Button이 연결되지 않았습니다."
             );
         }
 
+
+        // ==========================================
+        // 처음에는 Panel 숨김
+        // ==========================================
 
         if (panelRoot != null)
         {
@@ -82,6 +118,33 @@ public class SceneTransitionPanelUI : MonoBehaviour
                 false
             );
         }
+
+
+        isOpen =
+            false;
+
+
+        IsTransitionUIOpen =
+            false;
+    }
+
+
+    // =========================================================
+    // 기존 코드 호환용 Open
+    // =========================================================
+
+    public void Open(
+        string sceneName,
+        string displayName,
+        PlayerGameplayControl playerControl
+    )
+    {
+        Open(
+            sceneName,
+            displayName,
+            playerControl,
+            null
+        );
     }
 
 
@@ -92,40 +155,61 @@ public class SceneTransitionPanelUI : MonoBehaviour
     public void Open(
         string sceneName,
         string displayName,
-        PlayerGameplayControl playerControl
+        PlayerGameplayControl playerControl,
+        ScenePortal portal
     )
     {
-        targetSceneName = sceneName;
+        targetSceneName =
+            sceneName;
 
-        currentPlayerControl = playerControl;
 
-        isOpen = true;
+        currentPlayerControl =
+            playerControl;
 
-        IsTransitionUIOpen = true;
+
+        // ★ 현재 Portal 기억
+        currentPortal =
+            portal;
+
+
+        isOpen =
+            true;
+
+
+        IsTransitionUIOpen =
+            true;
 
 
         // ==========================================
-        // 다른 UI보다 가장 앞으로 가져오기
+        // Panel 활성화
         // ==========================================
 
         if (panelRoot != null)
         {
-            panelRoot.SetActive(true);
+            panelRoot.SetActive(
+                true
+            );
+
 
             panelRoot.transform.SetAsLastSibling();
         }
 
 
         // ==========================================
-        // 반드시 마우스 잠금 해제
+        // Mouse
         // ==========================================
 
         Cursor.lockState =
             CursorLockMode.None;
 
+
         Cursor.visible =
             true;
 
+
+        // ==========================================
+        // Destination Text
+        // ==========================================
 
         if (destinationText != null)
         {
@@ -133,6 +217,10 @@ public class SceneTransitionPanelUI : MonoBehaviour
                 $"{displayName}으로 이동하시겠습니까?";
         }
 
+
+        // ==========================================
+        // Buttons
+        // ==========================================
 
         if (moveButton != null)
         {
@@ -148,6 +236,10 @@ public class SceneTransitionPanelUI : MonoBehaviour
         }
 
 
+        // ==========================================
+        // Player 조작 정지
+        // ==========================================
+
         if (currentPlayerControl != null)
         {
             currentPlayerControl.LockControls();
@@ -155,7 +247,8 @@ public class SceneTransitionPanelUI : MonoBehaviour
 
 
         Debug.Log(
-            $"[SceneTransitionPanel] Open : {targetSceneName}"
+            $"[SceneTransitionPanel] Open : " +
+            $"{targetSceneName}"
         );
     }
 
@@ -167,48 +260,12 @@ public class SceneTransitionPanelUI : MonoBehaviour
     public void OnMoveButtonClicked()
     {
         Debug.Log(
-            $"[SceneTransitionPanel] Move Click : {targetSceneName}"
+            $"[SceneTransitionPanel] Move Click : " +
+            $"{targetSceneName}"
         );
 
 
-        if (string.IsNullOrWhiteSpace(
-                targetSceneName))
-        {
-            Debug.LogError(
-                "[SceneTransitionPanel] Target Scene이 없습니다."
-            );
-
-            return;
-        }
-
-
-        if (SceneTransitionManager.Instance == null)
-        {
-            Debug.LogError(
-                "[SceneTransitionPanel] SceneTransitionManager가 없습니다."
-            );
-
-            return;
-        }
-
-
-        // ==========================================
-        // UI를 즉시 숨긴다.
-        // ==========================================
-
-        isOpen =
-            false;
-
-        IsTransitionUIOpen = false;
-
-        if (panelRoot != null)
-        {
-            panelRoot.SetActive(
-                false
-            );
-        }
-
-
+        // 중복 클릭 방지
         if (moveButton != null)
         {
             moveButton.interactable =
@@ -216,15 +273,48 @@ public class SceneTransitionPanelUI : MonoBehaviour
         }
 
 
-        // ==========================================
-        // Scene 이동
-        // ==========================================
+        if (cancelButton != null)
+        {
+            cancelButton.interactable =
+                false;
+        }
 
-        SceneTransitionManager
-            .Instance
-            .LoadScene(
-                targetSceneName
-            );
+
+        // =====================================================
+        // 새로운 Portal 연출 시스템
+        // =====================================================
+
+        if (currentPortal != null)
+        {
+            currentPortal.StartPortalTransition();
+
+            return;
+        }
+
+
+        // =====================================================
+        // Portal 정보가 없다면 오류
+        // =====================================================
+
+        Debug.LogError(
+            "[SceneTransitionPanel] " +
+            "현재 ScenePortal이 등록되어 있지 않습니다."
+        );
+
+
+        // 다시 누를 수 있게 복구
+        if (moveButton != null)
+        {
+            moveButton.interactable =
+                true;
+        }
+
+
+        if (cancelButton != null)
+        {
+            cancelButton.interactable =
+                true;
+        }
     }
 
 
@@ -244,7 +334,10 @@ public class SceneTransitionPanelUI : MonoBehaviour
 
 
     // =========================================================
-    // Panel 닫기
+    // 일반 Close
+    //
+    // 취소했을 때 사용
+    // Player 조작도 다시 켬
     // =========================================================
 
     public void Close()
@@ -256,8 +349,14 @@ public class SceneTransitionPanelUI : MonoBehaviour
         isOpen =
             false;
 
+
         IsTransitionUIOpen =
-        false;
+            false;
+
+
+        // ==========================================
+        // Panel
+        // ==========================================
 
         if (panelRoot != null)
         {
@@ -266,6 +365,10 @@ public class SceneTransitionPanelUI : MonoBehaviour
             );
         }
 
+
+        // ==========================================
+        // Buttons
+        // ==========================================
 
         if (moveButton != null)
         {
@@ -281,14 +384,99 @@ public class SceneTransitionPanelUI : MonoBehaviour
         }
 
 
+        // ==========================================
+        // Player 조작 복구
+        // ==========================================
+
         if (currentPlayerControl != null)
         {
-            currentPlayerControl
-                .UnlockControls();
+            currentPlayerControl.UnlockControls();
         }
 
 
+        // ==========================================
+        // Runtime 초기화
+        // ==========================================
+
         currentPlayerControl =
             null;
+
+
+        currentPortal =
+            null;
+
+
+        targetSceneName =
+            null;
+    }
+
+
+    // =========================================================
+    // Portal 연출 시작용 Close
+    //
+    // 중요:
+    // Player 조작을 다시 켜지 않음
+    // =========================================================
+
+    public void CloseForTransition()
+    {
+        isOpen =
+            false;
+
+
+        IsTransitionUIOpen =
+            false;
+
+
+        // ==========================================
+        // Panel만 숨김
+        // ==========================================
+
+        if (panelRoot != null)
+        {
+            panelRoot.SetActive(
+                false
+            );
+        }
+
+
+        if (moveButton != null)
+        {
+            moveButton.interactable =
+                false;
+        }
+
+
+        if (cancelButton != null)
+        {
+            cancelButton.interactable =
+                false;
+        }
+
+
+        // =====================================================
+        // 매우 중요
+        //
+        // currentPlayerControl.UnlockControls()
+        // 호출하지 않는다.
+        //
+        // Portal 연출 중에는 Player가 움직이면 안 됨.
+        // =====================================================
+
+        Debug.Log(
+            "[SceneTransitionPanel] " +
+            "Portal Transition용으로 UI 숨김"
+        );
+    }
+
+
+    // =========================================================
+    // Destroy
+    // =========================================================
+
+    private void OnDestroy()
+    {
+        IsTransitionUIOpen =
+            false;
     }
 }

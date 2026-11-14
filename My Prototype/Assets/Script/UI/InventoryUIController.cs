@@ -423,7 +423,7 @@ public class InventoryUIController : MonoBehaviour
     private IEnumerator UnavailableMessageRoutine()
     {
         unavailableMessageText.text =
-            "전투에서는 도망칠 수 없습니다.";
+            "사용 할 수 없습니다.";
 
 
         unavailableMessageText.gameObject.SetActive(

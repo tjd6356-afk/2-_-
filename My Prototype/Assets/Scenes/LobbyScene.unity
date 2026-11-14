@@ -2886,22 +2886,40 @@ PrefabInstance:
       value: GameScenePortal
       objectReference: {fileID: 0}
     - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+      propertyPath: mainCamera
+      value: 
+      objectReference: {fileID: 1966443905}
+    - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+      propertyPath: cameraEndPoint
+      value: 
+      objectReference: {fileID: 1491516536}
+    - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
       propertyPath: transitionPanel
       value: 
       objectReference: {fileID: 58059972}
     - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
-      propertyPath: destinationSceneName
-      value: Dungeon1
-      objectReference: {fileID: 0}
+      propertyPath: cameraStartPoint
+      value: 
+      objectReference: {fileID: 1491516537}
     - target: {fileID: 9208496542207522123, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
-      propertyPath: destinationDisplayName
-      value: "\uB358\uC804"
-      objectReference: {fileID: 0}
+      propertyPath: thirdPersonCamera
+      value: 
+      objectReference: {fileID: 1966443908}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+--- !u!4 &1491516536 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1272796778641153449, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+  m_PrefabInstance: {fileID: 1491516535}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1491516537 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2876332880800534829, guid: 496202ee898195c4d81a7b62a8d44506, type: 3}
+  m_PrefabInstance: {fileID: 1491516535}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1548364790
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4635,6 +4653,18 @@ PrefabInstance:
     - target: {fileID: 3587498192145147331, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: m_hasFontAssetChanged
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5265917095387404900, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5265917095387404900, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5265917095387404900, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6011981734689782225, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: m_Name
