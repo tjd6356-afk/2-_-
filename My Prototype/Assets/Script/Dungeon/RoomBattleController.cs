@@ -63,6 +63,41 @@ public class RoomBattleController : MonoBehaviour
     [SerializeField]
     private int maxSpawnPositionAttempts = 20;
 
+    // =========================================================
+    // Monster Spawn Presentation
+    // =========================================================
+
+    [Header("Monster Spawn Presentation")]
+
+    [Tooltip("몬스터가 최종 Spawn 위치보다 얼마나 높은 곳에서 나타날지")]
+    [SerializeField]
+    private float monsterSpawnHeight = 20f;
+
+
+    [Tooltip("위에서 바닥까지 내려오는 시간")]
+    [SerializeField]
+    private float monsterDropDuration = 0.6f;
+
+
+    [Tooltip("착지 후 AI가 활성화되기 전 최소 대기시간")]
+    [SerializeField]
+    private float monsterReadyDelayMin = 0.5f;
+
+
+    [Tooltip("착지 후 AI가 활성화되기 전 최대 대기시간")]
+    [SerializeField]
+    private float monsterReadyDelayMax = 0.7f;
+
+
+    [Tooltip("몬스터가 내려오는 움직임")]
+    [SerializeField]
+    private AnimationCurve monsterDropCurve =
+        AnimationCurve.EaseInOut(
+            0f,
+            0f,
+            1f,
+            1f
+        );
 
     // =========================================================
     // Battle Barrier
@@ -349,12 +384,16 @@ public class RoomBattleController : MonoBehaviour
             {
                 Debug.LogWarning(
                     $"[RoomBattle] Monster {i + 1}의 " +
-                    "Spawn 위치를 찾지 못했습니다."
+                    $"Spawn 위치를 찾지 못했습니다."
                 );
 
                 continue;
             }
 
+
+            // =====================================================
+            // 일단 정상적인 NavMesh 위치에 생성
+            // =====================================================
 
             GameObject monster =
                 Instantiate(
@@ -372,9 +411,221 @@ public class RoomBattleController : MonoBehaviour
             aliveMonsters.Add(
                 monster
             );
+
+
+            // =====================================================
+            // 등장 연출 시작
+            // =====================================================
+
+            StartCoroutine(
+                MonsterSpawnRoutine(
+                    monster,
+                    spawnPosition
+                )
+            );
         }
     }
 
+    // =========================================================
+    // Monster Spawn Presentation
+    // =========================================================
+
+    private IEnumerator MonsterSpawnRoutine(
+        GameObject monster,
+        Vector3 groundPosition
+    )
+    {
+        if (monster == null)
+            yield break;
+
+
+        // =====================================================
+        // Enemy Components
+        // =====================================================
+
+        EnemyAI enemyAI =
+            monster.GetComponentInChildren<EnemyAI>();
+
+
+        EnemyShooter enemyShooter =
+            monster.GetComponentInChildren<EnemyShooter>();
+
+
+        NavMeshAgent agent =
+            monster.GetComponentInChildren<NavMeshAgent>();
+
+
+        // =====================================================
+        // 등장하는 동안 공격 / 추적 금지
+        // =====================================================
+
+        if (enemyAI != null)
+        {
+            enemyAI.enabled =
+                false;
+        }
+
+
+        if (enemyShooter != null)
+        {
+            enemyShooter.enabled =
+                false;
+        }
+
+
+        // =====================================================
+        // NavMeshAgent도 잠깐 정지
+        //
+        // Transform을 직접 위에서 아래로 움직일 것이므로
+        // Agent가 위치를 다시 끌어당기지 못하게 함
+        // =====================================================
+
+        if (agent != null)
+        {
+            agent.enabled =
+                false;
+        }
+
+
+        // =====================================================
+        // 시작 위치
+        // =====================================================
+
+        Vector3 startPosition =
+            groundPosition +
+            Vector3.up *
+            monsterSpawnHeight;
+
+
+        monster.transform.position =
+            startPosition;
+
+
+        // =====================================================
+        // 위 → 아래 이동
+        // =====================================================
+
+        float elapsed =
+            0f;
+
+
+        float duration =
+            Mathf.Max(
+                0.01f,
+                monsterDropDuration
+            );
+
+
+        while (elapsed <
+               duration)
+        {
+            if (monster == null)
+                yield break;
+
+
+            elapsed +=
+                Time.deltaTime;
+
+
+            float t =
+                Mathf.Clamp01(
+                    elapsed /
+                    duration
+                );
+
+
+            float curvedT =
+                monsterDropCurve.Evaluate(
+                    t
+                );
+
+
+            monster.transform.position =
+                Vector3.Lerp(
+                    startPosition,
+                    groundPosition,
+                    curvedT
+                );
+
+
+            yield return null;
+        }
+
+
+        // =====================================================
+        // 정확히 바닥 위치로 보정
+        // =====================================================
+
+        if (monster == null)
+            yield break;
+
+
+        monster.transform.position =
+            groundPosition;
+
+
+        // =====================================================
+        // 착지 후 준비 시간
+        // =====================================================
+
+        float readyDelay =
+            Random.Range(
+                monsterReadyDelayMin,
+                monsterReadyDelayMax
+            );
+
+
+        yield return new WaitForSeconds(
+            readyDelay
+        );
+
+
+        if (monster == null)
+            yield break;
+
+
+        // =====================================================
+        // NavMeshAgent 복구
+        // =====================================================
+
+        if (agent != null)
+        {
+            agent.enabled =
+                true;
+
+
+            if (agent.isOnNavMesh)
+            {
+                agent.Warp(
+                    groundPosition
+                );
+            }
+        }
+
+
+        // =====================================================
+        // AI 활성화
+        // =====================================================
+
+        if (enemyAI != null)
+        {
+            enemyAI.enabled =
+                true;
+        }
+
+
+        if (enemyShooter != null)
+        {
+            enemyShooter.enabled =
+                true;
+        }
+
+
+        Debug.Log(
+            $"[RoomBattle] Monster 등장 완료 : " +
+            $"{monster.name}"
+        );
+    }
 
     // =========================================================
     // Monster Prefab Random
