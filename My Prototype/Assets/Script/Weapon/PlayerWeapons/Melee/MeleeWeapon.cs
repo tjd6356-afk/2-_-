@@ -136,6 +136,10 @@ public class MeleeWeapon : WeaponBase
     [SerializeField]
     private float bladeRollAngle = 0f;
 
+    [Tooltip("트레일(TrailPoint)의 정면(Z축)이 항상 휘두르는 평면의 위쪽을 향하도록 자동 정렬")]
+    [SerializeField]
+    private bool alignTrailToSwingPlane = true;
+
     [Tooltip("대기 상태에서 첫 공격 시 전방 시작 위치로 즉시 전환한 뒤 휘두를지 여부")]
     [SerializeField]
     private bool snapToForwardStartOnFirstSwing = true;
@@ -296,6 +300,7 @@ public class MeleeWeapon : WeaponBase
                 EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 holdPos, out Quaternion holdRot);
                 weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, holdPos, returnToDefaultSpeed * Time.deltaTime);
                 weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, holdRot, returnToDefaultSpeed * Time.deltaTime);
+                AlignTrailTransform(currentYawAngle);
             }
             else if (hasCachedDefaultPose)
             {
@@ -372,6 +377,7 @@ public class MeleeWeapon : WeaponBase
             EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 forwardStartPos, out Quaternion forwardStartRot);
             weaponVisual.localPosition = forwardStartPos;
             weaponVisual.localRotation = forwardStartRot;
+            AlignTrailTransform(currentYawAngle);
         }
 
         isInAttackPose = true;
@@ -410,21 +416,25 @@ public class MeleeWeapon : WeaponBase
     private IEnumerator SwingRoutine(bool toLeft, float mainDuration, float chamberDuration)
     {
         isSwinging = true;
+
+        float startAngle = currentYawAngle;
+        float startChamberRatio = currentChamberRatio;
+
+        float strikeEndAngle = GetStrikeEndAngle(toLeft);
+        float chamberedEndAngle = GetChamberedAngle(toLeft);
+        float targetEdgeRoll = GetTargetEdgeRoll(toLeft);
+
+        currentEdgeRoll = targetEdgeRoll;
+        EvaluateArcPose(startAngle, startChamberRatio, currentEdgeRoll, out Vector3 alignedStartPos, out Quaternion alignedStartRot);
+        weaponVisual.localPosition = alignedStartPos;
+        weaponVisual.localRotation = alignedStartRot;
+        AlignTrailTransform(startAngle);
+
         SetTrailEmitting(true, true);
 
         try
         {
-            float startAngle = currentYawAngle;
-            float startChamberRatio = currentChamberRatio;
-            float startEdgeRoll = currentEdgeRoll;
-
-            float strikeEndAngle = GetStrikeEndAngle(toLeft);
-            float chamberedEndAngle = GetChamberedAngle(toLeft);
-            float targetEdgeRoll = GetTargetEdgeRoll(toLeft);
-
-            // =====================================================
-            // 1단계: 칼날을 베는 방향으로 돌리며 타격 끝 각도까지 베기 (트레일 ON)
-            // =====================================================
+            // 1단계: 정렬된 칼날로 타격 끝 각도까지 베기 (트레일 ON)
             float elapsed = 0f;
             while (elapsed < mainDuration)
             {
@@ -432,26 +442,20 @@ public class MeleeWeapon : WeaponBase
                 float t = Mathf.Clamp01(elapsed / mainDuration);
                 float curvedT = swingCurve.Evaluate(t);
 
-                // 스윙 초반(첫 30% 구간)에 손목을 빠르게 돌려 칼날이 베는 방향을 정면으로 향하게 정렬
-                float edgeTurnT = Mathf.Clamp01(t * 3.5f);
-                currentEdgeRoll = Mathf.LerpAngle(startEdgeRoll, targetEdgeRoll, edgeTurnT);
-
                 currentYawAngle = Mathf.LerpUnclamped(startAngle, strikeEndAngle, curvedT);
                 currentChamberRatio = Mathf.Lerp(startChamberRatio, 0f, curvedT);
 
                 EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 targetPos, out Quaternion targetRot);
                 weaponVisual.localPosition = targetPos;
                 weaponVisual.localRotation = targetRot;
+                AlignTrailTransform(currentYawAngle);
 
                 yield return null;
             }
 
-            currentEdgeRoll = targetEdgeRoll;
             SetTrailEmitting(false, false);
 
-            // =====================================================
             // 2단계: 같은 방향으로 감속하며 무기를 뒤로 살짝 내빼기
-            // =====================================================
             if (chamberDuration > 0.001f)
             {
                 float chamberElapsed = 0f;
@@ -468,6 +472,7 @@ public class MeleeWeapon : WeaponBase
                     EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 chamberPos, out Quaternion chamberRot);
                     weaponVisual.localPosition = chamberPos;
                     weaponVisual.localRotation = chamberRot;
+                    AlignTrailTransform(currentYawAngle);
 
                     yield return null;
                 }
@@ -478,6 +483,7 @@ public class MeleeWeapon : WeaponBase
             EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 finalPos, out Quaternion finalRot);
             weaponVisual.localPosition = finalPos;
             weaponVisual.localRotation = finalRot;
+            AlignTrailTransform(currentYawAngle);
         }
         finally
         {
@@ -485,6 +491,21 @@ public class MeleeWeapon : WeaponBase
             isSwinging = false;
             swingCoroutine = null;
         }
+    }
+
+    // =========================================================
+    // TrailPoint의 파란색 Z축(+forward)이 항상 휘두르는 평면 위쪽을 향하도록 고정
+    // =========================================================
+    private void AlignTrailTransform(float yawAngle)
+    {
+        if (!alignTrailToSwingPlane || swingTrail == null || swingTrail.transform == weaponVisual)
+            return;
+
+        Quaternion planeRot = Quaternion.Euler(0f, yawAngle, bladeRollAngle);
+        Vector3 worldPlaneNormal = transform.TransformDirection(planeRot * Vector3.up);
+        Vector3 worldRadialDir = transform.TransformDirection(planeRot * Vector3.forward);
+
+        swingTrail.transform.rotation = Quaternion.LookRotation(-worldPlaneNormal, worldRadialDir);
     }
 
     private float GetTargetEdgeRoll(bool isLeft)
@@ -526,9 +547,7 @@ public class MeleeWeapon : WeaponBase
 
         pos = pivot + radialDir * orbitRadius + pullOffset;
 
-        // 1. 무기를 수평으로 눕히고 원호 바깥쪽(yawAngle)을 향하게 배치
         Quaternion arcOrientation = Quaternion.Euler(bladeLayAngle, yawAngle, bladeRollAngle);
-        // 2. 칼자루(로컬 Y축)를 기준으로 칼날이 베는 방향을 향하도록 자전 회전
         Quaternion bladeTwist = Quaternion.Euler(0f, edgeRollAngle, 0f);
 
         rot = arcOrientation * bladeTwist;

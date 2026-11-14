@@ -108,6 +108,7 @@ MonoBehaviour:
   bladeEdgeAngle: 90
   flipEdgeOnReturnSwing: 1
   bladeRollAngle: 0
+  alignTrailToSwingPlane: 1
   snapToForwardStartOnFirstSwing: 1
   swingCurve:
     serializedVersion: 2
@@ -159,8 +160,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2875856560197494226}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: 0.5}
-  m_LocalPosition: {x: -0.000114898736, y: 0, z: 0.02372}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.0271}
   m_LocalScale: {x: 0.00306396, y: 0.02680965, z: 0.00306396}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -192,7 +193,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -225,7 +226,7 @@ TrailRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.7757015
+        value: 0.66355133
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -246,7 +247,7 @@ TrailRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 1, g: 1, b: 1, a: 1}
+      key0: {r: 1, g: 1, b: 1, a: 0.19607843}
       key1: {r: 1, g: 1, b: 1, a: 0}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
@@ -264,7 +265,7 @@ TrailRenderer:
       ctime7: 0
       atime0: 0
       atime1: 65535
-      atime2: 0
+      atime2: 65535
       atime3: 0
       atime4: 0
       atime5: 0
