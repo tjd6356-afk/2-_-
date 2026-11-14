@@ -37,6 +37,10 @@ public class FarmGrowSlot : MonoBehaviour
 
     [Header("Harvest")]
 
+    [Tooltip("아이템 1개를 심었을 때 수확되는 개수")]
+    [SerializeField]
+    private int harvestAmount = 2;
+
     [Tooltip("성장 완료 후 Item Pickup이 생성될 위치")]
     [SerializeField]
     private Transform harvestSpawnPoint;
@@ -312,7 +316,7 @@ public class FarmGrowSlot : MonoBehaviour
             ItemWorldSpawner.Spawn(
                 plantedItemData,
                 spawnPosition,
-                1
+                harvestAmount
             );
 
 
@@ -472,6 +476,12 @@ public class FarmGrowSlot : MonoBehaviour
             Mathf.Max(
                 0f,
                 growDuration
+            );
+
+        harvestAmount =
+            Mathf.Max(
+                1,
+                harvestAmount
             );
     }
 }
