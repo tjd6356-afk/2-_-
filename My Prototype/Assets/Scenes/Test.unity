@@ -1092,6 +1092,10 @@ PrefabInstance:
       value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: weaponManager
+      value: 
+      objectReference: {fileID: 546167773}
+    - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 1966443906}
@@ -1099,6 +1103,14 @@ PrefabInstance:
       propertyPath: thirdPersonCamera
       value: 
       objectReference: {fileID: 1966443908}
+    - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: lockFacingWeaponTypes.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: 'lockFacingWeaponTypes.Array.data[0]'
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7306682803856176399, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1422,6 +1434,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8354316cc7351e343a892200cbd99ac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+--- !u!114 &546167773 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_PrefabInstance: {fileID: 466739312}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfac9378709725c44b0c74b7688d6751, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponManager
 --- !u!1 &700460029
 GameObject:
   m_ObjectHideFlags: 0
@@ -3008,7 +3031,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70d12c9acec761144b6c979de58f95db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPickup
-  weaponPrefab: {fileID: 5479772868171434253, guid: e72af9f9b144b374fbe0ec82bc849643, type: 3}
+  weaponPrefab: {fileID: 940615241903331799, guid: db7e2cad5599c1148b68e73c001d15a6, type: 3}
   destroyAfterEquip: 0
 --- !u!1001 &1865050508
 PrefabInstance:

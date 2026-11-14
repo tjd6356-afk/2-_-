@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
@@ -45,6 +46,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float wireAirDeceleration = 1.5f;
     [SerializeField] private float wireGroundDeceleration = 12f;
 
+    [Header("Weapon Facing Lock")]
+    [SerializeField] private PlayerWeaponManager weaponManager;
+    [Tooltip("여기에 등록된 무기 타입을 들고 있으면 조준(우클릭)하지 않아도 항상 카메라 정면을 바라봅니다.")]
+    [SerializeField] private List<WeaponType> lockFacingWeaponTypes = new List<WeaponType>();
+
     private Vector3 wireHorizontalVelocity;
 
     private bool isDashing;
@@ -88,6 +94,11 @@ public class PlayerMovement : MonoBehaviour
         {
             wireController =
                 GetComponent<WireController>();
+        }
+
+        if (weaponManager == null)
+        {
+            weaponManager = GetComponent<PlayerWeaponManager>();
         }
     }
 
@@ -244,7 +255,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         // 일반 상태일 때만 이동 방향으로 회전
-        if (!isAiming &&
+        if (!IsFacingLockedToCamera() &&
             moveDirection.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation =
@@ -370,25 +381,34 @@ public class PlayerMovement : MonoBehaviour
         );
     }
 
+    private bool IsFacingLockedToCamera()
+    {
+        if (thirdPersonCamera != null && thirdPersonCamera.IsAiming)
+            return true;
+
+        if (weaponManager != null && lockFacingWeaponTypes != null &&
+            lockFacingWeaponTypes.Contains(weaponManager.ActiveWeaponType))
+            return true;
+
+        return false;
+    }
+
+
     private void RotateWhileAiming()
     {
         if (thirdPersonCamera == null)
             return;
 
-
-        if (!thirdPersonCamera.IsAiming)
+        // ✨ 수정됨: 조준 중이거나, 정면 고정 무기 타입을 들고 있을 때 카메라 방향으로 회전
+        if (!IsFacingLockedToCamera())
             return;
 
-
-        // 카메라의 좌우 회전값만 가져온다.
-        // 위/아래 Pitch는 Player에 적용하지 않는다.
         Quaternion targetRotation =
             Quaternion.Euler(
                 0f,
                 thirdPersonCamera.CurrentYaw,
                 0f
             );
-
 
         transform.rotation =
             Quaternion.Slerp(
