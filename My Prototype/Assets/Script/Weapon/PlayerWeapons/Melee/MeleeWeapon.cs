@@ -13,6 +13,10 @@ public class MeleeWeapon : WeaponBase
     [SerializeField]
     private Transform weaponVisual;
 
+    [Tooltip("(선택) 휘두르기 중심 기준으로 삼을 빈 오브젝트. 비워두면 무기 프리팹 루트(0,0,0)를 기준으로 오프셋만 적용합니다.")]
+    [SerializeField]
+    private Transform swingCenterPoint;
+
     [Header("Normal Stats (비조준 공격 설정)")]
     [Min(0f)]
     [SerializeField]
@@ -47,85 +51,116 @@ public class MeleeWeapon : WeaponBase
     [SerializeField]
     private float aimedBaseAttackInterval = 0.7f;
 
-    // =========================================================
-    // 스윙 애니메이션 포즈 (비조준 / 조준 각각 좌·우 포즈 지정)
-    // =========================================================
-    [Header("Normal Swing Poses (비조준 좌·우 포즈)")]
-    [Tooltip("기본(오른쪽) 대기 및 짝수 공격 도착 위치")]
+    [Header("Aim")]
     [SerializeField]
-    private Vector3 normalRightPosition = new Vector3(0.35f, -0.1f, 0.4f);
-
-    [Tooltip("기본(오른쪽) 대기 및 짝수 공격 도착 각도")]
-    [SerializeField]
-    private Vector3 normalRightEuler = new Vector3(15f, 45f, -20f);
-
-    [Tooltip("홀수 공격(1타) 후 멈춰 있을 왼쪽 위치")]
-    [SerializeField]
-    private Vector3 normalLeftPosition = new Vector3(-0.35f, -0.15f, 0.45f);
-
-    [Tooltip("홀수 공격(1타) 후 멈춰 있을 왼쪽 각도")]
-    [SerializeField]
-    private Vector3 normalLeftEuler = new Vector3(20f, -65f, 35f);
-
-    [Header("Aimed Swing Poses (조준 시 좌·우 포즈)")]
-    [Tooltip("조준 시 오른쪽 대기 위치")]
-    [SerializeField]
-    private Vector3 aimedRightPosition = new Vector3(0.2f, -0.05f, 0.5f);
-
-    [Tooltip("조준 시 오른쪽 대기 각도")]
-    [SerializeField]
-    private Vector3 aimedRightEuler = new Vector3(70f, 15f, 0f);
-
-    [Tooltip("조준 시 1타 공격 후 멈춰 있을 위치 (찌르기 연출 시 Z값을 높게 설정)")]
-    [SerializeField]
-    private Vector3 aimedLeftPosition = new Vector3(0.15f, -0.05f, 0.95f);
-
-    [Tooltip("조준 시 1타 공격 후 멈춰 있을 각도")]
-    [SerializeField]
-    private Vector3 aimedLeftEuler = new Vector3(85f, -15f, 0f);
-
-    [Header("Swing Timing & Curve")]
-    [Tooltip("공속 1.0 기준 휘두르는 데 걸리는 시간 (초)")]
-    [Min(0.02f)]
-    [SerializeField]
-    private float baseSwingDuration = 0.16f;
-
-    [Tooltip("스윙 가속/감속 곡선 (기본: 빠르게 휘두르고 끝에 절도 있게 멈춤)")]
-    [SerializeField]
-    private AnimationCurve swingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-
-    [Tooltip("우클릭 조준 전환 시 자세가 바뀌는 속도")]
-    [Min(1f)]
-    [SerializeField]
-    private float aimPoseTransitionSpeed = 14f;
-
-    [Header("Layer Masks")]
-    [SerializeField]
-    private LayerMask enemyMask = ~0;
+    private float maxAimDistance = 100f;
 
     [SerializeField]
     private LayerMask aimMask = ~0;
 
+    [SerializeField]
+    private LayerMask enemyMask = ~0;
+
+    // =========================================================
+    // 휘두르기 중심 위치 및 원호(부채꼴) 궤도 설정
+    // =========================================================
+    [Header("Normal Swing Arc (비조준 휘두르기 중심 및 궤도)")]
+    [Tooltip("비조준 시 휘두르기 중심 위치 오프셋 (X: 좌우, Y: 높이, Z: 앞뒤)")]
+    [SerializeField]
+    private Vector3 normalSwingCenterOffset = new Vector3(0f, 1.15f, 0.25f);
+
+    [Tooltip("좌우로 휘두르는 반각 (80이면 오른쪽 +80° ~ 왼쪽 -80°, 총 160° 반원 회전)")]
+    [Range(10f, 150f)]
+    [SerializeField]
+    private float normalSwingHalfAngle = 80f;
+
+    [Tooltip("휘두르기 중심으로부터 무기가 떨어져 도는 원호 반경")]
+    [Min(0.1f)]
+    [SerializeField]
+    private float normalOrbitRadius = 1.25f;
+
+    [Header("Aimed Swing Arc (조준 시 휘두르기 중심 및 궤도)")]
+    [Tooltip("조준 시 휘두르기 중심 위치 오프셋 (X: 좌우, Y: 높이, Z: 앞뒤)")]
+    [SerializeField]
+    private Vector3 aimedSwingCenterOffset = new Vector3(0f, 1.15f, 0.35f);
+
+    [Tooltip("조준 시 좌우로 휘두르는 반각")]
+    [Range(10f, 150f)]
+    [SerializeField]
+    private float aimedSwingHalfAngle = 60f;
+
+    [Tooltip("조준 시 원호 반경")]
+    [Min(0.1f)]
+    [SerializeField]
+    private float aimedOrbitRadius = 1.35f;
+
+    [Header("Blade Orientation & Timing (무기 눕힘 각도 및 속도)")]
+    [Tooltip("무기를 눕히는 X축 각도 (90 = 지면과 완전히 수평)")]
+    [SerializeField]
+    private float bladeLayAngle = 90f;
+
+    [Tooltip("칼날 기울기 Z축 각도 (0 = 수평 횡베기, 값을 주면 대각선 베기)")]
+    [SerializeField]
+    private float bladeRollAngle = 0f;
+
+    [Tooltip("대기 상태에서 첫 공격 시 전방 시작 위치로 즉시 전환한 뒤 휘두를지 여부")]
+    [SerializeField]
+    private bool snapToForwardStartOnFirstSwing = true;
+
+    [Min(0.02f)]
+    [SerializeField]
+    private float baseSwingDuration = 0.18f;
+
+    [SerializeField]
+    private AnimationCurve swingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+    [Tooltip("공격 종료 후 원래 기본 자세로 되돌아가는 속도")]
+    [Min(1f)]
+    [SerializeField]
+    private float returnToDefaultSpeed = 14f;
+
+    private ThirdPersonCamera thirdPersonCam;
     private float nextAttackTime;
-    private bool isSwungToLeft; // false: 오른쪽 자세, true: 왼쪽 자세
+    private bool isSwungToLeft;
     private bool isSwinging;
+    private bool isInAttackPose;
     private Coroutine swingCoroutine;
 
-    public bool IsAiming => Mouse.current != null && Mouse.current.rightButton.isPressed;
+    // 무기에 위치/회전값을 부여하기 전의 원본 기본 자세
+    private Vector3 defaultLocalPosition;
+    private Quaternion defaultLocalRotation;
+    private bool hasCachedDefaultPose;
+
+    public bool IsAiming =>
+        (thirdPersonCam != null && thirdPersonCam.IsAiming) ||
+        (Mouse.current != null && Mouse.current.rightButton.isPressed);
+
+    private void Awake()
+    {
+        CacheDefaultPose();
+    }
+
+    private void CacheDefaultPose()
+    {
+        if (hasCachedDefaultPose || weaponVisual == null)
+            return;
+
+        defaultLocalPosition = weaponVisual.localPosition;
+        defaultLocalRotation = weaponVisual.localRotation;
+        hasCachedDefaultPose = true;
+    }
 
     public override void Equip()
     {
+        CacheDefaultPose();
         base.Equip();
-        nextAttackTime = 0f;
-        isSwungToLeft = false;
-        isSwinging = false;
 
-        // 장착 즉시 오른쪽 기본 자세로 초기화
-        if (weaponVisual != null)
+        if (PlayerCamera != null)
         {
-            weaponVisual.localPosition = normalRightPosition;
-            weaponVisual.localRotation = Quaternion.Euler(normalRightEuler);
+            thirdPersonCam = PlayerCamera.GetComponent<ThirdPersonCamera>();
         }
+
+        ResetWeaponPoseState();
     }
 
     public override void Unequip()
@@ -136,15 +171,27 @@ public class MeleeWeapon : WeaponBase
             swingCoroutine = null;
         }
 
+        ResetWeaponPoseState();
+        base.Unequip();
+    }
+
+    private void ResetWeaponPoseState()
+    {
         isSwinging = false;
         isSwungToLeft = false;
+        isInAttackPose = false;
         nextAttackTime = 0f;
-        base.Unequip();
+
+        if (weaponVisual != null && hasCachedDefaultPose)
+        {
+            weaponVisual.localPosition = defaultLocalPosition;
+            weaponVisual.localRotation = defaultLocalRotation;
+        }
     }
 
     private void Update()
     {
-        if (PlayerStats == null || Mouse.current == null)
+        if (PlayerCamera == null || PlayerStats == null || Mouse.current == null)
             return;
 
         if (Mouse.current.leftButton.isPressed)
@@ -152,12 +199,24 @@ public class MeleeWeapon : WeaponBase
             TryAttack(IsAiming);
         }
 
-        // 휘두르는 중이 아닐 때, 현재 스윙 방향(좌/우)을 유지한 채 비조준 <-> 조준 자세를 부드럽게 전환
         if (!isSwinging && weaponVisual != null)
         {
-            GetTargetPose(IsAiming, isSwungToLeft, out Vector3 targetPos, out Quaternion targetRot);
-            weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, targetPos, aimPoseTransitionSpeed * Time.deltaTime);
-            weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, targetRot, aimPoseTransitionSpeed * Time.deltaTime);
+            // 공격 간격(쿨타임) 동안에는 직전 스윙 끝 각도를 유지해 연속 공격 시 좌·우 교차 스윙
+            if (Time.time < nextAttackTime)
+            {
+                float holdAngle = GetEndAngle(IsAiming, isSwungToLeft);
+                EvaluateArcPose(IsAiming, holdAngle, out Vector3 holdPos, out Quaternion holdRot);
+                weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, holdPos, returnToDefaultSpeed * Time.deltaTime);
+                weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, holdRot, returnToDefaultSpeed * Time.deltaTime);
+            }
+            // 공격을 멈춘 상태에서는 프리팹 원래의 기본 위치/회전값으로 복귀
+            else if (hasCachedDefaultPose)
+            {
+                isSwungToLeft = false;
+                isInAttackPose = false;
+                weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, defaultLocalPosition, returnToDefaultSpeed * Time.deltaTime);
+                weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, defaultLocalRotation, returnToDefaultSpeed * Time.deltaTime);
+            }
         }
     }
 
@@ -170,10 +229,20 @@ public class MeleeWeapon : WeaponBase
         float currentBaseInterval = isAiming ? aimedBaseAttackInterval : baseAttackInterval;
         float finalInterval = currentBaseInterval / meleeSpeedStat;
 
-        // 1. 데미지 판정 실행
+        // 대기 자세에서 첫 휘두르기를 시작할 때 전방 오른쪽 시작 위치로 먼저 배치
+        if (!isInAttackPose && snapToForwardStartOnFirstSwing && weaponVisual != null)
+        {
+            isSwungToLeft = false;
+            float startRightAngle = GetEndAngle(isAiming, false);
+            EvaluateArcPose(isAiming, startRightAngle, out Vector3 forwardStartPos, out Quaternion forwardStartRot);
+            weaponVisual.localPosition = forwardStartPos;
+            weaponVisual.localRotation = forwardStartRot;
+        }
+
+        isInAttackPose = true;
+
         PerformAttack(isAiming);
 
-        // 2. 좌 <-> 우 스윙 방향 반전 후 해당 방향으로 스윙 애니메이션 실행
         isSwungToLeft = !isSwungToLeft;
         StartSwingAnimation(isAiming, isSwungToLeft, meleeSpeedStat, finalInterval);
 
@@ -190,19 +259,17 @@ public class MeleeWeapon : WeaponBase
             StopCoroutine(swingCoroutine);
         }
 
-        // 공속에 비례해 스윙 시간을 줄이되, 다음 공격 간격(finalInterval)의 85%를 넘지 않도록 보정
         float duration = Mathf.Min(baseSwingDuration / speedStat, maxAllowedDuration * 0.85f);
         duration = Mathf.Max(0.03f, duration);
 
         swingCoroutine = StartCoroutine(SwingRoutine(isAiming, toLeft, duration));
     }
 
-    private IEnumerator SwingRoutine(bool isAiming, bool toLeft, float duration)
+    private IEnumerator SwingRoutine(bool initialAiming, bool toLeft, float duration)
     {
         isSwinging = true;
 
-        Vector3 startPos = weaponVisual.localPosition;
-        Quaternion startRot = weaponVisual.localRotation;
+        float startAngle = GetEndAngle(initialAiming, !toLeft);
 
         float elapsed = 0f;
         while (elapsed < duration)
@@ -211,17 +278,20 @@ public class MeleeWeapon : WeaponBase
             float t = Mathf.Clamp01(elapsed / duration);
             float curvedT = swingCurve.Evaluate(t);
 
-            // 스윙 도중 우클릭 조준을 누르거나 떼어도 목표 좌/우 방향을 유지하며 자연스럽게 연결
-            GetTargetPose(IsAiming, toLeft, out Vector3 targetPos, out Quaternion targetRot);
+            bool currentAiming = IsAiming;
+            float endAngle = GetEndAngle(currentAiming, toLeft);
+            float currentAngle = Mathf.LerpUnclamped(startAngle, endAngle, curvedT);
 
-            weaponVisual.localPosition = Vector3.LerpUnclamped(startPos, targetPos, curvedT);
-            weaponVisual.localRotation = Quaternion.SlerpUnclamped(startRot, targetRot, curvedT);
+            EvaluateArcPose(currentAiming, currentAngle, out Vector3 targetPos, out Quaternion targetRot);
+            weaponVisual.localPosition = targetPos;
+            weaponVisual.localRotation = targetRot;
 
             yield return null;
         }
 
-        // 도착 자세 고정 (되돌아가지 않고 멈춤)
-        GetTargetPose(IsAiming, toLeft, out Vector3 finalPos, out Quaternion finalRot);
+        bool finalAiming = IsAiming;
+        float finalAngle = GetEndAngle(finalAiming, toLeft);
+        EvaluateArcPose(finalAiming, finalAngle, out Vector3 finalPos, out Quaternion finalRot);
         weaponVisual.localPosition = finalPos;
         weaponVisual.localRotation = finalRot;
 
@@ -229,18 +299,34 @@ public class MeleeWeapon : WeaponBase
         swingCoroutine = null;
     }
 
-    private void GetTargetPose(bool isAiming, bool isLeft, out Vector3 pos, out Quaternion rot)
+    private float GetEndAngle(bool isAiming, bool isLeft)
     {
-        if (isAiming)
-        {
-            pos = isLeft ? aimedLeftPosition : aimedRightPosition;
-            rot = Quaternion.Euler(isLeft ? aimedLeftEuler : aimedRightEuler);
-        }
-        else
-        {
-            pos = isLeft ? normalLeftPosition : normalRightPosition;
-            rot = Quaternion.Euler(isLeft ? normalLeftEuler : normalRightEuler);
-        }
+        float halfAngle = isAiming ? aimedSwingHalfAngle : normalSwingHalfAngle;
+        return isLeft ? -halfAngle : halfAngle;
+    }
+
+    private Vector3 GetSwingCenterLocal(bool isAiming)
+    {
+        Vector3 baseCenter = swingCenterPoint != null
+            ? transform.InverseTransformPoint(swingCenterPoint.position)
+            : Vector3.zero;
+
+        return baseCenter + (isAiming ? aimedSwingCenterOffset : normalSwingCenterOffset);
+    }
+
+    // =========================================================
+    // 극좌표 기반 원호 위치 및 방사형 회전 계산
+    // =========================================================
+    private void EvaluateArcPose(bool isAiming, float yawAngle, out Vector3 pos, out Quaternion rot)
+    {
+        float radius = isAiming ? aimedOrbitRadius : normalOrbitRadius;
+        Vector3 pivot = GetSwingCenterLocal(isAiming);
+
+        float rad = yawAngle * Mathf.Deg2Rad;
+        Vector3 radialDir = new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad));
+
+        pos = pivot + radialDir * radius;
+        rot = Quaternion.Euler(bladeLayAngle, yawAngle, bladeRollAngle);
     }
 
     private void PerformAttack(bool isAiming)
@@ -254,7 +340,7 @@ public class MeleeWeapon : WeaponBase
         float currentRange = isAiming ? aimedAttackRange : attackRange;
         float currentRadius = isAiming ? aimedAttackRadius : attackRadius;
 
-        Vector3 attackDirection = GetAttackDirection(isAiming, currentRange);
+        Vector3 attackDirection = GetAttackDirection(isAiming);
         Vector3 startPoint = attackPoint.position;
         Vector3 endPoint = startPoint + attackDirection * currentRange;
 
@@ -291,15 +377,21 @@ public class MeleeWeapon : WeaponBase
         }
     }
 
-    private Vector3 GetAttackDirection(bool isAiming, float range)
+    private Vector3 GetAttackDirection(bool isAiming)
     {
         if (isAiming && PlayerCamera != null)
         {
-            float checkDistance = Mathf.Max(range + 5f, 20f);
             Ray aimRay = PlayerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            Vector3 targetPoint = Physics.Raycast(aimRay, out RaycastHit hit, checkDistance, aimMask, QueryTriggerInteraction.Ignore)
-                ? hit.point
-                : aimRay.GetPoint(checkDistance);
+            Vector3 targetPoint;
+
+            if (Physics.Raycast(aimRay, out RaycastHit hit, maxAimDistance, aimMask, QueryTriggerInteraction.Ignore))
+            {
+                targetPoint = hit.point;
+            }
+            else
+            {
+                targetPoint = aimRay.GetPoint(maxAimDistance);
+            }
 
             Vector3 toTarget = targetPoint - attackPoint.position;
 
@@ -326,21 +418,68 @@ public class MeleeWeapon : WeaponBase
         aimedDamageMultiplier = Mathf.Max(0f, aimedDamageMultiplier);
         aimedBaseAttackInterval = Mathf.Max(0.01f, aimedBaseAttackInterval);
 
+        normalOrbitRadius = Mathf.Max(0.1f, normalOrbitRadius);
+        aimedOrbitRadius = Mathf.Max(0.1f, aimedOrbitRadius);
+
+        maxAimDistance = Mathf.Max(1f, maxAimDistance);
         baseSwingDuration = Mathf.Max(0.02f, baseSwingDuration);
-        aimPoseTransitionSpeed = Mathf.Max(1f, aimPoseTransitionSpeed);
+        returnToDefaultSpeed = Mathf.Max(1f, returnToDefaultSpeed);
     }
 
     private void OnDrawGizmosSelected()
     {
-        if (attackPoint == null)
-            return;
+        if (attackPoint != null)
+        {
+            Vector3 forward = WeaponManager != null ? WeaponManager.transform.forward : transform.forward;
+            Vector3 up = WeaponManager != null ? WeaponManager.transform.up : transform.up;
+            Vector3 right = WeaponManager != null ? WeaponManager.transform.right : transform.right;
 
-        Vector3 forward = WeaponManager != null ? WeaponManager.transform.forward : transform.forward;
-        Vector3 up = WeaponManager != null ? WeaponManager.transform.up : transform.up;
-        Vector3 right = WeaponManager != null ? WeaponManager.transform.right : transform.right;
+            DrawCapsuleGizmo(attackPoint.position, forward, up, right, attackRange, attackRadius, Color.red);
+            DrawCapsuleGizmo(attackPoint.position, forward, up, right, aimedAttackRange, aimedAttackRadius, Color.cyan);
+        }
 
-        DrawCapsuleGizmo(attackPoint.position, forward, up, right, attackRange, attackRadius, Color.red);
-        DrawCapsuleGizmo(attackPoint.position, forward, up, right, aimedAttackRange, aimedAttackRadius, Color.cyan);
+        // 휘두르기 중심점 및 부채꼴 원호 궤적 시각화
+        DrawSwingArcGizmo(false, Color.yellow);
+        DrawSwingArcGizmo(true, Color.green);
+    }
+
+    private void DrawSwingArcGizmo(bool isAiming, Color color)
+    {
+        Gizmos.color = color;
+
+        Vector3 localCenter = GetSwingCenterLocal(isAiming);
+        Vector3 worldCenter = transform.TransformPoint(localCenter);
+
+        float halfAngle = isAiming ? aimedSwingHalfAngle : normalSwingHalfAngle;
+        float radius = isAiming ? aimedOrbitRadius : normalOrbitRadius;
+
+        // 중심점 표시
+        Gizmos.DrawWireSphere(worldCenter, 0.08f);
+
+        int segments = 20;
+        Vector3 prevPoint = Vector3.zero;
+
+        for (int i = 0; i <= segments; i++)
+        {
+            float t = (float)i / segments;
+            float angle = Mathf.Lerp(-halfAngle, halfAngle, t);
+            float rad = angle * Mathf.Deg2Rad;
+
+            Vector3 localPoint = localCenter + new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad)) * radius;
+            Vector3 worldPoint = transform.TransformPoint(localPoint);
+
+            if (i == 0 || i == segments)
+            {
+                Gizmos.DrawLine(worldCenter, worldPoint);
+            }
+
+            if (i > 0)
+            {
+                Gizmos.DrawLine(prevPoint, worldPoint);
+            }
+
+            prevPoint = worldPoint;
+        }
     }
 
     private void DrawCapsuleGizmo(Vector3 start, Vector3 forward, Vector3 up, Vector3 right, float range, float radius, Color color)

@@ -294,7 +294,7 @@ public class ThirdPersonCamera : MonoBehaviour
     private void CheckAimInput()
     {
         // 근접 무기는 조준 카메라 사용 안 함
-        if (weaponManager != null &&
+       /* if (weaponManager != null &&
             weaponManager.ActiveWeaponType ==
             WeaponType.Melee)
         {
@@ -302,7 +302,7 @@ public class ThirdPersonCamera : MonoBehaviour
                 false;
 
             return;
-        }
+        }*/
 
 
         if (Mouse.current == null)
