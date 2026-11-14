@@ -97,6 +97,8 @@ MonoBehaviour:
   wireController: {fileID: 0}
   wireAirDeceleration: 1.5
   wireGroundDeceleration: 12
+  weaponManager: {fileID: 0}
+  lockFacingWeaponTypes: 01000000
   isSwingingByWeapon: 0
 --- !u!114 &5351818697115213627
 MonoBehaviour:

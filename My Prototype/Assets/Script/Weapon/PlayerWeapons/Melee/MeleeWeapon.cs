@@ -83,7 +83,7 @@ public class MeleeWeapon : WeaponBase
     [SerializeField]
     private Vector3 swingCenterOffset = new Vector3(0f, 1.15f, 0.25f);
 
-    [Tooltip("좌우로 휘두르는 반각 (80이면 오른쪽 +80° ~ 왼쪽 -80°, 총 160° 반원 회전)")]
+    [Tooltip("좌우로 휘두르는 기본 반각 (80이면 오른쪽 +80° ~ 왼쪽 -80°까지 베기)")]
     [Range(10f, 150f)]
     [SerializeField]
     private float swingHalfAngle = 80f;
@@ -93,10 +93,44 @@ public class MeleeWeapon : WeaponBase
     [SerializeField]
     private float orbitRadius = 1.25f;
 
-    [Header("Blade Orientation & Timing (무기 눕힘 각도 및 속도)")]
+    // =========================================================
+    // 다음 공격 대비 감속 및 뒤로 내빼기 설정
+    // =========================================================
+    [Header("Follow-Through & Chambering (감속 및 다음 공격 대비 자세)")]
+    [Tooltip("타격 지점을 지난 뒤 같은 방향으로 더 미끄러지며 회전하는 추가 각도 (되돌아오지 않음)")]
+    [Range(0f, 45f)]
+    [SerializeField]
+    private float chamberExtraAngle = 16f;
+
+    [Tooltip("다음 휘두르기를 대비해 무기를 뒤로 살짝 내빼는 위치 오프셋 (Z를 음수로 두면 뒤쪽으로 당김)")]
+    [SerializeField]
+    private Vector3 chamberPullOffset = new Vector3(0f, 0.05f, -0.14f);
+
+    [Tooltip("공속 1.0 기준 실제 타격(트레일 ON)에 걸리는 시간 (초)")]
+    [Min(0.02f)]
+    [SerializeField]
+    private float baseSwingDuration = 0.13f;
+
+    [Tooltip("공속 1.0 기준 타격 후 감속하며 뒤로 내빼는 데 걸리는 시간 (초)")]
+    [Min(0.01f)]
+    [SerializeField]
+    private float baseChamberDuration = 0.14f;
+
+    // =========================================================
+    // 칼날 방향 및 무기 눕힘 각도 설정
+    // =========================================================
+    [Header("Blade Orientation & Return (칼날 방향 및 무기 눕힘 각도)")]
     [Tooltip("휘두를 때 무기를 눕히는 X축 각도 (90 = 지면과 완전히 수평)")]
     [SerializeField]
     private float bladeLayAngle = 90f;
+
+    [Tooltip("칼날이 옆면이 아닌 베는 방향을 향하도록 칼자루 축을 회전시키는 각도 (기본 90, 칼날이 반대로 향하면 -90, 이미 옆면이 날이면 0)")]
+    [SerializeField]
+    private float bladeEdgeAngle = 90f;
+
+    [Tooltip("왕복 스윙(좌->우 / 우->좌) 시 칼날이 항상 진행 방향을 향하도록 손목을 반전시킬지 여부")]
+    [SerializeField]
+    private bool flipEdgeOnReturnSwing = true;
 
     [Tooltip("휘두를 때 칼날 기울기 Z축 각도 (0 = 수평 횡베기)")]
     [SerializeField]
@@ -105,10 +139,6 @@ public class MeleeWeapon : WeaponBase
     [Tooltip("대기 상태에서 첫 공격 시 전방 시작 위치로 즉시 전환한 뒤 휘두를지 여부")]
     [SerializeField]
     private bool snapToForwardStartOnFirstSwing = true;
-
-    [Min(0.02f)]
-    [SerializeField]
-    private float baseSwingDuration = 0.18f;
 
     [SerializeField]
     private AnimationCurve swingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -119,6 +149,9 @@ public class MeleeWeapon : WeaponBase
     private float returnToDefaultSpeed = 14f;
 
     private float nextAttackTime;
+    private float currentYawAngle;
+    private float currentChamberRatio;
+    private float currentEdgeRoll;
     private bool isSwungToLeft;
     private bool isSwinging;
     private bool isInAttackPose;
@@ -213,6 +246,9 @@ public class MeleeWeapon : WeaponBase
         isSwungToLeft = false;
         isInAttackPose = false;
         nextAttackTime = 0f;
+        currentYawAngle = GetChamberedAngle(false);
+        currentChamberRatio = 1f;
+        currentEdgeRoll = GetTargetEdgeRoll(true);
 
         SetTrailEmitting(false, true);
 
@@ -241,7 +277,6 @@ public class MeleeWeapon : WeaponBase
             ExitGuard();
         }
 
-        // 가드 중이 아닐 때만 좌클릭 공격 허용
         if (Mouse.current.leftButton.isPressed)
         {
             TryAttack();
@@ -251,8 +286,14 @@ public class MeleeWeapon : WeaponBase
         {
             if (Time.time < nextAttackTime)
             {
-                float holdAngle = GetEndAngle(isSwungToLeft);
-                EvaluateArcPose(holdAngle, out Vector3 holdPos, out Quaternion holdRot);
+                float holdAngle = GetChamberedAngle(isSwungToLeft);
+                float holdEdgeRoll = GetTargetEdgeRoll(isSwungToLeft);
+
+                currentYawAngle = Mathf.Lerp(currentYawAngle, holdAngle, returnToDefaultSpeed * Time.deltaTime);
+                currentChamberRatio = Mathf.Lerp(currentChamberRatio, 1f, returnToDefaultSpeed * Time.deltaTime);
+                currentEdgeRoll = Mathf.LerpAngle(currentEdgeRoll, holdEdgeRoll, returnToDefaultSpeed * Time.deltaTime);
+
+                EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 holdPos, out Quaternion holdRot);
                 weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, holdPos, returnToDefaultSpeed * Time.deltaTime);
                 weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, holdRot, returnToDefaultSpeed * Time.deltaTime);
             }
@@ -260,6 +301,10 @@ public class MeleeWeapon : WeaponBase
             {
                 isSwungToLeft = false;
                 isInAttackPose = false;
+                currentYawAngle = GetChamberedAngle(false);
+                currentChamberRatio = 1f;
+                currentEdgeRoll = GetTargetEdgeRoll(true);
+
                 weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, defaultLocalPosition, returnToDefaultSpeed * Time.deltaTime);
                 weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, defaultLocalRotation, returnToDefaultSpeed * Time.deltaTime);
             }
@@ -272,7 +317,6 @@ public class MeleeWeapon : WeaponBase
         {
             isGuarding = true;
 
-            // 휘두르는 중이었다면 즉시 중단하고 트레일 끄기
             if (swingCoroutine != null)
             {
                 StopCoroutine(swingCoroutine);
@@ -281,9 +325,11 @@ public class MeleeWeapon : WeaponBase
             isSwinging = false;
             isSwungToLeft = false;
             isInAttackPose = false;
+            currentYawAngle = GetChamberedAngle(false);
+            currentChamberRatio = 1f;
+            currentEdgeRoll = GetTargetEdgeRoll(true);
             SetTrailEmitting(false, true);
 
-            // 이동 속도 감소 및 받는 피해량 감소 적용
             float incomingDamageMultiplier = 1f - guardDamageReduction;
             PlayerStats.SetGuardModifiers(guardMoveSpeedMultiplier, incomingDamageMultiplier);
         }
@@ -319,8 +365,11 @@ public class MeleeWeapon : WeaponBase
             SetTrailEmitting(false, true);
 
             isSwungToLeft = false;
-            float startRightAngle = GetEndAngle(false);
-            EvaluateArcPose(startRightAngle, out Vector3 forwardStartPos, out Quaternion forwardStartRot);
+            currentYawAngle = GetChamberedAngle(false);
+            currentChamberRatio = 1f;
+            currentEdgeRoll = GetTargetEdgeRoll(true);
+
+            EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 forwardStartPos, out Quaternion forwardStartRot);
             weaponVisual.localPosition = forwardStartPos;
             weaponVisual.localRotation = forwardStartRot;
         }
@@ -345,39 +394,88 @@ public class MeleeWeapon : WeaponBase
             StopCoroutine(swingCoroutine);
         }
 
-        float duration = Mathf.Min(baseSwingDuration / speedStat, maxAllowedDuration * 0.85f);
-        duration = Mathf.Max(0.03f, duration);
+        float rawMain = baseSwingDuration / speedStat;
+        float rawChamber = baseChamberDuration / speedStat;
+        float totalRaw = Mathf.Max(0.03f, rawMain + rawChamber);
 
-        swingCoroutine = StartCoroutine(SwingRoutine(toLeft, duration));
+        float maxTotal = Mathf.Max(0.03f, maxAllowedDuration * 0.92f);
+        float scale = totalRaw > maxTotal ? (maxTotal / totalRaw) : 1f;
+
+        float mainDuration = Mathf.Max(0.02f, rawMain * scale);
+        float chamberDuration = Mathf.Max(0f, rawChamber * scale);
+
+        swingCoroutine = StartCoroutine(SwingRoutine(toLeft, mainDuration, chamberDuration));
     }
 
-    private IEnumerator SwingRoutine(bool toLeft, float duration)
+    private IEnumerator SwingRoutine(bool toLeft, float mainDuration, float chamberDuration)
     {
         isSwinging = true;
         SetTrailEmitting(true, true);
 
         try
         {
-            float startAngle = GetEndAngle(!toLeft);
-            float endAngle = GetEndAngle(toLeft);
+            float startAngle = currentYawAngle;
+            float startChamberRatio = currentChamberRatio;
+            float startEdgeRoll = currentEdgeRoll;
 
+            float strikeEndAngle = GetStrikeEndAngle(toLeft);
+            float chamberedEndAngle = GetChamberedAngle(toLeft);
+            float targetEdgeRoll = GetTargetEdgeRoll(toLeft);
+
+            // =====================================================
+            // 1단계: 칼날을 베는 방향으로 돌리며 타격 끝 각도까지 베기 (트레일 ON)
+            // =====================================================
             float elapsed = 0f;
-            while (elapsed < duration)
+            while (elapsed < mainDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
+                float t = Mathf.Clamp01(elapsed / mainDuration);
                 float curvedT = swingCurve.Evaluate(t);
 
-                float currentAngle = Mathf.LerpUnclamped(startAngle, endAngle, curvedT);
+                // 스윙 초반(첫 30% 구간)에 손목을 빠르게 돌려 칼날이 베는 방향을 정면으로 향하게 정렬
+                float edgeTurnT = Mathf.Clamp01(t * 3.5f);
+                currentEdgeRoll = Mathf.LerpAngle(startEdgeRoll, targetEdgeRoll, edgeTurnT);
 
-                EvaluateArcPose(currentAngle, out Vector3 targetPos, out Quaternion targetRot);
+                currentYawAngle = Mathf.LerpUnclamped(startAngle, strikeEndAngle, curvedT);
+                currentChamberRatio = Mathf.Lerp(startChamberRatio, 0f, curvedT);
+
+                EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 targetPos, out Quaternion targetRot);
                 weaponVisual.localPosition = targetPos;
                 weaponVisual.localRotation = targetRot;
 
                 yield return null;
             }
 
-            EvaluateArcPose(endAngle, out Vector3 finalPos, out Quaternion finalRot);
+            currentEdgeRoll = targetEdgeRoll;
+            SetTrailEmitting(false, false);
+
+            // =====================================================
+            // 2단계: 같은 방향으로 감속하며 무기를 뒤로 살짝 내빼기
+            // =====================================================
+            if (chamberDuration > 0.001f)
+            {
+                float chamberElapsed = 0f;
+                while (chamberElapsed < chamberDuration)
+                {
+                    chamberElapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(chamberElapsed / chamberDuration);
+
+                    float glideT = 1f - Mathf.Pow(1f - t, 2.5f);
+
+                    currentYawAngle = Mathf.LerpUnclamped(strikeEndAngle, chamberedEndAngle, glideT);
+                    currentChamberRatio = Mathf.Lerp(0f, 1f, glideT);
+
+                    EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 chamberPos, out Quaternion chamberRot);
+                    weaponVisual.localPosition = chamberPos;
+                    weaponVisual.localRotation = chamberRot;
+
+                    yield return null;
+                }
+            }
+
+            currentYawAngle = chamberedEndAngle;
+            currentChamberRatio = 1f;
+            EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, out Vector3 finalPos, out Quaternion finalRot);
             weaponVisual.localPosition = finalPos;
             weaponVisual.localRotation = finalRot;
         }
@@ -389,9 +487,23 @@ public class MeleeWeapon : WeaponBase
         }
     }
 
-    private float GetEndAngle(bool isLeft)
+    private float GetTargetEdgeRoll(bool isLeft)
+    {
+        if (!flipEdgeOnReturnSwing)
+            return bladeEdgeAngle;
+
+        return isLeft ? -bladeEdgeAngle : bladeEdgeAngle;
+    }
+
+    private float GetStrikeEndAngle(bool isLeft)
     {
         return isLeft ? -swingHalfAngle : swingHalfAngle;
+    }
+
+    private float GetChamberedAngle(bool isLeft)
+    {
+        float totalAngle = swingHalfAngle + chamberExtraAngle;
+        return isLeft ? -totalAngle : totalAngle;
     }
 
     private Vector3 GetSwingCenterLocal()
@@ -403,15 +515,23 @@ public class MeleeWeapon : WeaponBase
         return baseCenter + swingCenterOffset;
     }
 
-    private void EvaluateArcPose(float yawAngle, out Vector3 pos, out Quaternion rot)
+    private void EvaluateArcPose(float yawAngle, float chamberRatio, float edgeRollAngle, out Vector3 pos, out Quaternion rot)
     {
         Vector3 pivot = GetSwingCenterLocal();
 
         float rad = yawAngle * Mathf.Deg2Rad;
         Vector3 radialDir = new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad));
 
-        pos = pivot + radialDir * orbitRadius;
-        rot = Quaternion.Euler(bladeLayAngle, yawAngle, bladeRollAngle);
+        Vector3 pullOffset = chamberPullOffset * chamberRatio;
+
+        pos = pivot + radialDir * orbitRadius + pullOffset;
+
+        // 1. 무기를 수평으로 눕히고 원호 바깥쪽(yawAngle)을 향하게 배치
+        Quaternion arcOrientation = Quaternion.Euler(bladeLayAngle, yawAngle, bladeRollAngle);
+        // 2. 칼자루(로컬 Y축)를 기준으로 칼날이 베는 방향을 향하도록 자전 회전
+        Quaternion bladeTwist = Quaternion.Euler(0f, edgeRollAngle, 0f);
+
+        rot = arcOrientation * bladeTwist;
     }
 
     private void PerformAttack()
@@ -471,6 +591,7 @@ public class MeleeWeapon : WeaponBase
 
         orbitRadius = Mathf.Max(0.1f, orbitRadius);
         baseSwingDuration = Mathf.Max(0.02f, baseSwingDuration);
+        baseChamberDuration = Mathf.Max(0.01f, baseChamberDuration);
         returnToDefaultSpeed = Mathf.Max(1f, returnToDefaultSpeed);
         guardTransitionSpeed = Mathf.Max(1f, guardTransitionSpeed);
     }
@@ -512,13 +633,14 @@ public class MeleeWeapon : WeaponBase
 
         Gizmos.DrawWireSphere(worldCenter, 0.08f);
 
+        float totalHalfAngle = swingHalfAngle + chamberExtraAngle;
         int segments = 20;
         Vector3 prevPoint = Vector3.zero;
 
         for (int i = 0; i <= segments; i++)
         {
             float t = (float)i / segments;
-            float angle = Mathf.Lerp(-swingHalfAngle, swingHalfAngle, t);
+            float angle = Mathf.Lerp(-totalHalfAngle, totalHalfAngle, t);
             float rad = angle * Mathf.Deg2Rad;
 
             Vector3 localPoint = localCenter + new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad)) * orbitRadius;
