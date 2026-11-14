@@ -18,8 +18,7 @@ public class PlayerStats : MonoBehaviour
     [SerializeField]
     private float meleeAttackSpeed = 1f;
 
-    public float MeleeAttackSpeed =>
-        meleeAttackSpeed;
+    public float MeleeAttackSpeed => meleeAttackSpeed;
 
     // 현재 체력
     private float currentHealth;
@@ -27,48 +26,54 @@ public class PlayerStats : MonoBehaviour
     // 사망 여부
     private bool isDead;
 
-    public event Action OnPlayerDied;
+    // 가드 상태 보정치 (기본값 1 = 보정 없음)
+    private float moveSpeedMultiplier = 1f;
+    private float damageTakenMultiplier = 1f;
 
+    public event Action OnPlayerDied;
 
     // =========================================================
     // 외부에서 읽을 수 있는 스탯
     // =========================================================
-
     public float MaxHealth => maxHealth;
-
     public float CurrentHealth => currentHealth;
-
     public float FireRate => fireRate;
-
     public float ReloadSpeed => reloadSpeed;
-
-    public float MoveSpeed => moveSpeed;
-
+    public float MoveSpeed => moveSpeed * moveSpeedMultiplier;
     public float AttackPower => attackPower;
-
     public bool IsDead => isDead;
-
 
     // =========================================================
     // 체력 변경 이벤트
     // =========================================================
-
     public event Action<float, float> OnHealthChanged;
-
     public event Action OnDied;
-
 
     private void Awake()
     {
         currentHealth = maxHealth;
         isDead = false;
+        ResetGuardModifiers();
     }
 
+    // =========================================================
+    // 가드 스탯 보정 적용 / 해제
+    // =========================================================
+    public void SetGuardModifiers(float speedMultiplier, float incomingDamageMultiplier)
+    {
+        moveSpeedMultiplier = Mathf.Clamp(speedMultiplier, 0f, 1f);
+        damageTakenMultiplier = Mathf.Clamp(incomingDamageMultiplier, 0f, 1f);
+    }
+
+    public void ResetGuardModifiers()
+    {
+        moveSpeedMultiplier = 1f;
+        damageTakenMultiplier = 1f;
+    }
 
     // =========================================================
     // 데미지
     // =========================================================
-
     public void TakeDamage(float damage)
     {
         if (isDead)
@@ -77,22 +82,14 @@ public class PlayerStats : MonoBehaviour
         if (damage <= 0f)
             return;
 
+        float finalDamage = damage * damageTakenMultiplier;
+        if (finalDamage <= 0f)
+            return;
 
-        currentHealth -= damage;
+        currentHealth -= finalDamage;
+        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
 
-        currentHealth =
-            Mathf.Clamp(
-                currentHealth,
-                0f,
-                maxHealth
-            );
-
-
-        OnHealthChanged?.Invoke(
-            currentHealth,
-            maxHealth
-        );
-
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         if (currentHealth <= 0f)
         {
@@ -100,11 +97,9 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-
     // =========================================================
     // 회복
     // =========================================================
-
     public void Heal(float amount)
     {
         if (isDead)
@@ -113,111 +108,61 @@ public class PlayerStats : MonoBehaviour
         if (amount <= 0f)
             return;
 
-
         currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
 
-        currentHealth =
-            Mathf.Clamp(
-                currentHealth,
-                0f,
-                maxHealth
-            );
-
-
-        OnHealthChanged?.Invoke(
-            currentHealth,
-            maxHealth
-        );
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
-
 
     // =========================================================
     // 체력 완전 회복
     // =========================================================
-
     public void RestoreFullHealth()
     {
         if (isDead)
             return;
 
-
         currentHealth = maxHealth;
-
-
-        OnHealthChanged?.Invoke(
-            currentHealth,
-            maxHealth
-        );
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
-
 
     // =========================================================
     // 사망
     // =========================================================
-
     private void Die()
     {
         if (isDead)
             return;
 
-
         isDead = true;
-
         currentHealth = 0f;
 
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
-        OnHealthChanged?.Invoke(
-            currentHealth,
-            maxHealth
-        );
+        Debug.Log("Player Dead");
 
-
-        Debug.Log(
-            "Player Dead"
-        );
-
-
-        // 기존 시스템용
         OnDied?.Invoke();
-
-
-        // PlayerDeathHandler용
         OnPlayerDied?.Invoke();
     }
-
 
     // =========================================================
     // 재장전 시간 계산
     // =========================================================
-
     public float GetReloadTime(float baseReloadTime)
     {
         return baseReloadTime / reloadSpeed;
     }
 
-
     // =========================================================
     // Inspector 값 보호
     // =========================================================
-
     private void OnValidate()
     {
-        maxHealth =
-            Mathf.Max(1f, maxHealth);
-
-        fireRate =
-            Mathf.Max(0.01f, fireRate);
-
-        reloadSpeed =
-            Mathf.Max(0.01f, reloadSpeed);
-
-        moveSpeed =
-            Mathf.Max(0f, moveSpeed);
-
-        attackPower =
-            Mathf.Max(0f, attackPower);
-
-        meleeAttackSpeed =
-            Mathf.Max(0.1f,meleeAttackSpeed);
+        maxHealth = Mathf.Max(1f, maxHealth);
+        fireRate = Mathf.Max(0.01f, fireRate);
+        reloadSpeed = Mathf.Max(0.01f, reloadSpeed);
+        moveSpeed = Mathf.Max(0f, moveSpeed);
+        attackPower = Mathf.Max(0f, attackPower);
+        meleeAttackSpeed = Mathf.Max(0.1f, meleeAttackSpeed);
     }
 }
