@@ -74,11 +74,6 @@ public class RoomBattleController : MonoBehaviour
     private float monsterSpawnHeight = 20f;
 
 
-    [Tooltip("위에서 바닥까지 내려오는 시간")]
-    [SerializeField]
-    private float monsterDropDuration = 0.6f;
-
-
     [Tooltip("착지 후 AI가 활성화되기 전 최소 대기시간")]
     [SerializeField]
     private float monsterReadyDelayMin = 0.5f;
@@ -88,16 +83,9 @@ public class RoomBattleController : MonoBehaviour
     [SerializeField]
     private float monsterReadyDelayMax = 0.7f;
 
-
-    [Tooltip("몬스터가 내려오는 움직임")]
+    [Tooltip("혹시 착지를 감지하지 못했을 때 무한 대기를 막는 시간")]
     [SerializeField]
-    private AnimationCurve monsterDropCurve =
-        AnimationCurve.EaseInOut(
-            0f,
-            0f,
-            1f,
-            1f
-        );
+    private float maximumFallTime = 5f;
 
     // =========================================================
     // Battle Barrier
@@ -379,8 +367,12 @@ public class RoomBattleController : MonoBehaviour
                 continue;
 
 
+            // =====================================================
+            // 원래의 정상적인 바닥 Spawn 위치
+            // =====================================================
+
             if (!TryGetSpawnPosition(
-                    out Vector3 spawnPosition))
+                    out Vector3 groundPosition))
             {
                 Debug.LogWarning(
                     $"[RoomBattle] Monster {i + 1}의 " +
@@ -392,13 +384,19 @@ public class RoomBattleController : MonoBehaviour
 
 
             // =====================================================
-            // 일단 정상적인 NavMesh 위치에 생성
+            // 실제 생성 위치는 바닥보다 위쪽
             // =====================================================
+
+            Vector3 airPosition =
+                groundPosition +
+                Vector3.up *
+                monsterSpawnHeight;
+
 
             GameObject monster =
                 Instantiate(
                     monsterPrefab,
-                    spawnPosition,
+                    airPosition,
                     monsterPrefab.transform.rotation,
                     runtimeRoot
                 );
@@ -414,23 +412,23 @@ public class RoomBattleController : MonoBehaviour
 
 
             // =====================================================
-            // 등장 연출 시작
+            // 실제 중력 낙하 연출 시작
             // =====================================================
 
             StartCoroutine(
-                MonsterSpawnRoutine(
+                MonsterDropRoutine(
                     monster,
-                    spawnPosition
+                    groundPosition
                 )
             );
         }
     }
 
     // =========================================================
-    // Monster Spawn Presentation
+    // Monster 실제 낙하 Spawn
     // =========================================================
 
-    private IEnumerator MonsterSpawnRoutine(
+    private IEnumerator MonsterDropRoutine(
         GameObject monster,
         Vector3 groundPosition
     )
@@ -440,23 +438,29 @@ public class RoomBattleController : MonoBehaviour
 
 
         // =====================================================
-        // Enemy Components
+        // Components
         // =====================================================
 
         EnemyAI enemyAI =
-            monster.GetComponentInChildren<EnemyAI>();
+            monster.GetComponentInChildren<EnemyAI>(
+                true
+            );
 
 
         EnemyShooter enemyShooter =
-            monster.GetComponentInChildren<EnemyShooter>();
+            monster.GetComponentInChildren<EnemyShooter>(
+                true
+            );
 
 
         NavMeshAgent agent =
-            monster.GetComponentInChildren<NavMeshAgent>();
+            monster.GetComponentInChildren<NavMeshAgent>(
+                true
+            );
 
 
         // =====================================================
-        // 등장하는 동안 공격 / 추적 금지
+        // 등장 중에는 AI 완전 정지
         // =====================================================
 
         if (enemyAI != null)
@@ -474,10 +478,9 @@ public class RoomBattleController : MonoBehaviour
 
 
         // =====================================================
-        // NavMeshAgent도 잠깐 정지
+        // NavMeshAgent OFF
         //
-        // Transform을 직접 위에서 아래로 움직일 것이므로
-        // Agent가 위치를 다시 끌어당기지 못하게 함
+        // 낙하 중에는 물리가 위치를 담당
         // =====================================================
 
         if (agent != null)
@@ -488,84 +491,149 @@ public class RoomBattleController : MonoBehaviour
 
 
         // =====================================================
-        // 시작 위치
+        // Rigidbody 준비
         // =====================================================
 
-        Vector3 startPosition =
-            groundPosition +
-            Vector3.up *
-            monsterSpawnHeight;
+        Rigidbody rb =
+            monster.GetComponent<Rigidbody>();
 
 
-        monster.transform.position =
-            startPosition;
+        bool createdTemporaryRigidbody =
+            false;
+
+
+        // Enemy에 Rigidbody가 없다면
+        // 등장 연출 동안만 임시 생성
+        if (rb == null)
+        {
+            rb =
+                monster.AddComponent<Rigidbody>();
+
+
+            createdTemporaryRigidbody =
+                true;
+        }
 
 
         // =====================================================
-        // 위 → 아래 이동
+        // 기존 Rigidbody 설정 저장
         // =====================================================
 
-        float elapsed =
+        bool oldUseGravity =
+            rb.useGravity;
+
+
+        bool oldIsKinematic =
+            rb.isKinematic;
+
+
+        RigidbodyConstraints oldConstraints =
+            rb.constraints;
+
+
+        CollisionDetectionMode oldCollisionDetection =
+            rb.collisionDetectionMode;
+
+
+        // =====================================================
+        // 실제 낙하 설정
+        // =====================================================
+
+        rb.useGravity =
+            true;
+
+
+        rb.isKinematic =
+            false;
+
+
+        // 떨어지면서 적이 옆으로 뒤집히는 것 방지
+        rb.constraints =
+            RigidbodyConstraints.FreezeRotation;
+
+
+        // 빠르게 떨어져도 바닥 관통 방지
+        rb.collisionDetectionMode =
+            CollisionDetectionMode.Continuous;
+
+
+        rb.linearVelocity =
+            Vector3.zero;
+
+
+        rb.angularVelocity =
+            Vector3.zero;
+
+
+        // =====================================================
+        // Landing Detector
+        // =====================================================
+
+        MonsterSpawnLandingDetector detector =
+            monster.AddComponent
+            <MonsterSpawnLandingDetector>();
+
+
+        detector.Initialize(
+            groundMask
+        );
+
+
+        // =====================================================
+        // 실제 낙하
+        // =====================================================
+
+        float fallTimer =
             0f;
 
 
-        float duration =
-            Mathf.Max(
-                0.01f,
-                monsterDropDuration
-            );
-
-
-        while (elapsed <
-               duration)
+        while (!detector.HasLanded &&
+               fallTimer < maximumFallTime)
         {
             if (monster == null)
                 yield break;
 
 
-            elapsed +=
+            fallTimer +=
                 Time.deltaTime;
-
-
-            float t =
-                Mathf.Clamp01(
-                    elapsed /
-                    duration
-                );
-
-
-            float curvedT =
-                monsterDropCurve.Evaluate(
-                    t
-                );
-
-
-            monster.transform.position =
-                Vector3.Lerp(
-                    startPosition,
-                    groundPosition,
-                    curvedT
-                );
 
 
             yield return null;
         }
 
 
-        // =====================================================
-        // 정확히 바닥 위치로 보정
-        // =====================================================
-
         if (monster == null)
             yield break;
 
 
-        monster.transform.position =
-            groundPosition;
+        // =====================================================
+        // 착지
+        // =====================================================
+
+        rb.linearVelocity =
+            Vector3.zero;
+
+
+        rb.angularVelocity =
+            Vector3.zero;
+
+
+        // 바닥에 착지한 뒤에는 더 이상 움직이지 않게
+        rb.useGravity =
+            false;
+
+
+        rb.isKinematic =
+            true;
+
+
+        Debug.Log(
+            $"[RoomBattle] Monster 착지 : {monster.name}"
+        );
 
 
         // =====================================================
-        // 착지 후 준비 시간
+        // 플레이어 준비 시간
         // =====================================================
 
         float readyDelay =
@@ -585,7 +653,67 @@ public class RoomBattleController : MonoBehaviour
 
 
         // =====================================================
-        // NavMeshAgent 복구
+        // Landing Detector 제거
+        // =====================================================
+
+        if (detector != null)
+        {
+            Destroy(
+                detector
+            );
+        }
+
+
+        // =====================================================
+        // Rigidbody 복구 / 제거
+        // =====================================================
+
+        if (createdTemporaryRigidbody)
+        {
+            Destroy(
+                rb
+            );
+
+
+            // Destroy가 실제 적용될 때까지 한 프레임
+            yield return null;
+        }
+        else
+        {
+            rb.useGravity =
+                oldUseGravity;
+
+
+            rb.isKinematic =
+                oldIsKinematic;
+
+
+            rb.constraints =
+                oldConstraints;
+
+
+            rb.collisionDetectionMode =
+                oldCollisionDetection;
+        }
+
+
+        if (monster == null)
+            yield break;
+
+
+        // =====================================================
+        // 원래 NavMesh 위치로 최종 보정
+        //
+        // 기존 시스템에서 정상적으로 사용하던 Spawn 위치이므로
+        // 전투 시작점은 이 위치가 됨
+        // =====================================================
+
+        monster.transform.position =
+            groundPosition;
+
+
+        // =====================================================
+        // NavMeshAgent 활성화
         // =====================================================
 
         if (agent != null)
@@ -604,15 +732,8 @@ public class RoomBattleController : MonoBehaviour
 
 
         // =====================================================
-        // AI 활성화
+        // 공격 시스템 활성화
         // =====================================================
-
-        if (enemyAI != null)
-        {
-            enemyAI.enabled =
-                true;
-        }
-
 
         if (enemyShooter != null)
         {
@@ -621,9 +742,15 @@ public class RoomBattleController : MonoBehaviour
         }
 
 
+        if (enemyAI != null)
+        {
+            enemyAI.enabled =
+                true;
+        }
+
+
         Debug.Log(
-            $"[RoomBattle] Monster 등장 완료 : " +
-            $"{monster.name}"
+            $"[RoomBattle] Monster 전투 시작 : {monster.name}"
         );
     }
 
