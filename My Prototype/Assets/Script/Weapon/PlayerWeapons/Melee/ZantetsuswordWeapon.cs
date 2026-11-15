@@ -104,25 +104,40 @@ public class ZantetsuswordWeapon : WeaponBase
     [SerializeField]
     private float iaidoBaseAttackInterval = 0.65f;
 
-    [Tooltip("발도 사선('/') 기울기 각도 (양수 45° = 왼쪽 아래 -> 오른쪽 위 '/' 베기)")]
+    [Tooltip("발도 사선('/') 기울기 각도 (양수 28° = 왼쪽 아래 -> 오른쪽 위 '/' 대각선 베기)")]
     [Range(-80f, 80f)]
     [SerializeField]
-    private float iaidoSlashTiltAngle = 45f;
+    private float iaidoSlashTiltAngle = 28f;
 
-    [Tooltip("발도 베기 좌우 반각 (75면 왼쪽 아래 -75°에서 오른쪽 위 +75°까지 베어 올림)")]
+    [Tooltip("발도 베기 좌우 반각 (80이면 왼쪽 아래 -80°에서 오른쪽 위 +80°까지 크게 횡단)")]
     [Range(20f, 140f)]
     [SerializeField]
-    private float iaidoSwingHalfAngle = 75f;
+    private float iaidoSwingHalfAngle = 80f;
 
     [Tooltip("발도 베기 원호 반경")]
     [Min(0.1f)]
     [SerializeField]
-    private float iaidoOrbitRadius = 1.3f;
+    private float iaidoOrbitRadius = 1.25f;
 
-    [Tooltip("공속 1.0 기준 발도 베기 소요 시간 (초)")]
+    [Tooltip("발도 베기 후 같은 방향으로 감속하며 미끄러지는 여분 각도")]
+    [Range(0f, 45f)]
+    [SerializeField]
+    private float iaidoChamberExtraAngle = 16f;
+
+    [Tooltip("공속 1.0 기준 발도 실제 타격(트레일 ON) 소요 시간 (초)")]
     [Min(0.02f)]
     [SerializeField]
     private float iaidoSwingDuration = 0.14f;
+
+    [Tooltip("공속 1.0 기준 발도 후 감속 여운 시간 (초)")]
+    [Min(0.01f)]
+    [SerializeField]
+    private float iaidoChamberDuration = 0.13f;
+
+    [Tooltip("우클릭 유지 중 발도 베기 끝 자세를 잠깐 유지한 뒤 재납도하기까지의 여운 시간 (초)")]
+    [Min(0f)]
+    [SerializeField]
+    private float iaidoPostSlashHoldDuration = 0.10f;
 
     // =========================================================
     // 일반 횡베기 궤도 및 감속 연출 설정
@@ -179,12 +194,13 @@ public class ZantetsuswordWeapon : WeaponBase
 
     private ThirdPersonCamera thirdPersonCam;
     private float nextAttackTime;
+    private float iaidoHoldUntilTime;
     private float currentYawAngle;
     private float currentChamberRatio;
     private float currentEdgeRoll;
     private bool isSwungToLeft;
     private bool isSwinging;
-    private bool isInAttackPose;
+    private bool isInAttackPose; // 일반 평타 여운 유지 여부 (발도 공격 시에는 false 유지)
     private bool isSheathing;
     private bool isEquipped;
     private Coroutine swingCoroutine;
@@ -280,6 +296,7 @@ public class ZantetsuswordWeapon : WeaponBase
         isSwungToLeft = false;
         isInAttackPose = false;
         nextAttackTime = 0f;
+        iaidoHoldUntilTime = 0f;
         currentYawAngle = GetChamberedAngle(false);
         currentChamberRatio = 1f;
         currentEdgeRoll = GetTargetEdgeRoll(true);
@@ -325,7 +342,8 @@ public class ZantetsuswordWeapon : WeaponBase
 
         if (!isSwinging && weaponVisual != null)
         {
-            if (Time.time < nextAttackTime)
+            // 일반 평타를 친 직후(isInAttackPose == true)에만 다음 콤보 대기 자세 유지
+            if (isInAttackPose && Time.time < nextAttackTime)
             {
                 float holdAngle = GetChamberedAngle(isSwungToLeft);
                 float holdEdgeRoll = GetTargetEdgeRoll(isSwungToLeft);
@@ -339,6 +357,7 @@ public class ZantetsuswordWeapon : WeaponBase
                 weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, holdRot, returnToDefaultSpeed * Time.deltaTime);
                 AlignTrailTransform(currentYawAngle, 0f);
             }
+            // 발도 공격 직후 조준을 풀었거나 평타 대기 시간이 끝나면 곧바로 기본 대기 자세로 복귀
             else if (hasCachedDefaultPose)
             {
                 isSwungToLeft = false;
@@ -362,7 +381,6 @@ public class ZantetsuswordWeapon : WeaponBase
         {
             isSheathing = true;
 
-            // 일반 휘두르기 도중이었다면 중단하고 납도 자세로 전환
             if (swingCoroutine != null)
             {
                 StopCoroutine(swingCoroutine);
@@ -371,14 +389,14 @@ public class ZantetsuswordWeapon : WeaponBase
             isSwinging = false;
             isSwungToLeft = false;
             isInAttackPose = false;
+            iaidoHoldUntilTime = 0f;
             SetTrailEmitting(false, true);
 
-            // 납도 중 받는 피해 감소는 0 (방어 없음), 이동 속도만 설정값 반영
             PlayerStats.SetGuardModifiers(sheathMoveSpeedMultiplier, 1f);
         }
 
-        // 발도 베기 모션이 진행 중이 아닐 때만 납도 준비 자세로 칼을 거두어 들임
-        if (!isSwinging && weaponVisual != null)
+        // 발도 베기 모션 중이 아니고, 베기 직후 여운 시간이 지났을 때만 납도 자세로 거두어 들임
+        if (!isSwinging && Time.time >= iaidoHoldUntilTime && weaponVisual != null)
         {
             Quaternion targetSheathRot = Quaternion.Euler(sheathLocalEuler);
             weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, sheathLocalPosition, sheathTransitionSpeed * Time.deltaTime);
@@ -389,6 +407,8 @@ public class ZantetsuswordWeapon : WeaponBase
     private void ExitSheath()
     {
         isSheathing = false;
+        isInAttackPose = false;
+        iaidoHoldUntilTime = 0f;
 
         if (PlayerStats != null)
         {
@@ -407,6 +427,10 @@ public class ZantetsuswordWeapon : WeaponBase
         float meleeSpeedStat = Mathf.Max(0.1f, PlayerStats.MeleeAttackSpeed);
         float finalInterval = iaidoBaseAttackInterval / meleeSpeedStat;
 
+        // 평타 여운 상태 비활성화 (조준 해제 시 수평 평타 자세로 꺾이는 현상 방지)
+        isInAttackPose = false;
+        isSwungToLeft = false;
+
         // 원거리 검기 투사체 발사
         LaunchSwordWave();
 
@@ -416,7 +440,7 @@ public class ZantetsuswordWeapon : WeaponBase
             PerformMeleeBoxAttack(iaidoMeleeDamageMultiplier);
         }
 
-        // 사선('/') 발도 애니메이션 실행 (왼쪽 아래 -> 오른쪽 위)
+        // 사선('/') 발도 애니메이션 실행 (평타처럼 크게 한 번 베고 감속 여운 연결)
         if (weaponVisual != null)
         {
             if (swingCoroutine != null)
@@ -424,26 +448,34 @@ public class ZantetsuswordWeapon : WeaponBase
                 StopCoroutine(swingCoroutine);
             }
 
-            float duration = Mathf.Min(iaidoSwingDuration / meleeSpeedStat, finalInterval * 0.7f);
-            duration = Mathf.Max(0.04f, duration);
+            float rawMain = iaidoSwingDuration / meleeSpeedStat;
+            float rawChamber = iaidoChamberDuration / meleeSpeedStat;
+            float totalRaw = Mathf.Max(0.04f, rawMain + rawChamber);
 
-            swingCoroutine = StartCoroutine(IaidoDrawRoutine(duration));
+            float maxTotal = Mathf.Max(0.04f, finalInterval * 0.85f);
+            float scale = totalRaw > maxTotal ? (maxTotal / totalRaw) : 1f;
+
+            float mainDuration = Mathf.Max(0.03f, rawMain * scale);
+            float chamberDuration = Mathf.Max(0f, rawChamber * scale);
+
+            swingCoroutine = StartCoroutine(IaidoDrawRoutine(mainDuration, chamberDuration));
         }
 
         nextAttackTime = Time.time + finalInterval;
     }
 
-    private IEnumerator IaidoDrawRoutine(float duration)
+    private IEnumerator IaidoDrawRoutine(float mainDuration, float chamberDuration)
     {
         isSwinging = true;
         SetTrailEmitting(false, true);
 
         try
         {
-            // 왼쪽 아래(-iaidoSwingHalfAngle)에서 시작해 오른쪽 위(+iaidoSwingHalfAngle)로 '/' 방향 베어 올림
+            // 왼쪽 아래(-iaidoSwingHalfAngle)에서 시작해 오른쪽 위(+iaidoSwingHalfAngle)로 '/' 크게 횡단
             float startAngle = -iaidoSwingHalfAngle;
-            float endAngle = iaidoSwingHalfAngle;
-            float drawEdgeRoll = GetTargetEdgeRoll(false); // 왼쪽 -> 오른쪽 진행 방향 칼날 정렬
+            float strikeEndAngle = iaidoSwingHalfAngle;
+            float chamberedEndAngle = iaidoSwingHalfAngle + iaidoChamberExtraAngle;
+            float drawEdgeRoll = GetTargetEdgeRoll(false);
 
             currentYawAngle = startAngle;
             currentChamberRatio = 0f;
@@ -456,16 +488,18 @@ public class ZantetsuswordWeapon : WeaponBase
 
             SetTrailEmitting(true, true);
 
+            // 1단계: 사선('/') 방향으로 크게 한 번 베어내기 (트레일 ON)
             float elapsed = 0f;
-            while (elapsed < duration)
+            while (elapsed < mainDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
+                float t = Mathf.Clamp01(elapsed / mainDuration);
                 float curvedT = swingCurve.Evaluate(t);
 
-                currentYawAngle = Mathf.LerpUnclamped(startAngle, endAngle, curvedT);
+                currentYawAngle = Mathf.LerpUnclamped(startAngle, strikeEndAngle, curvedT);
+                currentChamberRatio = 0f;
 
-                EvaluateArcPose(currentYawAngle, 0f, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 pos, out Quaternion rot);
+                EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 pos, out Quaternion rot);
                 weaponVisual.localPosition = pos;
                 weaponVisual.localRotation = rot;
                 AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle);
@@ -473,10 +507,39 @@ public class ZantetsuswordWeapon : WeaponBase
                 yield return null;
             }
 
-            EvaluateArcPose(endAngle, 0f, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 finalPos, out Quaternion finalRot);
+            SetTrailEmitting(false, false);
+
+            // 2단계: 평타처럼 같은 방향으로 부드럽게 감속하며 마무리
+            if (chamberDuration > 0.001f)
+            {
+                float chamberElapsed = 0f;
+                while (chamberElapsed < chamberDuration)
+                {
+                    chamberElapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(chamberElapsed / chamberDuration);
+                    float glideT = 1f - Mathf.Pow(1f - t, 2.5f);
+
+                    currentYawAngle = Mathf.LerpUnclamped(strikeEndAngle, chamberedEndAngle, glideT);
+                    currentChamberRatio = Mathf.Lerp(0f, 1f, glideT);
+
+                    EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 chamberPos, out Quaternion chamberRot);
+                    weaponVisual.localPosition = chamberPos;
+                    weaponVisual.localRotation = chamberRot;
+                    AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle);
+
+                    yield return null;
+                }
+            }
+
+            currentYawAngle = chamberedEndAngle;
+            currentChamberRatio = 1f;
+            EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 finalPos, out Quaternion finalRot);
             weaponVisual.localPosition = finalPos;
             weaponVisual.localRotation = finalRot;
-            AlignTrailTransform(endAngle, iaidoSlashTiltAngle);
+            AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle);
+
+            // 우클릭 유지 시에만 베어낸 끝 자세 여운을 잠깐 남긴 뒤 재납도
+            iaidoHoldUntilTime = isSheathing ? (Time.time + iaidoPostSlashHoldDuration) : 0f;
         }
         finally
         {
@@ -803,6 +866,7 @@ public class ZantetsuswordWeapon : WeaponBase
         baseSwingDuration = Mathf.Max(0.02f, baseSwingDuration);
         baseChamberDuration = Mathf.Max(0.01f, baseChamberDuration);
         iaidoSwingDuration = Mathf.Max(0.02f, iaidoSwingDuration);
+        iaidoChamberDuration = Mathf.Max(0.01f, iaidoChamberDuration);
 
         maxAimDistance = Mathf.Max(1f, maxAimDistance);
         returnToDefaultSpeed = Mathf.Max(1f, returnToDefaultSpeed);
@@ -822,7 +886,7 @@ public class ZantetsuswordWeapon : WeaponBase
 
         // 노란색: 일반 수평 횡베기 궤도 / 하늘색: '/' 사선 발도 베기 궤도
         DrawSwingArcGizmo(swingHalfAngle + chamberExtraAngle, orbitRadius, 0f, Color.yellow);
-        DrawSwingArcGizmo(iaidoSwingHalfAngle, iaidoOrbitRadius, iaidoSlashTiltAngle, Color.cyan);
+        DrawSwingArcGizmo(iaidoSwingHalfAngle + iaidoChamberExtraAngle, iaidoOrbitRadius, iaidoSlashTiltAngle, Color.cyan);
     }
 
     private void DrawBoxGizmo(Vector3 start, Vector3 forward, Quaternion rotation, float range, float width, float height, Color color)

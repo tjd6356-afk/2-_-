@@ -78,7 +78,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MeleeWeapon
   weaponId: weapon_10
-  weaponName: Weapon
+  weaponName: "\uC7A5\uAC80"
   weaponType: 1
   attackPoint: {fileID: 728102361673393224}
   weaponVisual: {fileID: 7429925763069298322}
