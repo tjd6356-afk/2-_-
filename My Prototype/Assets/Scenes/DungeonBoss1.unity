@@ -260,6 +260,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d2e3cb2a9534c34dad2c145dcefa6cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossStats
+--- !u!1 &481270312 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5603550721532395835, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+  m_PrefabInstance: {fileID: 2003803410}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &542392761 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
@@ -755,6 +760,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1264074845}
   m_CullTransparentMesh: 1
+--- !u!114 &1313426556 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4277178575825033243, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+  m_PrefabInstance: {fileID: 2003803410}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &1323014425
 GameObject:
   m_ObjectHideFlags: 0
@@ -1406,6 +1422,66 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1717153943606554855, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: hpFill
+      value: 
+      objectReference: {fileID: 1313426556}
+    - target: {fileID: 1717153943606554855, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: lateHPFill
+      value: 
+      objectReference: {fileID: 2003803411}
+    - target: {fileID: 1717153943606554855, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: lateHPDelay
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 1717153943606554855, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: bossHealthRoot
+      value: 
+      objectReference: {fileID: 481270312}
+    - target: {fileID: 1747537077609064448, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Type
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1747537077609064448, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -4863336276314997047, guid: b2aa5ef75fab3ae4eb3ea7bde9b79dac, type: 3}
+    - target: {fileID: 5051913265425773512, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5051913265425773512, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5051913265425773512, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5051913265425773512, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5603550721532395835, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5881421431326913843, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5881421431326913843, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5881421431326913843, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5881421431326913843, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7219283685993010386, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -1486,6 +1562,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7894336823120465274, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8776635390010244227, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
       propertyPath: m_Name
       value: DungeonCanvas
@@ -1495,6 +1575,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+--- !u!114 &2003803411 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1747537077609064448, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
+  m_PrefabInstance: {fileID: 2003803410}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!114 &2003803413 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1717153943606554855, guid: 278324df27473b74fb74b7ed61fdb03a, type: 3}
