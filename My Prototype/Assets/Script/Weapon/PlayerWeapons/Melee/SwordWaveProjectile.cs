@@ -26,7 +26,7 @@ public class SwordWaveProjectile : MonoBehaviour
 
     [Tooltip("검기 판정 박스 크기 (X: 검기 좌우 폭, Y: 상하 두께, Z: 전후 길이)")]
     [SerializeField]
-    private Vector3 hitboxSize = new Vector3(2.2f, 0.35f, 0.8f);
+    private Vector3 hitboxSize = new Vector3(2.4f, 0.8f, 1.0f);
 
     [Header("Post-Hit Follow-Through (맞은 직후 추가 전진 판정)")]
     [Tooltip("첫 적을 맞힌 직후 추가로 더 나아갈 거리 (m) - 이 거리 안의 뒤쪽 적까지 타격 후 소멸")]
@@ -49,9 +49,13 @@ public class SwordWaveProjectile : MonoBehaviour
     [SerializeField]
     private LayerMask enemyMask = ~0;
 
-    [Tooltip("검기가 부딪히면 소멸할 벽/지형 레이어 (적·플레이어 레이어는 반드시 제외)")]
+    [Tooltip("검기가 부딪히면 소멸할 벽/지형 레이어 (적·플레이어 레이어는 제외)")]
     [SerializeField]
     private LayerMask obstacleMask = 0;
+
+    [Tooltip("적의 Is Trigger 콜라이더도 검기로 타격할지 여부")]
+    [SerializeField]
+    private bool hitTriggerColliders = false;
 
     [Header("Optional VFX")]
     [Tooltip("(선택) 적중 시 생성할 타격 이펙트 프리팹")]
@@ -61,7 +65,7 @@ public class SwordWaveProjectile : MonoBehaviour
     private Vector3 moveDirection = Vector3.forward;
     private float baseDamage;
     private float appliedTiltAngle;
-    private Transform ownerRoot;
+    private PlayerStats ownerStats;
 
     private float spawnTime;
     private bool isLaunched;
@@ -70,22 +74,16 @@ public class SwordWaveProjectile : MonoBehaviour
 
     private readonly HashSet<IHealth> hitTargets = new HashSet<IHealth>();
 
-    /// <summary>
-    /// 프리팹 기본 기울기(defaultTiltAngle)로 검기 발사
-    /// </summary>
-    public void Launch(Vector3 direction, float damage, GameObject owner)
+    public void Launch(Vector3 direction, float damage, PlayerStats owner)
     {
         Launch(direction, damage, owner, defaultTiltAngle);
     }
 
-    /// <summary>
-    /// 지정한 기울기 각도(tiltAngle)를 적용하여 검기 발사
-    /// </summary>
-    public void Launch(Vector3 direction, float damage, GameObject owner, float tiltAngle)
+    public void Launch(Vector3 direction, float damage, PlayerStats owner, float tiltAngle)
     {
         moveDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : transform.forward;
         baseDamage = Mathf.Max(0f, damage);
-        ownerRoot = owner != null ? owner.transform.root : null;
+        ownerStats = owner;
 
         appliedTiltAngle = useLauncherTiltAngle ? tiltAngle : defaultTiltAngle;
         transform.rotation = Quaternion.LookRotation(moveDirection, Vector3.up) * Quaternion.Euler(0f, 0f, appliedTiltAngle);
@@ -95,6 +93,9 @@ public class SwordWaveProjectile : MonoBehaviour
         remainingDistanceAfterHit = extraTravelAfterFirstHit;
         hitTargets.Clear();
         isLaunched = true;
+
+        // 발사 직후 영점 거리에 있는 적도 즉시 판정
+        ProcessEnemyHits(transform.position, transform.position, 0f, false);
     }
 
     private void Update()
@@ -124,7 +125,6 @@ public class SwordWaveProjectile : MonoBehaviour
         Vector3 startPos = transform.position;
         bool hitObstacle = false;
 
-        // 1. 벽/지형 충돌 검사 (장애물에 닿으면 그 지점까지만 판정 후 소멸)
         if (obstacleMask.value != 0 && stepDistance > 0f)
         {
             RaycastHit[] wallHits = Physics.RaycastAll(
@@ -141,7 +141,9 @@ public class SwordWaveProjectile : MonoBehaviour
                 Collider col = wallHits[i].collider;
                 if (col == null)
                     continue;
-                if (ownerRoot != null && col.transform.IsChildOf(ownerRoot))
+
+                PlayerStats hitPlayer = col.GetComponentInParent<PlayerStats>();
+                if (hitPlayer != null && hitPlayer == ownerStats)
                     continue;
 
                 if (wallHits[i].distance < nearestWallDist)
@@ -155,8 +157,6 @@ public class SwordWaveProjectile : MonoBehaviour
         }
 
         Vector3 endPos = startPos + moveDirection * stepDistance;
-
-        // 2. 적 타격 판정 (이동 경로 전체를 감싸는 Swept OverlapBox)
         ProcessEnemyHits(startPos, endPos, stepDistance, hitObstacle);
     }
 
@@ -169,15 +169,18 @@ public class SwordWaveProjectile : MonoBehaviour
             (hitboxSize.z + stepDistance) * 0.5f
         );
 
+        QueryTriggerInteraction triggerMode = hitTriggerColliders
+            ? QueryTriggerInteraction.Collide
+            : QueryTriggerInteraction.Ignore;
+
         Collider[] hits = Physics.OverlapBox(
             sweepCenter,
             sweptHalfExtents,
             transform.rotation,
             enemyMask,
-            QueryTriggerInteraction.Ignore
+            triggerMode
         );
 
-        // 아직 첫 적을 맞히지 않은 상태라면, 이번 프레임에서 가장 먼저 닿은 적 기준으로 추가 전진 거리 계산
         if (!hasTriggeredFirstHit)
         {
             float firstHitForwardDist = float.MaxValue;
@@ -185,7 +188,7 @@ public class SwordWaveProjectile : MonoBehaviour
 
             for (int i = 0; i < hits.Length; i++)
             {
-                if (!TryGetValidTarget(hits[i], out IHealth health))
+                if (!TryGetValidTarget(hits[i], out _))
                     continue;
 
                 Vector3 closestPoint = hits[i].ClosestPoint(startPos);
@@ -202,7 +205,6 @@ public class SwordWaveProjectile : MonoBehaviour
             {
                 hasTriggeredFirstHit = true;
 
-                // 첫 적 적중 지점 + extraTravelAfterFirstHit까지만 이번 프레임 도달 거리 허용
                 float maxReachThisFrame = Mathf.Min(stepDistance, firstHitForwardDist + extraTravelAfterFirstHit);
                 float consumedFollowThrough = Mathf.Max(0f, maxReachThisFrame - firstHitForwardDist);
                 remainingDistanceAfterHit = Mathf.Max(0f, extraTravelAfterFirstHit - consumedFollowThrough);
@@ -217,7 +219,6 @@ public class SwordWaveProjectile : MonoBehaviour
                 return;
             }
 
-            // 아무도 맞지 않았으면 정상 전진
             transform.position = endPos;
             if (hitObstacle)
             {
@@ -226,7 +227,6 @@ public class SwordWaveProjectile : MonoBehaviour
             return;
         }
 
-        // 이미 첫 적을 맞힌 뒤 추가 전진 중인 상태
         ApplyDamageWithinReach(hits, startPos, stepDistance);
         transform.position = endPos;
         remainingDistanceAfterHit -= stepDistance;
@@ -239,7 +239,6 @@ public class SwordWaveProjectile : MonoBehaviour
 
     private void ApplyDamageWithinReach(Collider[] hits, Vector3 startPos, float maxForwardReach)
     {
-        // 박스 앞쪽 여유분(hitboxSize.z * 0.5f)까지 포함해 도달 범위 내 적 타격
         float reachLimit = maxForwardReach + (hitboxSize.z * 0.5f);
 
         for (int i = 0; i < hits.Length; i++)
@@ -277,7 +276,8 @@ public class SwordWaveProjectile : MonoBehaviour
         if (col == null)
             return false;
 
-        if (ownerRoot != null && col.transform.IsChildOf(ownerRoot))
+        PlayerStats hitPlayer = col.GetComponentInParent<PlayerStats>();
+        if (hitPlayer != null && hitPlayer == ownerStats)
             return false;
 
         health = col.GetComponentInParent<IHealth>();
@@ -306,12 +306,10 @@ public class SwordWaveProjectile : MonoBehaviour
             ? transform.rotation
             : Quaternion.LookRotation(transform.forward, Vector3.up) * Quaternion.Euler(0f, 0f, defaultTiltAngle);
 
-        // 1. 하늘색: 실제 검기 판정 박스 (기울기 반영)
         Gizmos.color = Color.cyan;
         Gizmos.matrix = Matrix4x4.TRS(transform.position, previewRot, Vector3.one);
         Gizmos.DrawWireCube(Vector3.zero, hitboxSize);
 
-        // 2. 노란색: 첫 적 적중 후 추가로 전진하는 거리 표시
         if (extraTravelAfterFirstHit > 0f)
         {
             Gizmos.color = Color.yellow;

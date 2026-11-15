@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class ZantetsuswordWeapon : WeaponBase
 {
     [Header("References")]
+    [Tooltip("근접 공격 판정 기준점 (비워두면 플레이어 본체 가슴 높이 전방을 자동 사용)")]
     [SerializeField]
     private Transform attackPoint;
 
@@ -21,12 +22,21 @@ public class ZantetsuswordWeapon : WeaponBase
     [SerializeField]
     private Transform swingCenterPoint;
 
-    [Header("Sword Wave Projectile (발도 원거리 검기 설정)")]
-    [Tooltip("발도 공격 시 발사할 검기 Projectile 프리팹")]
+    [Header("Fallback Origin Offsets (AttackPoint 미지정 시 기본 발사/타격 위치)")]
+    [Tooltip("AttackPoint가 비어 있을 때 플레이어 발밑 기준 높이 오프셋")]
     [SerializeField]
-    private Projectile swordWavePrefab;
+    private float defaultOriginHeight = 1.1f;
 
-    [Tooltip("검기가 생성될 위치 (비워두면 Attack Point 위치에서 발사)")]
+    [Tooltip("AttackPoint가 비어 있을 때 플레이어 정면 거리 오프셋")]
+    [SerializeField]
+    private float defaultOriginForward = 0.5f;
+
+    [Header("Sword Wave Projectile (발도 원거리 검기 설정)")]
+    [Tooltip("발도 공격 시 발사할 SwordWaveProjectile 프리팹")]
+    [SerializeField]
+    private SwordWaveProjectile swordWavePrefab;
+
+    [Tooltip("검기가 생성될 위치 (비워두면 Attack Point 또는 플레이어 가슴 전방에서 발사)")]
     [SerializeField]
     private Transform waveSpawnPoint;
 
@@ -34,6 +44,15 @@ public class ZantetsuswordWeapon : WeaponBase
     [Min(0f)]
     [SerializeField]
     private float waveDamageMultiplier = 1.2f;
+
+    [Tooltip("날아가는 검기의 기울기 각도 (체크 해제 시 발도 베기 각도 iaidoSlashTiltAngle을 그대로 따라감)")]
+    [SerializeField]
+    private bool useCustomWaveTilt = false;
+
+    [Tooltip("useCustomWaveTilt 체크 시 적용할 날아가는 검기의 기울기 각도")]
+    [Range(-180f, 180f)]
+    [SerializeField]
+    private float customWaveTiltAngle = 28f;
 
     [Tooltip("화면 중앙 크로스헤어 조준 최대 거리")]
     [Min(1f)]
@@ -44,21 +63,24 @@ public class ZantetsuswordWeapon : WeaponBase
     private LayerMask aimMask = ~0;
 
     [Header("Normal Melee Stats (일반 횡베기 설정)")]
+    [Tooltip("전방 공격 사거리 (Z 길이)")]
     [Min(0.1f)]
     [SerializeField]
-    private float attackRange = 2.2f;
+    private float attackRange = 2.0f;
 
+    [Tooltip("공격 판정의 좌우 전체 폭 (X 길이)")]
     [Min(0.1f)]
     [SerializeField]
-    private float attackWidth = 2.8f;
+    private float attackWidth = 2.6f;
 
+    [Tooltip("공격 판정의 상하 전체 높이 (Y 길이)")]
     [Min(0.1f)]
     [SerializeField]
     private float attackHeight = 1.2f;
 
     [Min(0f)]
     [SerializeField]
-    private float normalDamageMultiplier = 1f;
+    private float damageMultiplier = 1f;
 
     [Min(0.01f)]
     [SerializeField]
@@ -67,11 +89,19 @@ public class ZantetsuswordWeapon : WeaponBase
     [SerializeField]
     private LayerMask enemyMask = ~0;
 
+    [Tooltip("적의 Is Trigger 콜라이더도 근접 공격으로 타격할지 여부")]
+    [SerializeField]
+    private bool hitTriggerColliders = true;
+
+    [Tooltip("근접 판정 결과를 콘솔에 출력할지 여부 (원인 확인 후 해제 가능)")]
+    [SerializeField]
+    private bool debugMeleeHitLog = true;
+
     // =========================================================
     // 납도 준비 자세 & 사선('/') 발도 공격 설정 (우클릭 홀드)
     // =========================================================
     [Header("Sheathing Stance (우클릭 납도 준비 자세)")]
-    [Tooltip("납도 자세 중 이동 속도 비율 (1.0 = 속도 감소 없음)")]
+    [Tooltip("납도 자세 중 플레이어 이동 속도 비율 (1.0 = 속도 감소 없음)")]
     [Range(0f, 1f)]
     [SerializeField]
     private float sheathMoveSpeedMultiplier = 0.9f;
@@ -142,57 +172,74 @@ public class ZantetsuswordWeapon : WeaponBase
     // =========================================================
     // 일반 횡베기 궤도 및 감속 연출 설정
     // =========================================================
-    [Header("Normal Swing Arc (일반 수평 횡베기 궤도)")]
+    [Header("Swing Arc (일반 휘두르기 중심 및 궤도)")]
+    [Tooltip("휘두르기 중심 위치 오프셋 (X: 좌우, Y: 높이, Z: 앞뒤)")]
     [SerializeField]
     private Vector3 swingCenterOffset = new Vector3(0f, 1.15f, 0.25f);
 
+    [Tooltip("좌우로 휘두르는 기본 반각 (80이면 오른쪽 +80° ~ 왼쪽 -80°까지 베기)")]
     [Range(10f, 150f)]
     [SerializeField]
     private float swingHalfAngle = 80f;
 
+    [Tooltip("휘두르기 중심으로부터 무기가 떨어져 도는 원호 반경")]
     [Min(0.1f)]
     [SerializeField]
     private float orbitRadius = 1.25f;
 
+    [Header("Follow-Through & Chambering (감속 및 다음 공격 대비 자세)")]
+    [Tooltip("타격 지점을 지난 뒤 같은 방향으로 더 미끄러지며 회전하는 추가 각도")]
     [Range(0f, 45f)]
     [SerializeField]
     private float chamberExtraAngle = 16f;
 
+    [Tooltip("다음 휘두르기를 대비해 무기를 뒤로 살짝 내빼는 위치 오프셋")]
     [SerializeField]
     private Vector3 chamberPullOffset = new Vector3(0f, 0.05f, -0.14f);
 
+    [Tooltip("공속 1.0 기준 실제 타격(트레일 ON)에 걸리는 시간 (초)")]
     [Min(0.02f)]
     [SerializeField]
     private float baseSwingDuration = 0.13f;
 
+    [Tooltip("공속 1.0 기준 타격 후 감속하며 뒤로 내빼는 데 걸리는 시간 (초)")]
     [Min(0.01f)]
     [SerializeField]
     private float baseChamberDuration = 0.14f;
 
-    [Header("Blade Orientation & Return (칼날 방향 및 복귀)")]
+    [Header("Blade Orientation & Return (칼날 방향 및 무기 눕힘 각도)")]
+    [Tooltip("휘두를 때 무기를 눕히는 X축 각도 (90 = 지면과 완전히 수평)")]
     [SerializeField]
     private float bladeLayAngle = 90f;
 
+    [Tooltip("칼날이 옆면이 아닌 베는 방향을 향하도록 칼자루 축을 회전시키는 각도")]
     [SerializeField]
     private float bladeEdgeAngle = 90f;
 
+    [Tooltip("왕복 스윙 시 칼날이 항상 진행 방향을 향하도록 손목을 반전시킬지 여부")]
     [SerializeField]
     private bool flipEdgeOnReturnSwing = true;
 
+    [Tooltip("휘두를 때 칼날 기울기 Z축 각도 (0 = 수평 횡베기)")]
+    [SerializeField]
+    private float bladeRollAngle = 0f;
+
+    [Tooltip("트레일의 정면이 항상 휘두르는 평면의 위쪽을 향하도록 자동 정렬")]
     [SerializeField]
     private bool alignTrailToSwingPlane = true;
 
+    [Tooltip("대기 상태에서 첫 공격 시 전방 시작 위치로 즉시 전환한 뒤 휘두를지 여부")]
     [SerializeField]
     private bool snapToForwardStartOnFirstSwing = true;
 
     [SerializeField]
     private AnimationCurve swingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+    [Tooltip("공격 종료 후 원래 기본 자세로 되돌아가는 속도")]
     [Min(1f)]
     [SerializeField]
     private float returnToDefaultSpeed = 14f;
 
-    private ThirdPersonCamera thirdPersonCam;
     private float nextAttackTime;
     private float iaidoHoldUntilTime;
     private float currentYawAngle;
@@ -200,7 +247,7 @@ public class ZantetsuswordWeapon : WeaponBase
     private float currentEdgeRoll;
     private bool isSwungToLeft;
     private bool isSwinging;
-    private bool isInAttackPose; // 일반 평타 여운 유지 여부 (발도 공격 시에는 false 유지)
+    private bool isInAttackPose;
     private bool isSheathing;
     private bool isEquipped;
     private Coroutine swingCoroutine;
@@ -252,11 +299,6 @@ public class ZantetsuswordWeapon : WeaponBase
         CacheDefaultPose();
         FindSwingTrailIfNeeded();
         base.Equip();
-
-        if (PlayerCamera != null)
-        {
-            thirdPersonCam = PlayerCamera.GetComponent<ThirdPersonCamera>();
-        }
 
         isEquipped = true;
         ResetWeaponState();
@@ -321,7 +363,6 @@ public class ZantetsuswordWeapon : WeaponBase
         {
             EnterOrMaintainSheath();
 
-            // 납도 준비 자세 중 좌클릭 시 사선('/') 발도 공격 + 원거리 검기 발사
             if (Mouse.current.leftButton.isPressed)
             {
                 TryIaidoDrawAttack();
@@ -334,7 +375,6 @@ public class ZantetsuswordWeapon : WeaponBase
             ExitSheath();
         }
 
-        // 비조준 상태에서는 일반 근접 횡베기
         if (Mouse.current.leftButton.isPressed)
         {
             TryNormalAttack();
@@ -342,7 +382,6 @@ public class ZantetsuswordWeapon : WeaponBase
 
         if (!isSwinging && weaponVisual != null)
         {
-            // 일반 평타를 친 직후(isInAttackPose == true)에만 다음 콤보 대기 자세 유지
             if (isInAttackPose && Time.time < nextAttackTime)
             {
                 float holdAngle = GetChamberedAngle(isSwungToLeft);
@@ -352,12 +391,11 @@ public class ZantetsuswordWeapon : WeaponBase
                 currentChamberRatio = Mathf.Lerp(currentChamberRatio, 1f, returnToDefaultSpeed * Time.deltaTime);
                 currentEdgeRoll = Mathf.LerpAngle(currentEdgeRoll, holdEdgeRoll, returnToDefaultSpeed * Time.deltaTime);
 
-                EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, 0f, out Vector3 holdPos, out Quaternion holdRot);
+                EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, bladeRollAngle, 0f, out Vector3 holdPos, out Quaternion holdRot);
                 weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, holdPos, returnToDefaultSpeed * Time.deltaTime);
                 weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, holdRot, returnToDefaultSpeed * Time.deltaTime);
-                AlignTrailTransform(currentYawAngle, 0f);
+                AlignTrailTransform(currentYawAngle, bladeRollAngle, 0f);
             }
-            // 발도 공격 직후 조준을 풀었거나 평타 대기 시간이 끝나면 곧바로 기본 대기 자세로 복귀
             else if (hasCachedDefaultPose)
             {
                 isSwungToLeft = false;
@@ -395,12 +433,16 @@ public class ZantetsuswordWeapon : WeaponBase
             PlayerStats.SetGuardModifiers(sheathMoveSpeedMultiplier, 1f);
         }
 
-        // 발도 베기 모션 중이 아니고, 베기 직후 여운 시간이 지났을 때만 납도 자세로 거두어 들임
         if (!isSwinging && Time.time >= iaidoHoldUntilTime && weaponVisual != null)
         {
-            Quaternion targetSheathRot = Quaternion.Euler(sheathLocalEuler);
-            weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, sheathLocalPosition, sheathTransitionSpeed * Time.deltaTime);
-            weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, targetSheathRot, sheathTransitionSpeed * Time.deltaTime);
+            float pitchAngle = GetAimPitchAngle();
+            Quaternion pitchRot = Quaternion.Euler(pitchAngle, 0f, 0f);
+
+            Vector3 targetPos = pitchRot * sheathLocalPosition;
+            Quaternion targetRot = pitchRot * Quaternion.Euler(sheathLocalEuler);
+
+            weaponVisual.localPosition = Vector3.Lerp(weaponVisual.localPosition, targetPos, sheathTransitionSpeed * Time.deltaTime);
+            weaponVisual.localRotation = Quaternion.Slerp(weaponVisual.localRotation, targetRot, sheathTransitionSpeed * Time.deltaTime);
         }
     }
 
@@ -417,7 +459,7 @@ public class ZantetsuswordWeapon : WeaponBase
     }
 
     // =========================================================
-    // 1. 사선('/') 발도 공격 + 원거리 검기 발사
+    // 1. 사선('/') 발도 공격 + 조준 위아래 각도 연동 + 원거리 검기 발사
     // =========================================================
     private void TryIaidoDrawAttack()
     {
@@ -427,20 +469,19 @@ public class ZantetsuswordWeapon : WeaponBase
         float meleeSpeedStat = Mathf.Max(0.1f, PlayerStats.MeleeAttackSpeed);
         float finalInterval = iaidoBaseAttackInterval / meleeSpeedStat;
 
-        // 평타 여운 상태 비활성화 (조준 해제 시 수평 평타 자세로 꺾이는 현상 방지)
         isInAttackPose = false;
         isSwungToLeft = false;
 
-        // 원거리 검기 투사체 발사
-        LaunchSwordWave();
+        Vector3 spawnOrigin = GetWaveSpawnOrigin();
+        Vector3 aimDir = GetAimShootDirection(spawnOrigin);
 
-        // 근접 사거리 내 적도 함께 타격
+        LaunchSwordWave(spawnOrigin, aimDir);
+
         if (iaidoAlsoHitsMelee)
         {
-            PerformMeleeBoxAttack(iaidoMeleeDamageMultiplier);
+            PerformMeleeBoxAttack(iaidoMeleeDamageMultiplier, aimDir);
         }
 
-        // 사선('/') 발도 애니메이션 실행 (평타처럼 크게 한 번 베고 감속 여운 연결)
         if (weaponVisual != null)
         {
             if (swingCoroutine != null)
@@ -471,7 +512,6 @@ public class ZantetsuswordWeapon : WeaponBase
 
         try
         {
-            // 왼쪽 아래(-iaidoSwingHalfAngle)에서 시작해 오른쪽 위(+iaidoSwingHalfAngle)로 '/' 크게 횡단
             float startAngle = -iaidoSwingHalfAngle;
             float strikeEndAngle = iaidoSwingHalfAngle;
             float chamberedEndAngle = iaidoSwingHalfAngle + iaidoChamberExtraAngle;
@@ -481,14 +521,15 @@ public class ZantetsuswordWeapon : WeaponBase
             currentChamberRatio = 0f;
             currentEdgeRoll = drawEdgeRoll;
 
-            EvaluateArcPose(startAngle, 0f, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 startPos, out Quaternion startRot);
+            float pitchAngle = GetAimPitchAngle();
+
+            EvaluateArcPose(startAngle, 0f, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, pitchAngle, out Vector3 startPos, out Quaternion startRot);
             weaponVisual.localPosition = startPos;
             weaponVisual.localRotation = startRot;
-            AlignTrailTransform(startAngle, iaidoSlashTiltAngle);
+            AlignTrailTransform(startAngle, iaidoSlashTiltAngle, pitchAngle);
 
             SetTrailEmitting(true, true);
 
-            // 1단계: 사선('/') 방향으로 크게 한 번 베어내기 (트레일 ON)
             float elapsed = 0f;
             while (elapsed < mainDuration)
             {
@@ -498,18 +539,18 @@ public class ZantetsuswordWeapon : WeaponBase
 
                 currentYawAngle = Mathf.LerpUnclamped(startAngle, strikeEndAngle, curvedT);
                 currentChamberRatio = 0f;
+                pitchAngle = GetAimPitchAngle();
 
-                EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 pos, out Quaternion rot);
+                EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, pitchAngle, out Vector3 pos, out Quaternion rot);
                 weaponVisual.localPosition = pos;
                 weaponVisual.localRotation = rot;
-                AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle);
+                AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle, pitchAngle);
 
                 yield return null;
             }
 
             SetTrailEmitting(false, false);
 
-            // 2단계: 평타처럼 같은 방향으로 부드럽게 감속하며 마무리
             if (chamberDuration > 0.001f)
             {
                 float chamberElapsed = 0f;
@@ -521,11 +562,12 @@ public class ZantetsuswordWeapon : WeaponBase
 
                     currentYawAngle = Mathf.LerpUnclamped(strikeEndAngle, chamberedEndAngle, glideT);
                     currentChamberRatio = Mathf.Lerp(0f, 1f, glideT);
+                    pitchAngle = GetAimPitchAngle();
 
-                    EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 chamberPos, out Quaternion chamberRot);
+                    EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, pitchAngle, out Vector3 chamberPos, out Quaternion chamberRot);
                     weaponVisual.localPosition = chamberPos;
                     weaponVisual.localRotation = chamberRot;
-                    AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle);
+                    AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle, pitchAngle);
 
                     yield return null;
                 }
@@ -533,12 +575,13 @@ public class ZantetsuswordWeapon : WeaponBase
 
             currentYawAngle = chamberedEndAngle;
             currentChamberRatio = 1f;
-            EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, out Vector3 finalPos, out Quaternion finalRot);
+            pitchAngle = GetAimPitchAngle();
+
+            EvaluateArcPose(currentYawAngle, currentChamberRatio, drawEdgeRoll, iaidoOrbitRadius, iaidoSlashTiltAngle, pitchAngle, out Vector3 finalPos, out Quaternion finalRot);
             weaponVisual.localPosition = finalPos;
             weaponVisual.localRotation = finalRot;
-            AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle);
+            AlignTrailTransform(currentYawAngle, iaidoSlashTiltAngle, pitchAngle);
 
-            // 우클릭 유지 시에만 베어낸 끝 자세 여운을 잠깐 남긴 뒤 재납도
             iaidoHoldUntilTime = isSheathing ? (Time.time + iaidoPostSlashHoldDuration) : 0f;
         }
         finally
@@ -551,7 +594,20 @@ public class ZantetsuswordWeapon : WeaponBase
         }
     }
 
-    private void LaunchSwordWave()
+    private float GetAimPitchAngle()
+    {
+        if (PlayerCamera == null)
+            return 0f;
+
+        Vector3 localCamForward = transform.InverseTransformDirection(PlayerCamera.transform.forward);
+        if (localCamForward.sqrMagnitude < 0.0001f)
+            return 0f;
+
+        localCamForward.Normalize();
+        return -Mathf.Asin(Mathf.Clamp(localCamForward.y, -0.95f, 0.95f)) * Mathf.Rad2Deg;
+    }
+
+    private void LaunchSwordWave(Vector3 spawnPos, Vector3 shootDirection)
     {
         if (swordWavePrefab == null)
         {
@@ -559,22 +615,13 @@ public class ZantetsuswordWeapon : WeaponBase
             return;
         }
 
-        Transform spawnTransform = waveSpawnPoint != null
-            ? waveSpawnPoint
-            : (attackPoint != null ? attackPoint : transform);
+        float tiltAngle = useCustomWaveTilt ? customWaveTiltAngle : iaidoSlashTiltAngle;
 
-        Vector3 spawnPos = spawnTransform.position;
-        Vector3 shootDirection = GetAimShootDirection(spawnPos);
-
-        // 검기 프리팹도 발도 베기('/') 각도만큼 기울여서 생성
-        Quaternion waveRotation = Quaternion.LookRotation(shootDirection) * Quaternion.Euler(0f, 0f, iaidoSlashTiltAngle);
-
-        Projectile wave = Instantiate(swordWavePrefab, spawnPos, waveRotation);
+        Quaternion waveRotation = Quaternion.LookRotation(shootDirection, Vector3.up) * Quaternion.Euler(0f, 0f, tiltAngle);
+        SwordWaveProjectile wave = Instantiate(swordWavePrefab, spawnPos, waveRotation);
 
         float waveDamage = PlayerStats.AttackPower * waveDamageMultiplier;
-        GameObject owner = WeaponManager != null ? WeaponManager.gameObject : gameObject;
-
-        wave.Launch(shootDirection, waveDamage, owner);
+        wave.Launch(shootDirection, waveDamage, PlayerStats, tiltAngle);
     }
 
     private Vector3 GetAimShootDirection(Vector3 origin)
@@ -582,12 +629,71 @@ public class ZantetsuswordWeapon : WeaponBase
         if (PlayerCamera != null)
         {
             Ray aimRay = PlayerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            Vector3 targetPoint = Physics.Raycast(aimRay, out RaycastHit hit, maxAimDistance, aimMask, QueryTriggerInteraction.Ignore)
-                ? hit.point
-                : aimRay.GetPoint(maxAimDistance);
+
+            float camToOriginDist = Vector3.Dot(origin - aimRay.origin, aimRay.direction);
+            float minValidDistance = Mathf.Max(0.2f, camToOriginDist + 0.2f);
+
+            Vector3 targetPoint = aimRay.GetPoint(maxAimDistance);
+
+            // 1순위: 조준선 반경 0.35m 이내에 적이 있으면 적의 콜라이더 중심을 우선 조준
+            RaycastHit[] enemyHits = Physics.SphereCastAll(aimRay, 0.35f, maxAimDistance, enemyMask, QueryTriggerInteraction.Collide);
+            float nearestEnemyDist = maxAimDistance;
+            bool foundEnemy = false;
+
+            for (int i = 0; i < enemyHits.Length; i++)
+            {
+                if (enemyHits[i].distance < minValidDistance)
+                    continue;
+
+                Collider col = enemyHits[i].collider;
+                if (col == null)
+                    continue;
+
+                PlayerStats hitPlayer = col.GetComponentInParent<PlayerStats>();
+                if (hitPlayer != null && hitPlayer == PlayerStats)
+                    continue;
+
+                IHealth health = col.GetComponentInParent<IHealth>();
+                if (health == null || health.IsDead)
+                    continue;
+
+                if (enemyHits[i].distance < nearestEnemyDist)
+                {
+                    nearestEnemyDist = enemyHits[i].distance;
+                    targetPoint = col.bounds.center;
+                    foundEnemy = true;
+                }
+            }
+
+            // 2순위: 조준선 주변에 적이 없으면 일반 레이캐스트 지점 조준
+            if (!foundEnemy)
+            {
+                RaycastHit[] hits = Physics.RaycastAll(aimRay, maxAimDistance, aimMask, QueryTriggerInteraction.Ignore);
+                float nearestDist = maxAimDistance;
+
+                for (int i = 0; i < hits.Length; i++)
+                {
+                    if (hits[i].distance < minValidDistance)
+                        continue;
+
+                    Collider col = hits[i].collider;
+                    if (col == null)
+                        continue;
+
+                    PlayerStats hitPlayer = col.GetComponentInParent<PlayerStats>();
+                    if (hitPlayer != null && hitPlayer == PlayerStats)
+                        continue;
+
+                    if (hits[i].distance < nearestDist)
+                    {
+                        nearestDist = hits[i].distance;
+                        targetPoint = hits[i].point;
+                    }
+                }
+            }
 
             Vector3 toTarget = targetPoint - origin;
-            if (Vector3.Dot(toTarget, PlayerCamera.transform.forward) > 0.1f)
+            if (toTarget.sqrMagnitude > 0.0001f && Vector3.Dot(toTarget, PlayerCamera.transform.forward) > 0.1f)
             {
                 return toTarget.normalized;
             }
@@ -618,15 +724,16 @@ public class ZantetsuswordWeapon : WeaponBase
             currentChamberRatio = 1f;
             currentEdgeRoll = GetTargetEdgeRoll(true);
 
-            EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, 0f, out Vector3 forwardStartPos, out Quaternion forwardStartRot);
+            EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, bladeRollAngle, 0f, out Vector3 forwardStartPos, out Quaternion forwardStartRot);
             weaponVisual.localPosition = forwardStartPos;
             weaponVisual.localRotation = forwardStartRot;
-            AlignTrailTransform(currentYawAngle, 0f);
+            AlignTrailTransform(currentYawAngle, bladeRollAngle, 0f);
         }
 
         isInAttackPose = true;
 
-        PerformMeleeBoxAttack(normalDamageMultiplier);
+        Vector3 forwardDir = WeaponManager != null ? WeaponManager.transform.forward : transform.forward;
+        PerformMeleeBoxAttack(damageMultiplier, forwardDir);
 
         isSwungToLeft = !isSwungToLeft;
         StartNormalSwingAnimation(isSwungToLeft, meleeSpeedStat, finalInterval);
@@ -669,10 +776,10 @@ public class ZantetsuswordWeapon : WeaponBase
         float targetEdgeRoll = GetTargetEdgeRoll(toLeft);
 
         currentEdgeRoll = targetEdgeRoll;
-        EvaluateArcPose(startAngle, startChamberRatio, currentEdgeRoll, orbitRadius, 0f, out Vector3 alignedStartPos, out Quaternion alignedStartRot);
+        EvaluateArcPose(startAngle, startChamberRatio, currentEdgeRoll, orbitRadius, bladeRollAngle, 0f, out Vector3 alignedStartPos, out Quaternion alignedStartRot);
         weaponVisual.localPosition = alignedStartPos;
         weaponVisual.localRotation = alignedStartRot;
-        AlignTrailTransform(startAngle, 0f);
+        AlignTrailTransform(startAngle, bladeRollAngle, 0f);
 
         SetTrailEmitting(true, true);
 
@@ -688,10 +795,10 @@ public class ZantetsuswordWeapon : WeaponBase
                 currentYawAngle = Mathf.LerpUnclamped(startAngle, strikeEndAngle, curvedT);
                 currentChamberRatio = Mathf.Lerp(startChamberRatio, 0f, curvedT);
 
-                EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, 0f, out Vector3 targetPos, out Quaternion targetRot);
+                EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, bladeRollAngle, 0f, out Vector3 targetPos, out Quaternion targetRot);
                 weaponVisual.localPosition = targetPos;
                 weaponVisual.localRotation = targetRot;
-                AlignTrailTransform(currentYawAngle, 0f);
+                AlignTrailTransform(currentYawAngle, bladeRollAngle, 0f);
 
                 yield return null;
             }
@@ -711,10 +818,10 @@ public class ZantetsuswordWeapon : WeaponBase
                     currentYawAngle = Mathf.LerpUnclamped(strikeEndAngle, chamberedEndAngle, glideT);
                     currentChamberRatio = Mathf.Lerp(0f, 1f, glideT);
 
-                    EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, 0f, out Vector3 chamberPos, out Quaternion chamberRot);
+                    EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, bladeRollAngle, 0f, out Vector3 chamberPos, out Quaternion chamberRot);
                     weaponVisual.localPosition = chamberPos;
                     weaponVisual.localRotation = chamberRot;
-                    AlignTrailTransform(currentYawAngle, 0f);
+                    AlignTrailTransform(currentYawAngle, bladeRollAngle, 0f);
 
                     yield return null;
                 }
@@ -722,10 +829,10 @@ public class ZantetsuswordWeapon : WeaponBase
 
             currentYawAngle = chamberedEndAngle;
             currentChamberRatio = 1f;
-            EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, 0f, out Vector3 finalPos, out Quaternion finalRot);
+            EvaluateArcPose(currentYawAngle, currentChamberRatio, currentEdgeRoll, orbitRadius, bladeRollAngle, 0f, out Vector3 finalPos, out Quaternion finalRot);
             weaponVisual.localPosition = finalPos;
             weaponVisual.localRotation = finalRot;
-            AlignTrailTransform(currentYawAngle, 0f);
+            AlignTrailTransform(currentYawAngle, bladeRollAngle, 0f);
         }
         finally
         {
@@ -736,37 +843,47 @@ public class ZantetsuswordWeapon : WeaponBase
     }
 
     // =========================================================
-    // 궤도 및 트레일 평면 계산 (수평 0° / 사선 '/' tiltAngle 지원)
+    // 궤도 및 트레일 평면 계산
     // =========================================================
-    private void EvaluateArcPose(float yawAngle, float chamberRatio, float edgeRollAngle, float radius, float planeTiltAngle, out Vector3 pos, out Quaternion rot)
+    private void EvaluateArcPose(
+        float yawAngle,
+        float chamberRatio,
+        float edgeRollAngle,
+        float radius,
+        float planeTiltAngle,
+        float pitchAngle,
+        out Vector3 pos,
+        out Quaternion rot)
     {
         Vector3 pivot = GetSwingCenterLocal();
 
         float rad = yawAngle * Mathf.Deg2Rad;
         Vector3 horizontalRadial = new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad));
 
-        Quaternion planeTilt = Quaternion.Euler(0f, 0f, planeTiltAngle);
-        Vector3 tiltedRadial = planeTilt * horizontalRadial;
-        Vector3 pullOffset = chamberPullOffset * chamberRatio;
+        Quaternion pitchRot = Quaternion.Euler(pitchAngle, 0f, 0f);
+        Quaternion swingSpaceRot = pitchRot * Quaternion.Euler(0f, 0f, planeTiltAngle);
+
+        Vector3 tiltedRadial = swingSpaceRot * horizontalRadial;
+        Vector3 pullOffset = pitchRot * (chamberPullOffset * chamberRatio);
 
         pos = pivot + tiltedRadial * radius + pullOffset;
 
-        Quaternion arcOrientation = planeTilt * Quaternion.Euler(bladeLayAngle, yawAngle, 0f);
+        Quaternion arcOrientation = swingSpaceRot * Quaternion.Euler(bladeLayAngle, yawAngle, 0f);
         Quaternion bladeTwist = Quaternion.Euler(0f, edgeRollAngle, 0f);
 
         rot = arcOrientation * bladeTwist;
     }
 
-    private void AlignTrailTransform(float yawAngle, float planeTiltAngle)
+    private void AlignTrailTransform(float yawAngle, float planeTiltAngle, float pitchAngle)
     {
         if (!alignTrailToSwingPlane || swingTrail == null || swingTrail.transform == weaponVisual)
             return;
 
-        Quaternion planeTilt = Quaternion.Euler(0f, 0f, planeTiltAngle);
+        Quaternion swingSpaceRot = Quaternion.Euler(pitchAngle, 0f, 0f) * Quaternion.Euler(0f, 0f, planeTiltAngle);
         Quaternion yawRot = Quaternion.Euler(0f, yawAngle, 0f);
 
-        Vector3 localPlaneNormal = planeTilt * Vector3.up;
-        Vector3 localRadialDir = planeTilt * (yawRot * Vector3.forward);
+        Vector3 localPlaneNormal = swingSpaceRot * Vector3.up;
+        Vector3 localRadialDir = swingSpaceRot * (yawRot * Vector3.forward);
 
         Vector3 worldPlaneNormal = transform.TransformDirection(localPlaneNormal);
         Vector3 worldRadialDir = transform.TransformDirection(localRadialDir);
@@ -802,50 +919,93 @@ public class ZantetsuswordWeapon : WeaponBase
         return baseCenter + swingCenterOffset;
     }
 
-    private void PerformMeleeBoxAttack(float dmgMultiplier)
+    private Vector3 GetMeleeOrigin()
     {
-        if (attackPoint == null || PlayerStats == null || dmgMultiplier <= 0f)
+        if (attackPoint != null)
+            return attackPoint.position;
+
+        Transform body = WeaponManager != null ? WeaponManager.transform : transform;
+        return body.position + body.up * defaultOriginHeight + body.forward * defaultOriginForward;
+    }
+
+    private Vector3 GetWaveSpawnOrigin()
+    {
+        if (waveSpawnPoint != null)
+            return waveSpawnPoint.position;
+
+        return GetMeleeOrigin();
+    }
+
+    private void PerformMeleeBoxAttack(float dmgMultiplier, Vector3 attackDirection)
+    {
+        if (PlayerStats == null || dmgMultiplier <= 0f)
             return;
 
         float damage = PlayerStats.AttackPower * dmgMultiplier;
 
-        Vector3 attackDirection = WeaponManager != null ? WeaponManager.transform.forward : transform.forward;
+        Vector3 dir = attackDirection.sqrMagnitude > 0.0001f
+            ? attackDirection.normalized
+            : (WeaponManager != null ? WeaponManager.transform.forward : transform.forward);
+
         Vector3 upAxis = WeaponManager != null ? WeaponManager.transform.up : transform.up;
 
-        Quaternion boxRotation = Quaternion.LookRotation(attackDirection, upAxis);
-        Vector3 boxCenter = attackPoint.position + attackDirection * (attackRange * 0.5f);
+        Quaternion boxRotation = Quaternion.LookRotation(dir, upAxis);
+        Vector3 origin = GetMeleeOrigin();
+        Vector3 boxCenter = origin + dir * (attackRange * 0.5f);
         Vector3 halfExtents = new Vector3(attackWidth * 0.5f, attackHeight * 0.5f, attackRange * 0.5f);
+
+        QueryTriggerInteraction triggerMode = hitTriggerColliders
+            ? QueryTriggerInteraction.Collide
+            : QueryTriggerInteraction.Ignore;
 
         Collider[] hits = Physics.OverlapBox(
             boxCenter,
             halfExtents,
             boxRotation,
             enemyMask,
-            QueryTriggerInteraction.Ignore
+            triggerMode
         );
 
         HashSet<IHealth> hitTargets = new HashSet<IHealth>();
+        int validHitCount = 0;
 
         foreach (Collider hit in hits)
         {
             if (hit == null)
                 continue;
 
-            IHealth health = hit.GetComponentInParent<IHealth>();
-            if (health == null)
+            PlayerStats hitPlayer = hit.GetComponentInParent<PlayerStats>();
+            if (hitPlayer != null && hitPlayer == PlayerStats)
                 continue;
 
-            PlayerStats hitPlayer = hit.GetComponentInParent<PlayerStats>();
-            if (hitPlayer == PlayerStats)
+            IHealth health = hit.GetComponentInParent<IHealth>();
+            if (health == null)
+            {
+                if (debugMeleeHitLog)
+                    Debug.Log($"[근접 판정] 콜라이더 '{hit.name}'(Layer: {LayerMask.LayerToName(hit.gameObject.layer)})는 잡혔지만 IHealth가 없음");
                 continue;
+            }
 
             if (!hitTargets.Add(health))
                 continue;
 
             if (health.IsDead)
+            {
+                if (debugMeleeHitLog)
+                    Debug.Log($"[근접 판정] 대상 '{hit.name}'은 이미 IsDead == true 상태임");
                 continue;
+            }
 
             health.TakeDamage(damage);
+            validHitCount++;
+
+            if (debugMeleeHitLog)
+                Debug.Log($"[근접 판정] '{hit.name}'에게 데미지 {damage} 전달 완료");
+        }
+
+        if (validHitCount == 0 && debugMeleeHitLog)
+        {
+            Debug.LogWarning($"[근접 판정 실패] 박스 내 감지된 콜라이더 수: {hits.Length}개 / Origin: {origin}");
         }
     }
 
@@ -854,7 +1014,7 @@ public class ZantetsuswordWeapon : WeaponBase
         attackRange = Mathf.Max(0.1f, attackRange);
         attackWidth = Mathf.Max(0.1f, attackWidth);
         attackHeight = Mathf.Max(0.1f, attackHeight);
-        normalDamageMultiplier = Mathf.Max(0f, normalDamageMultiplier);
+        damageMultiplier = Mathf.Max(0f, damageMultiplier);
         waveDamageMultiplier = Mathf.Max(0f, waveDamageMultiplier);
         iaidoMeleeDamageMultiplier = Mathf.Max(0f, iaidoMeleeDamageMultiplier);
 
@@ -875,17 +1035,14 @@ public class ZantetsuswordWeapon : WeaponBase
 
     private void OnDrawGizmosSelected()
     {
-        if (attackPoint != null)
-        {
-            Vector3 forward = WeaponManager != null ? WeaponManager.transform.forward : transform.forward;
-            Vector3 up = WeaponManager != null ? WeaponManager.transform.up : transform.up;
-            Quaternion boxRot = Quaternion.LookRotation(forward, up);
+        Vector3 origin = GetMeleeOrigin();
+        Vector3 forward = WeaponManager != null ? WeaponManager.transform.forward : transform.forward;
+        Vector3 up = WeaponManager != null ? WeaponManager.transform.up : transform.up;
+        Quaternion boxRot = Quaternion.LookRotation(forward, up);
 
-            DrawBoxGizmo(attackPoint.position, forward, boxRot, attackRange, attackWidth, attackHeight, Color.red);
-        }
+        DrawBoxGizmo(origin, forward, boxRot, attackRange, attackWidth, attackHeight, Color.red);
 
-        // 노란색: 일반 수평 횡베기 궤도 / 하늘색: '/' 사선 발도 베기 궤도
-        DrawSwingArcGizmo(swingHalfAngle + chamberExtraAngle, orbitRadius, 0f, Color.yellow);
+        DrawSwingArcGizmo(swingHalfAngle + chamberExtraAngle, orbitRadius, bladeRollAngle, Color.yellow);
         DrawSwingArcGizmo(iaidoSwingHalfAngle + iaidoChamberExtraAngle, iaidoOrbitRadius, iaidoSlashTiltAngle, Color.cyan);
     }
 

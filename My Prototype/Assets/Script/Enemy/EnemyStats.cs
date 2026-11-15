@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 public class EnemyStats : MonoBehaviour, IHealth
@@ -76,9 +76,10 @@ public class EnemyStats : MonoBehaviour, IHealth
 
     public void TakeDamage(float damage)
     {
+        Debug.Log($"[EnemyStats] TakeDamage 호출됨 | 들어온 데미지: {damage} | 현재체력: {currentHealth} | isDead: {isDead}");
+
         if (isDead)
             return;
-
 
         if (damage <= 0f)
             return;
