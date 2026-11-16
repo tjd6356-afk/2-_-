@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 857969530038867447}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.008726558, w: 0.999962}
-  m_LocalPosition: {x: 0, y: 0.52900004, z: 0.888}
+  m_LocalPosition: {x: 0, y: 0.52900004, z: -0.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -85,37 +85,41 @@ MonoBehaviour:
   weaponVisual: {fileID: 7429925763069298322}
   swingTrail: {fileID: 6027270330251885666}
   swingCenterPoint: {fileID: 0}
+  defaultOriginHeight: 1.1
+  defaultOriginForward: 0.5
   swordWavePrefab: {fileID: 5951653419178871548, guid: 087603019d67d144694acbf6cd7ce634, type: 3}
   waveSpawnPoint: {fileID: 6398106825490045675}
-  waveDamageMultiplier: 1.2
+  waveDamageMultiplier: 5
   useCustomWaveTilt: 0
-  customWaveTiltAngle: 28
+  customWaveTiltAngle: 25
   maxAimDistance: 100
   aimMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  attackRange: 4.5
+  attackRange: 4.2
   attackWidth: 6.3
   attackHeight: 1
-  normalDamageMultiplier: 1
+  damageMultiplier: 4
   baseAttackInterval: 0.5
   enemyMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  hitTriggerColliders: 1
+  debugMeleeHitLog: 1
   sheathMoveSpeedMultiplier: 0.7
   sheathLocalPosition: {x: -0.8, y: 0.7, z: 0.7}
   sheathLocalEuler: {x: -120, y: 0, z: 0}
-  sheathTransitionSpeed: 18
+  sheathTransitionSpeed: 20
   iaidoAlsoHitsMelee: 1
-  iaidoMeleeDamageMultiplier: 1.3
-  iaidoBaseAttackInterval: 0.65
+  iaidoMeleeDamageMultiplier: 1
+  iaidoBaseAttackInterval: 1
   iaidoSlashTiltAngle: 25
   iaidoSwingHalfAngle: 75
   iaidoOrbitRadius: 0.99
   iaidoChamberExtraAngle: 16
   iaidoSwingDuration: 0.05
   iaidoChamberDuration: 0.15
-  iaidoPostSlashHoldDuration: 0.1
+  iaidoPostSlashHoldDuration: 0.3
   swingCenterOffset: {x: 0.1, y: 0.7, z: 0.5}
   swingHalfAngle: 100
   orbitRadius: 1.4
@@ -126,6 +130,7 @@ MonoBehaviour:
   bladeLayAngle: 90
   bladeEdgeAngle: 90
   flipEdgeOnReturnSwing: 1
+  bladeRollAngle: 0
   alignTrailToSwingPlane: 1
   snapToForwardStartOnFirstSwing: 1
   swingCurve:
@@ -265,7 +270,7 @@ TrailRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 1, g: 1, b: 1, a: 0.19607843}
+      key0: {r: 0, g: 1, b: 1, a: 0.19607843}
       key1: {r: 1, g: 1, b: 1, a: 0}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}

@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 857969530038867447}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.008726558, w: 0.999962}
-  m_LocalPosition: {x: 0, y: 0.52900004, z: -0.458}
+  m_LocalPosition: {x: 0, y: 0.52900004, z: -0.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -84,10 +84,10 @@ MonoBehaviour:
   weaponVisual: {fileID: 7429925763069298322}
   swingTrail: {fileID: 6027270330251885666}
   swingCenterPoint: {fileID: 0}
-  attackRange: 4.5
+  attackRange: 4.2
   attackWidth: 6.3
   attackHeight: 1
-  damageMultiplier: 1
+  damageMultiplier: 4
   baseAttackInterval: 0.5
   enemyMask:
     serializedVersion: 2

@@ -45,12 +45,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba2ff19c444e0e24c858128ae84abe24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SwordWaveProjectile
-  speed: 28
-  maxLifetime: 2.5
+  speed: 60
+  maxLifetime: 0.5
   defaultTiltAngle: 25
   useLauncherTiltAngle: 1
-  hitboxSize: {x: 2.95, y: 0.62, z: 0.68}
-  extraTravelAfterFirstHit: 1.5
+  hitboxSize: {x: 2, y: 0.62, z: 1}
+  extraTravelAfterFirstHit: 0.3
   postHitSpeedMultiplier: 0.85
   postHitDamageMultiplier: 1
   enemyMask:
@@ -60,7 +60,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   hitTriggerColliders: 1
-  hitEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 6163372132465508053, guid: 62f90da9ff5a4884ca05709e9d8bfc46, type: 3}
 --- !u!1 &4971724366152045810
 GameObject:
   m_ObjectHideFlags: 0
