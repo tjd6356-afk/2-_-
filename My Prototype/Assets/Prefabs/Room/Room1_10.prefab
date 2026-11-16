@@ -153,7 +153,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomBattleController
   monsterPrefabs:
-  - {fileID: 1287184418823599086, guid: 54fc00031419f814489931bde539f366, type: 3}
+  - prefab: {fileID: 1287184418823599086, guid: 54fc00031419f814489931bde539f366, type: 3}
+    isFlying: 0
+  - prefab: {fileID: 1287184418823599086, guid: 5d00f8d9c5f89a741983a7d93a905128, type: 3}
+    isFlying: 1
   monstersToSpawn: 3
   monsterSpawnArea: {fileID: 9098265954506547165}
   spawnAreaSize: {x: 20, y: 1, z: 20}
@@ -163,6 +166,17 @@ MonoBehaviour:
     m_Bits: 4294967295
   minimumMonsterSpacing: 1.5
   maxSpawnPositionAttempts: 20
+  monsterSpawnHeight: 20
+  monsterReadyDelayMin: 0.5
+  monsterReadyDelayMax: 0.7
+  maximumFallTime: 5
+  aerialSpawnDelayMin: 2
+  aerialSpawnDelayMax: 2.2
+  aerialSpawnEffectPrefab: {fileID: 7995496726522067502, guid: 03d14ca5dfbf62a4ab6591b53b4adaea, type: 3}
+  aerialSpawnHeightMin: 6
+  aerialSpawnHeightMax: 7
+  aerialReadyDelayMin: 0.4
+  aerialReadyDelayMax: 0.7
   barrierPrefab: {fileID: 7374105281293386433, guid: c84adffdb49456244ab1d380d1ee984d, type: 3}
   barrierSpawnPoints:
   - {fileID: 6984680401882535568}
