@@ -74,6 +74,20 @@ public class TitleReplayHoverAnimation : MonoBehaviour
             1f
         );
 
+    // =========================================================
+    // Cockroach Effect
+    // =========================================================
+
+    [Header("Cockroach Effect")]
+
+    [SerializeField]
+    private TitleCockroachRainbowAnimation cockroachAnimation;
+
+
+    [Tooltip("Box 이동이 끝난 뒤 바퀴벌레 연출까지 기다리는 시간")]
+    [SerializeField]
+    private float cockroachDelay =
+        2f;
 
     // =========================================================
     // Runtime
@@ -168,6 +182,10 @@ public class TitleReplayHoverAnimation : MonoBehaviour
         isHovered =
             false;
 
+        if (cockroachAnimation != null)
+        {
+            cockroachAnimation.StopAndReset();
+        }
 
         if (animationRoutine != null)
         {
@@ -337,6 +355,40 @@ public class TitleReplayHoverAnimation : MonoBehaviour
                 targetPosition;
         }
 
+        // =====================================================
+        // 3. 바퀴벌레 연출 대기
+        // =====================================================
+
+        float cockroachTimer =
+            0f;
+
+
+        while (cockroachTimer <
+               cockroachDelay)
+        {
+            // RePlayButton에서 Mouse가 빠졌으면
+            // 연출 시작하지 않음
+            if (!isHovered)
+                yield break;
+
+
+            cockroachTimer +=
+                Time.unscaledDeltaTime;
+
+
+            yield return null;
+        }
+
+
+        // =====================================================
+        // 바퀴벌레 Rainbow Animation 시작
+        // =====================================================
+
+        if (isHovered &&
+            cockroachAnimation != null)
+        {
+            cockroachAnimation.Play();
+        }
 
         animationRoutine =
             null;

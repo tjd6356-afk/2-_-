@@ -1227,6 +1227,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  cockroachAnimation: {fileID: 1754956129}
+  cockroachDelay: 1.5
 --- !u!1 &774253426
 GameObject:
   m_ObjectHideFlags: 0
@@ -2047,6 +2049,11 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &1298022120 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
+  m_PrefabInstance: {fileID: 1754956125}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1376031486
 GameObject:
   m_ObjectHideFlags: 0
@@ -3126,11 +3133,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9859524
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.16702688
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_LocalRotation.y
@@ -3142,7 +3149,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -19.23
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -3155,7 +3162,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 4d782a8470a8bc14b96dd97a35eda2ba, type: 2}
+      objectReference: {fileID: 2100000, guid: 1f4bb81c96164fa459663264670ff6cf, type: 2}
     - target: {fileID: 919132149155446097, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_Name
       value: aaaaaa3
@@ -3163,13 +3170,34 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1754956129}
   m_SourcePrefab: {fileID: 100100000, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
 --- !u!4 &1754956126 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
   m_PrefabInstance: {fileID: 1754956125}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1754956129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1298022120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b1ea257fbe4f5342bdd4e6152ed2664, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleCockroachRainbowAnimation
+  targetRenderers: []
+  rotationAxis: {x: 0, y: 1, z: 0}
+  rotationSpeed: 360
+  colorCycleSpeed: 1.5
+  saturation: 1
+  brightness: 1
 --- !u!1001 &1820319166
 PrefabInstance:
   m_ObjectHideFlags: 0
