@@ -3,40 +3,106 @@ using UnityEngine.SceneManagement;
 
 public class TitleUIController : MonoBehaviour
 {
-    [Header("Scene")]
-    [SerializeField]
-    private string lobbySceneName = "LobbyScene";
+    // =========================================================
+    // Scene
+    // =========================================================
 
+    [Header("Scene")]
+
+    [SerializeField]
+    private string lobbySceneName =
+        "LobbyScene";
+
+
+    // =========================================================
+    // Panels
+    // =========================================================
 
     [Header("Panels")]
+
+    [SerializeField]
+    private GameObject newPlayPanel;
+
+
     [SerializeField]
     private GameObject exitPanel;
+
 
     [SerializeField]
     private GameObject settingPanel;
 
 
+    // =========================================================
+    // Player Model
+    // =========================================================
+
+    [Header("Player Model")]
+
+    [SerializeField]
+    private TitlePlayerModelAnimation
+        playerModelAnimation;
+
+
+    // =========================================================
+    // Start
+    // =========================================================
+
     private void Start()
     {
         // ==========================================
-        // 게임 시작 시 Panel 숨기기
+        // New Play
+        // ==========================================
+
+        if (newPlayPanel != null)
+        {
+            newPlayPanel.SetActive(
+                false
+            );
+        }
+
+
+        // ==========================================
+        // Exit
         // ==========================================
 
         if (exitPanel != null)
         {
-            exitPanel.SetActive(false);
+            exitPanel.SetActive(
+                false
+            );
         }
 
+
+        // ==========================================
+        // Setting
+        // ==========================================
 
         if (settingPanel != null)
         {
-            settingPanel.SetActive(false);
+            settingPanel.SetActive(
+                false
+            );
         }
 
 
-        // 타이틀에서는 마우스 사용 가능
+        // ==========================================
+        // Player Model
+        // ==========================================
+
+        if (playerModelAnimation != null)
+        {
+            playerModelAnimation
+                .MoveToOriginal();
+        }
+
+
+        // ==========================================
+        // Cursor
+        // ==========================================
+
         Cursor.lockState =
             CursorLockMode.None;
+
 
         Cursor.visible =
             true;
@@ -44,19 +110,107 @@ public class TitleUIController : MonoBehaviour
 
 
     // =========================================================
-    // PLAY
+    // NEW PLAY
     // =========================================================
 
-    public void OnPlayButton()
+    public void OnNewPlayButton()
+    {
+        if (newPlayPanel == null)
+            return;
+
+
+        // ==========================================
+        // 다른 Panel 닫기
+        // ==========================================
+
+        if (exitPanel != null)
+        {
+            exitPanel.SetActive(
+                false
+            );
+        }
+
+
+        if (settingPanel != null)
+        {
+            settingPanel.SetActive(
+                false
+            );
+        }
+
+
+        // ==========================================
+        // New Play Panel
+        // ==========================================
+
+        newPlayPanel.SetActive(
+            true
+        );
+
+
+        newPlayPanel.transform
+            .SetAsLastSibling();
+
+
+        // ==========================================
+        // Player Model 살짝 앞으로
+        // ==========================================
+
+        if (playerModelAnimation != null)
+        {
+            playerModelAnimation
+                .MoveToPanelOpenPosition();
+        }
+    }
+
+
+    // =========================================================
+    // NEW PLAY - YES
+    // =========================================================
+
+    public void OnNewPlayYesButton()
     {
         Debug.Log(
-            $"Lobby Scene Load : {lobbySceneName}"
+            $"New Game Start : {lobbySceneName}"
         );
 
 
         SceneManager.LoadScene(
             lobbySceneName
         );
+    }
+
+
+    // =========================================================
+    // NEW PLAY - NO
+    // =========================================================
+
+    public void OnNewPlayNoButton()
+    {
+        if (newPlayPanel != null)
+        {
+            newPlayPanel.SetActive(
+                false
+            );
+        }
+
+
+        // Player Model 원래 위치 복귀
+        if (playerModelAnimation != null)
+        {
+            playerModelAnimation
+                .MoveToOriginal();
+        }
+    }
+
+
+    // =========================================================
+    // 기존 PLAY 호환
+    // =========================================================
+
+    public void OnPlayButton()
+    {
+        OnNewPlayButton();
     }
 
 
@@ -70,14 +224,32 @@ public class TitleUIController : MonoBehaviour
             return;
 
 
-        // ExitPanel이 열려있다면 닫기
         if (exitPanel != null)
         {
-            exitPanel.SetActive(false);
+            exitPanel.SetActive(
+                false
+            );
         }
 
 
-        settingPanel.SetActive(true);
+        if (newPlayPanel != null)
+        {
+            newPlayPanel.SetActive(
+                false
+            );
+        }
+
+
+        if (playerModelAnimation != null)
+        {
+            playerModelAnimation
+                .MoveToOriginal();
+        }
+
+
+        settingPanel.SetActive(
+            true
+        );
     }
 
 
@@ -87,7 +259,9 @@ public class TitleUIController : MonoBehaviour
             return;
 
 
-        settingPanel.SetActive(false);
+        settingPanel.SetActive(
+            false
+        );
     }
 
 
@@ -101,19 +275,37 @@ public class TitleUIController : MonoBehaviour
             return;
 
 
-        // SettingPanel이 열려있다면 닫기
         if (settingPanel != null)
         {
-            settingPanel.SetActive(false);
+            settingPanel.SetActive(
+                false
+            );
         }
 
 
-        exitPanel.SetActive(true);
+        if (newPlayPanel != null)
+        {
+            newPlayPanel.SetActive(
+                false
+            );
+        }
+
+
+        if (playerModelAnimation != null)
+        {
+            playerModelAnimation
+                .MoveToOriginal();
+        }
+
+
+        exitPanel.SetActive(
+            true
+        );
     }
 
 
     // =========================================================
-    // EXIT - YES
+    // EXIT YES
     // =========================================================
 
     public void OnExitYesButton()
@@ -125,13 +317,11 @@ public class TitleUIController : MonoBehaviour
 
 #if UNITY_EDITOR
 
-        // Unity Editor 테스트용
         UnityEditor.EditorApplication.isPlaying =
             false;
 
 #else
 
-        // 실제 Windows Build
         Application.Quit();
 
 #endif
@@ -139,7 +329,7 @@ public class TitleUIController : MonoBehaviour
 
 
     // =========================================================
-    // EXIT - NO
+    // EXIT NO
     // =========================================================
 
     public void OnExitNoButton()
@@ -148,6 +338,8 @@ public class TitleUIController : MonoBehaviour
             return;
 
 
-        exitPanel.SetActive(false);
+        exitPanel.SetActive(
+            false
+        );
     }
 }
