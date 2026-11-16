@@ -357,6 +357,8 @@ public class ZantetsuswordWeapon : WeaponBase
         if (!isEquipped || PlayerStats == null || Mouse.current == null)
             return;
 
+
+
         bool wantSheath = Mouse.current.rightButton.isPressed && !PlayerStats.IsDead;
 
         if (wantSheath)

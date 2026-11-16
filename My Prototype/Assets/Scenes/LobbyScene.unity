@@ -887,17 +887,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ab8aa19077159704ebaeeea1069c707d, type: 3}
---- !u!114 &291192478 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8063261731425846239, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
-  m_PrefabInstance: {fileID: 6891813886822376370}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
 --- !u!114 &291192482 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1125563036819802457, guid: 9eeddd0bc43b06444b55e11a374bbe7b, type: 3}
@@ -1443,7 +1432,11 @@ PrefabInstance:
     - target: {fileID: 5821247941830255217, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: 'gameplayBehaviours.Array.data[3]'
       value: 
-      objectReference: {fileID: 291192478}
+      objectReference: {fileID: 546167775}
+    - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: weaponManager
+      value: 
+      objectReference: {fileID: 466739315}
     - target: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: cameraTransform
       value: 
@@ -1712,6 +1705,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8354316cc7351e343a892200cbd99ac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+--- !u!114 &546167775 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7132637885072722944, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+  m_PrefabInstance: {fileID: 466739312}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d703df9df19a80b42bcc4bf28a6f46c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
 --- !u!1 &581537667
 GameObject:
   m_ObjectHideFlags: 0

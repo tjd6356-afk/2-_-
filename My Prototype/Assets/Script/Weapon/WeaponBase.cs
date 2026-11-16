@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public abstract class WeaponBase : MonoBehaviour
 {
@@ -40,6 +40,11 @@ public abstract class WeaponBase : MonoBehaviour
         get;
         private set;
     }
+
+    protected bool CanUseWeapon =>
+    PlayerStats != null &&
+    !PlayerStats.IsDead &&
+    !PlayerGameplayControl.GameplayLocked;
 
 
     // =========================================================
