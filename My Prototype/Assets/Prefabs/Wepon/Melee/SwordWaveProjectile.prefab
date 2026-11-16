@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba2ff19c444e0e24c858128ae84abe24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SwordWaveProjectile
-  speed: 60
+  speed: 50
   maxLifetime: 0.5
   defaultTiltAngle: 25
   useLauncherTiltAngle: 1

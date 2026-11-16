@@ -4683,6 +4683,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1921422860}
     m_Modifications:
+    - target: {fileID: 1535402069317868484, guid: 14032c72f92091147b4f2ea100359b22, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -254
+      objectReference: {fileID: 0}
     - target: {fileID: 4052637959285967561, guid: 14032c72f92091147b4f2ea100359b22, type: 3}
       propertyPath: weaponTrees.Array.data[0].nodes.Array.data[0].weaponDescription
       value: "\uC870\uC900\uC2DC \uCD1D\uC5F4\uC774 \uD68C\uC804\uD558\uC5EC \uBE60\uB974\uAC8C
