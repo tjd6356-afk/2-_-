@@ -99,6 +99,10 @@ public class RoomBattleController : MonoBehaviour
     [SerializeField]
     private float aerialSpawnDelayMax = 2.2f;
 
+    [Tooltip("지상 적 없이 공중 적만 스폰될 때 지연 시간에서 차감할 시간 (초)")]
+    [SerializeField]
+    private float aerialOnlyDelayReduction = 1.9f;
+
     [Tooltip("공중형 몬스터 소환 시 터질 파티클 이펙트 프리팹")]
     [SerializeField]
     private GameObject aerialSpawnEffectPrefab;
@@ -276,45 +280,58 @@ public class RoomBattleController : MonoBehaviour
         aliveMonsters.Clear();
         pendingMonsterSpawns = 0;
 
+        // 1. 이번 전투에서 소환할 몬스터 목록을 먼저 추첨
+        List<MonsterSpawnEntry> selectedEntries = new List<MonsterSpawnEntry>(monstersToSpawn);
         for (int i = 0; i < monstersToSpawn; i++)
         {
             MonsterSpawnEntry entry = GetRandomMonsterEntry();
-            if (entry == null || entry.prefab == null)
+            selectedEntries.Add(entry);
+        }
+
+        // 2. 지상형 몬스터 먼저 즉시 소환
+        for (int i = 0; i < selectedEntries.Count; i++)
+        {
+            MonsterSpawnEntry entry = selectedEntries[i];
+            if (entry == null || entry.prefab == null || entry.isFlying)
                 continue;
 
-            if (entry.isFlying)
+            int monsterIndex = i + 1;
+
+            if (!TryGetSpawnPosition(out Vector3 groundPosition))
             {
-                // =================================================
-                // 공중형 몬스터: 전투 시작 후 일정 시간 뒤 지연 소환
-                // =================================================
-                pendingMonsterSpawns++;
-                StartCoroutine(DelayedAerialSpawnRoutine(entry.prefab, i + 1));
+                Debug.LogWarning($"[RoomBattle] Monster {monsterIndex}의 Spawn 위치를 찾지 못했습니다.");
+                continue;
             }
-            else
-            {
-                // =================================================
-                // 지상형 몬스터: 즉시 상공에서 생성 후 낙하 연출
-                // =================================================
-                if (!TryGetSpawnPosition(out Vector3 groundPosition))
-                {
-                    Debug.LogWarning($"[RoomBattle] Monster {i + 1}의 Spawn 위치를 찾지 못했습니다.");
-                    continue;
-                }
 
-                Vector3 airPosition = groundPosition + Vector3.up * monsterSpawnHeight;
+            Vector3 airPosition = groundPosition + Vector3.up * monsterSpawnHeight;
 
-                GameObject monster = Instantiate(
-                    entry.prefab,
-                    airPosition,
-                    entry.prefab.transform.rotation,
-                    runtimeRoot
-                );
+            GameObject monster = Instantiate(
+                entry.prefab,
+                airPosition,
+                entry.prefab.transform.rotation,
+                runtimeRoot
+            );
 
-                monster.name = $"{entry.prefab.name}_{i + 1}";
-                aliveMonsters.Add(monster);
+            monster.name = $"{entry.prefab.name}_{monsterIndex}";
+            aliveMonsters.Add(monster);
 
-                StartCoroutine(MonsterDropRoutine(monster, groundPosition));
-            }
+            StartCoroutine(MonsterDropRoutine(monster, groundPosition));
+        }
+
+        // 3. 지상 적이 한 마리도 없다면 공중 적 지연 시간 단축
+        bool hasGroundMonster = aliveMonsters.Count > 0;
+        float delayReduction = hasGroundMonster ? 0f : aerialOnlyDelayReduction;
+
+        // 4. 공중형 몬스터 소환 예약
+        for (int i = 0; i < selectedEntries.Count; i++)
+        {
+            MonsterSpawnEntry entry = selectedEntries[i];
+            if (entry == null || entry.prefab == null || !entry.isFlying)
+                continue;
+
+            int monsterIndex = i + 1;
+            pendingMonsterSpawns++;
+            StartCoroutine(DelayedAerialSpawnRoutine(entry.prefab, monsterIndex, delayReduction));
         }
     }
 
@@ -324,10 +341,15 @@ public class RoomBattleController : MonoBehaviour
 
     private IEnumerator DelayedAerialSpawnRoutine(
         GameObject prefab,
-        int monsterIndex
+        int monsterIndex,
+        float delayReduction
     )
     {
-        float spawnDelay = Random.Range(aerialSpawnDelayMin, aerialSpawnDelayMax);
+        float spawnDelay = Mathf.Max(
+            0f,
+            Random.Range(aerialSpawnDelayMin, aerialSpawnDelayMax) - delayReduction
+        );
+
         if (spawnDelay > 0f)
         {
             yield return new WaitForSeconds(spawnDelay);
@@ -758,6 +780,7 @@ public class RoomBattleController : MonoBehaviour
     {
         aerialSpawnDelayMin = Mathf.Max(0f, aerialSpawnDelayMin);
         aerialSpawnDelayMax = Mathf.Max(aerialSpawnDelayMin, aerialSpawnDelayMax);
+        aerialOnlyDelayReduction = Mathf.Max(0f, aerialOnlyDelayReduction);
 
         aerialSpawnHeightMin = Mathf.Max(0.5f, aerialSpawnHeightMin);
         aerialSpawnHeightMax = Mathf.Max(aerialSpawnHeightMin, aerialSpawnHeightMax);

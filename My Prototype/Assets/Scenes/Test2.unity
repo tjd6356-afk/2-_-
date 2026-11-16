@@ -3823,7 +3823,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70d12c9acec761144b6c979de58f95db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPickup
-  weaponPrefab: {fileID: 6813174591700717100, guid: 13ece3cbe4119dd4f8e6720426a568d6, type: 3}
+  weaponPrefab: {fileID: 6813174591700717100, guid: 6a7ffde95ca44044da7aafa695520879, type: 3}
   destroyAfterEquip: 0
 --- !u!1001 &1828074572
 PrefabInstance:
