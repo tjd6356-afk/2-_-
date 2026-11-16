@@ -839,7 +839,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uB2E4\uC5F0\uBC1C"
+  m_text: "\uD074\uB7EC\uC2A4\uD130"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 16b5f7232aa2a974d944a4a735235721, type: 2}
   m_sharedMaterial: {fileID: 1883594410789965825, guid: 16b5f7232aa2a974d944a4a735235721, type: 2}
@@ -2170,7 +2170,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2642330445410321432
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2403,7 +2403,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -249, y: -191}
+  m_AnchoredPosition: {x: -254, y: -191}
   m_SizeDelta: {x: 220, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4071794422000572190
@@ -2643,7 +2643,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6439331772182397264
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2750,7 +2750,7 @@ MonoBehaviour:
         \uB0B4\uC7A5\uD55C\uB2E4\uB124. "
       requiredMaterials:
       - requiredItem: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
-        requiredAmount: 1
+        requiredAmount: 3
       isUnlocked: 0
   - weaponType: 4
     treeUIRoot: {fileID: 3889395514295164349}
@@ -2763,16 +2763,6 @@ MonoBehaviour:
       requiredMaterials: []
       isUnlocked: 1
     - nodeButton: {fileID: 2863424283007344851}
-      weaponPrefab: {fileID: -2676240497628087340, guid: 2e3b6243770a1f748ba2025299a200ee, type: 3}
-      weaponIcon: {fileID: 0}
-      weaponDescription: "\uD3ED\uBC1C\uC2DC \uC791\uC778 \uD3ED\uD0C4 \uC5EC\uB7EC\uAC1C\uAC00
-        \uC3DF\uC544\uC9C0\uB294 \uD074\uB7EC\uC2A4\uD130 \uD3ED\uD0C4 \uB85C\uCF13\uC744
-        \uB0B4\uC7A5\uD55C \uB7F0\uCC98\uB85C \uC5C5\uADF8\uB798\uC774\uB4DC \uD55C\uB2E4\uB124."
-      requiredMaterials:
-      - requiredItem: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
-        requiredAmount: 1
-      isUnlocked: 0
-    - nodeButton: {fileID: 428365010560630365}
       weaponPrefab: {fileID: 3451030157677185385, guid: a72e9903704c9344eae9c9e22eedac65, type: 3}
       weaponIcon: {fileID: 0}
       weaponDescription: "\uD55C \uBC29\uC758 \uD654\uB825\uC774 \uC57D\uD574\uC9C0\uB294
@@ -2780,7 +2770,19 @@ MonoBehaviour:
         \uC5F0\uC18D\uC73C\uB85C \uBC1C\uC0AC\uD558\uB294 \uB7F0\uCC98\uB85C \uAC1C\uC870\uD55C\uB2E4\uB124."
       requiredMaterials:
       - requiredItem: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
-        requiredAmount: 1
+        requiredAmount: 3
+      isUnlocked: 0
+    - nodeButton: {fileID: 428365010560630365}
+      weaponPrefab: {fileID: -2676240497628087340, guid: 2e3b6243770a1f748ba2025299a200ee, type: 3}
+      weaponIcon: {fileID: 0}
+      weaponDescription: "\uD3ED\uBC1C\uC2DC \uC791\uC778 \uD3ED\uD0C4 \uC5EC\uB7EC\uAC1C\uAC00
+        \uC3DF\uC544\uC9C0\uB294 \uD074\uB7EC\uC2A4\uD130 \uD3ED\uD0C4 \uB85C\uCF13\uC744
+        \uB0B4\uC7A5\uD55C \uB7F0\uCC98\uB85C \uC5C5\uADF8\uB798\uC774\uB4DC \uD55C\uB2E4\uB124."
+      requiredMaterials:
+      - requiredItem: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
+        requiredAmount: 3
+      - requiredItem: {fileID: 11400000, guid: 0f3e274865e54c442886333ca7a8943a, type: 2}
+        requiredAmount: 15
       isUnlocked: 0
   - weaponType: 6
     treeUIRoot: {fileID: 3879892556058608481}
@@ -2802,7 +2804,7 @@ MonoBehaviour:
         \uAE30\uBCF8 \uD0C4\uD37C\uC9D0 \uBC94\uC704\uAC00 \uC881\uC544\uC9C4\uB2E4\uB124. "
       requiredMaterials:
       - requiredItem: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
-        requiredAmount: 1
+        requiredAmount: 3
       isUnlocked: 0
   - weaponType: 2
     treeUIRoot: {fileID: 3774087625354673167}
@@ -2822,7 +2824,7 @@ MonoBehaviour:
         \uBC84\uD2BC\uC73C\uB85C \uB358\uC9D1\uB2C8\uB2E4.) "
       requiredMaterials:
       - requiredItem: {fileID: 11400000, guid: 05a306f9ecf655b41becac333ab65a10, type: 2}
-        requiredAmount: 1
+        requiredAmount: 3
       isUnlocked: 0
   - weaponType: 1
     treeUIRoot: {fileID: 1881886635885765650}
@@ -4327,7 +4329,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD074\uB7EC\uC2A4\uD130\n"
+  m_text: "\uB2E4\uC5F0\uBC1C"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 16b5f7232aa2a974d944a4a735235721, type: 2}
   m_sharedMaterial: {fileID: 1883594410789965825, guid: 16b5f7232aa2a974d944a4a735235721, type: 2}

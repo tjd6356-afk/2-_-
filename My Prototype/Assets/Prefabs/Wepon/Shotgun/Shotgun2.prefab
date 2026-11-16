@@ -81,7 +81,7 @@ MonoBehaviour:
   weaponType: 6
   firePoint: {fileID: 4014565773434977279}
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
-  damageMultiplier: 3
+  damageMultiplier: 6
   fireRateMultiplier: 0.7
   pelletCount: 20
   maxSpreadRadius: 0.08

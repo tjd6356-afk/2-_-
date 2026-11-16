@@ -52,9 +52,9 @@ MonoBehaviour:
   trailPrefab: {fileID: 1725384926065184180, guid: be264bd2d3639e44382a5ce413c2eb4d, type: 3}
   explosionPrefab: {fileID: 6609252621234395040, guid: 71e5a6e5f758142458b6a36126f41eac, type: 3}
   explosionRadius: 1.8
-  directDamageMultiplier: 1
-  explosionDamageMultiplier: 0.2
-  fireRateMultiplier: 6
+  directDamageMultiplier: 0.2
+  explosionDamageMultiplier: 0.1
+  fireRateMultiplier: 5.5
   windUpTime: 3
   windDownTime: 2
   minSpoolToFire: 0
@@ -95,6 +95,7 @@ MonoBehaviour:
   aimMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  doorImpactSpeed: 45
 --- !u!1 &6629655424420040990
 GameObject:
   m_ObjectHideFlags: 0

@@ -89,7 +89,7 @@ MonoBehaviour:
   defaultOriginForward: 0.5
   swordWavePrefab: {fileID: 5951653419178871548, guid: 3a5baa878f2512d4e9ca2daf512e084d, type: 3}
   waveSpawnPoint: {fileID: 6398106825490045675}
-  waveDamageMultiplier: 1
+  waveDamageMultiplier: 1.4
   useCustomWaveTilt: 0
   customWaveTiltAngle: 25
   maxAimDistance: 100
