@@ -3198,6 +3198,8 @@ MonoBehaviour:
   colorCycleSpeed: 2.5
   saturation: 1
   brightness: 1
+  moveHeight: 1
+  moveSpeed: 8
 --- !u!1001 &1820319166
 PrefabInstance:
   m_ObjectHideFlags: 0

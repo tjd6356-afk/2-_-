@@ -99,6 +99,10 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
         propertyBlocks =
         new List<MaterialPropertyBlock>();
 
+    private Vector3 originalLocalPosition;
+
+    private float moveTime;
+
 
     // =========================================================
     // Awake
@@ -112,6 +116,9 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
         originalEuler =
             transform.localEulerAngles;
+
+        originalLocalPosition =
+            transform.localPosition;
 
 
         // ==========================================
@@ -186,6 +193,26 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
                 originalEuler.z
             );
 
+        // =====================================================
+        // 위 / 아래 이동
+        // =====================================================
+
+        moveTime +=
+            Time.unscaledDeltaTime *
+            moveSpeed;
+
+
+        float verticalOffset =
+            Mathf.Sin(
+                moveTime
+            ) *
+            moveHeight;
+
+
+        transform.localPosition =
+            originalLocalPosition +
+            Vector3.up *
+            verticalOffset;
 
         // =====================================================
         // Rainbow
@@ -238,6 +265,12 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
         currentYRotation =
             originalEuler.y;
 
+        moveTime =
+            0f;
+
+
+        transform.localPosition =
+            originalLocalPosition;
 
         // ==========================================
         // 연출 시작하는 순간 X = -65도로 눕힘
@@ -269,6 +302,8 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
         currentYRotation =
             originalEuler.y;
 
+        transform.localPosition =
+            originalLocalPosition;
 
         // 원래 자세 복구
         transform.localRotation =
