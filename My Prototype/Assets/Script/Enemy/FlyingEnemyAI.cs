@@ -12,6 +12,9 @@ public class FlyingEnemyAI : MonoBehaviour
         Recovering  // 돌진 후 다시 공중 호버링 고도로 복귀
     }
 
+    // 씬에 활성화된 공중형 적 목록 (개체 간 겹침 방지 계산용)
+    private static readonly List<FlyingEnemyAI> activeFliers = new List<FlyingEnemyAI>();
+
     // =========================================================
     // References
     // =========================================================
@@ -29,7 +32,7 @@ public class FlyingEnemyAI : MonoBehaviour
 
     [Tooltip("급강하 돌진을 시작하는 사거리")]
     [SerializeField]
-    private float attackRange = 8f;
+    private float attackRange = 8.5f;
 
     [Tooltip("주변 타겟을 다시 검색하는 주기 (초)")]
     [SerializeField]
@@ -46,16 +49,24 @@ public class FlyingEnemyAI : MonoBehaviour
     private LayerMask obstacleMask = ~0;
 
     // =========================================================
-    // Flight & Hover (공중 부유 및 추적)
+    // Flight, Hover & Random Spread (공중 부유 및 개체별 랜덤 분산)
     // =========================================================
-    [Header("Flight & Hover")]
-    [Tooltip("목표 발밑 기준으로 유지하려는 기본 비행 높이")]
+    [Header("Flight & Hover (개체별 랜덤 거리/높이)")]
+    [Tooltip("목표 발밑 기준 유지할 비행 높이 범위 (최소 ~ 최대)")]
     [SerializeField]
-    private float hoverHeightAboveTarget = 2.6f;
+    private Vector2 hoverHeightRange = new Vector2(1.7f, 3.1f);
 
-    [Tooltip("돌진 전 목표와 유지하려는 수평 거리")]
+    [Tooltip("돌진 전 목표와 유지할 수평 거리 범위 (최소 ~ 최대)")]
     [SerializeField]
-    private float preferredHorizontalDistance = 4.5f;
+    private Vector2 preferredDistanceRange = new Vector2(3.5f, 6.5f);
+
+    [Tooltip("목표 주위를 좌우로 맴도는 공전 각속도 범위 (도/초, 음수=반시계 / 양수=시계)")]
+    [SerializeField]
+    private Vector2 orbitAngularSpeedRange = new Vector2(-40f, 40f);
+
+    [Tooltip("돌진이 끝날 때마다 새로운 비행 거리·높이·선회 방향을 다시 뽑을지 여부")]
+    [SerializeField]
+    private bool rerollPositionAfterDive = true;
 
     [Tooltip("선회/회전 속도")]
     [SerializeField]
@@ -66,18 +77,29 @@ public class FlyingEnemyAI : MonoBehaviour
     [SerializeField]
     private float bodyRadius = 0.45f;
 
-    [Header("Bat Motion (박쥐 특유의 흔들림 연출)")]
-    [Tooltip("제자리/이동 중 위아래로 둥실거리는 폭")]
+    [Header("Separation (동료 간 겹침 방지)")]
+    [Tooltip("다른 공중형 적과 거리를 벌리기 시작하는 반경")]
+    [Min(0f)]
     [SerializeField]
-    private float bobAmplitude = 0.25f;
+    private float separationRadius = 2.0f;
 
-    [Tooltip("위아래 둥실거림 속도")]
+    [Tooltip("서로 가까워졌을 때 밀어내는 힘의 세기")]
+    [Min(0f)]
     [SerializeField]
-    private float bobFrequency = 3.5f;
+    private float separationStrength = 3.5f;
+
+    [Header("Bat Motion (박쥐 특유의 흔들림 연출)")]
+    [Tooltip("제자리/이동 중 위아래로 둥실거리는 폭 범위 (최소 ~ 최대)")]
+    [SerializeField]
+    private Vector2 bobAmplitudeRange = new Vector2(0.18f, 0.35f);
+
+    [Tooltip("위아래 둥실거림 속도 범위 (최소 ~ 최대)")]
+    [SerializeField]
+    private Vector2 bobFrequencyRange = new Vector2(2.8f, 4.4f);
 
     [Tooltip("추적 시 좌우로 불규칙하게 흔들리며 날아오는 폭")]
     [SerializeField]
-    private float weaveAmplitude = 0.6f;
+    private float weaveAmplitude = 0.55f;
 
     [Tooltip("좌우 흔들림 속도")]
     [SerializeField]
@@ -91,10 +113,9 @@ public class FlyingEnemyAI : MonoBehaviour
     [SerializeField]
     private float targetAimHeight = 1.0f;
 
-    [Tooltip("돌진 전 공중에서 멈춰 조준하는 전조 시간 (초)")]
-    [Min(0.05f)]
+    [Tooltip("돌진 전 공중에서 멈춰 조준하는 전조 시간 범위 (초, 최소 ~ 최대)")]
     [SerializeField]
-    private float windUpDuration = 0.45f;
+    private Vector2 windUpDurationRange = new Vector2(0.38f, 0.58f);
 
     [Tooltip("전조 동작 중 살짝 뒤로 젖히며 고도를 높이는 오프셋")]
     [SerializeField]
@@ -120,10 +141,9 @@ public class FlyingEnemyAI : MonoBehaviour
     [SerializeField]
     private float recoverDuration = 0.4f;
 
-    [Tooltip("돌진 공격 후 다음 돌진까지의 대기 시간 (초)")]
-    [Min(0.1f)]
+    [Tooltip("돌진 공격 후 다음 돌진까지의 랜덤 대기 시간 범위 (초, 최소 ~ 최대)")]
     [SerializeField]
-    private float attackCooldown = 1.6f;
+    private Vector2 attackCooldownRange = new Vector2(1.2f, 2.8f);
 
     // =========================================================
     // Hit Reaction (피격 경직 & 공중 넉백)
@@ -154,6 +174,15 @@ public class FlyingEnemyAI : MonoBehaviour
     private float baseIdleHeight;
     private float motionPhaseOffset;
 
+    // 개체별 랜덤 부여 파라미터
+    private float personalHoverHeight;
+    private float personalPreferredDistance;
+    private float personalOrbitSpeed;
+    private float personalBobAmplitude;
+    private float personalBobFrequency;
+    private float currentOrbitAngle;
+    private bool hasInitializedOrbitAngle;
+
     private AttackState attackState = AttackState.None;
     private bool hasHitDuringCurrentDive;
     private bool isStunned;
@@ -174,11 +203,20 @@ public class FlyingEnemyAI : MonoBehaviour
             enemyStats = GetComponent<EnemyStats>();
 
         motionPhaseOffset = Random.Range(0f, Mathf.PI * 2f);
+        personalBobAmplitude = Random.Range(bobAmplitudeRange.x, bobAmplitudeRange.y);
+        personalBobFrequency = Random.Range(bobFrequencyRange.x, bobFrequencyRange.y);
+
+        RollPersonalFlightParameters();
     }
 
     private void Start()
     {
         baseIdleHeight = transform.position.y;
+
+        // 동시 스폰 시 한꺼번에 돌진하지 않도록 초기 공격 타이밍 분산
+        nextTargetScanTime = Time.time + Random.Range(0f, targetScanInterval);
+        nextAttackTime = Time.time + Random.Range(0.2f, attackCooldownRange.y * 0.75f);
+
         FindNearestTarget();
 
         PlayerStats foundPlayer = FindFirstObjectByType<PlayerStats>();
@@ -188,6 +226,9 @@ public class FlyingEnemyAI : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!activeFliers.Contains(this))
+            activeFliers.Add(this);
+
         if (enemyStats == null)
             enemyStats = GetComponent<EnemyStats>();
 
@@ -199,10 +240,26 @@ public class FlyingEnemyAI : MonoBehaviour
 
     private void OnDisable()
     {
+        activeFliers.Remove(this);
+
         if (enemyStats != null)
             enemyStats.OnDamaged -= HandleDamaged;
 
         StopAllCombatRoutines();
+    }
+
+    private void RollPersonalFlightParameters()
+    {
+        personalHoverHeight = Random.Range(hoverHeightRange.x, hoverHeightRange.y);
+        personalPreferredDistance = Random.Range(preferredDistanceRange.x, preferredDistanceRange.y);
+
+        // 너무 느리게 거의 제자리에 멈추는 각속도는 피하도록 보정
+        float rawOrbit = Random.Range(orbitAngularSpeedRange.x, orbitAngularSpeedRange.y);
+        if (Mathf.Abs(rawOrbit) < 10f && (Mathf.Abs(orbitAngularSpeedRange.x) >= 10f || Mathf.Abs(orbitAngularSpeedRange.y) >= 10f))
+        {
+            rawOrbit = (Random.value < 0.5f ? -1f : 1f) * Random.Range(12f, Mathf.Max(15f, Mathf.Abs(orbitAngularSpeedRange.y)));
+        }
+        personalOrbitSpeed = rawOrbit;
     }
 
     private void StopAllCombatRoutines()
@@ -268,7 +325,7 @@ public class FlyingEnemyAI : MonoBehaviour
             return;
         }
 
-        // 공격 사거리 안 + 쿨타임 완료 + 시야 확보 시 급강하 돌진 시작
+        // 공격 사거리 안 + 랜덤 쿨타임 완료 + 시야 확보 시 급강하 돌진 시작
         if (distance <= attackRange && Time.time >= nextAttackTime && CanSeeTarget())
         {
             attackRoutine = StartCoroutine(DiveAttackRoutine());
@@ -284,15 +341,17 @@ public class FlyingEnemyAI : MonoBehaviour
     // =========================================================
     private void HoverInPlace()
     {
-        float bobOffset = Mathf.Sin((Time.time * bobFrequency) + motionPhaseOffset) * bobAmplitude;
+        float bobOffset = Mathf.Sin((Time.time * personalBobFrequency) + motionPhaseOffset) * personalBobAmplitude;
         float targetY = baseIdleHeight + bobOffset;
 
-        Vector3 desiredMove = new Vector3(0f, (targetY - transform.position.y) * 4f * Time.deltaTime, 0f);
-        MoveWithCollision(desiredMove);
+        Vector3 hoverMove = new Vector3(0f, (targetY - transform.position.y) * 4f, 0f);
+        Vector3 totalVelocity = hoverMove + ComputeSeparationVector();
+
+        MoveWithCollision(totalVelocity * Time.deltaTime);
     }
 
     // =========================================================
-    // 2. 목표 상공으로 접근 및 호버링
+    // 2. 목표 상공으로 접근 및 개체별 궤도 선회
     // =========================================================
     private void FlyTowardsHoverPosition()
     {
@@ -300,29 +359,87 @@ public class FlyingEnemyAI : MonoBehaviour
         Vector3 toEnemy = transform.position - targetPos;
         toEnemy.y = 0f;
 
-        Vector3 horizontalDir = toEnemy.sqrMagnitude > 0.001f ? toEnemy.normalized : -transform.forward;
+        if (!hasInitializedOrbitAngle)
+        {
+            currentOrbitAngle = toEnemy.sqrMagnitude > 0.001f
+                ? Mathf.Atan2(toEnemy.x, toEnemy.z) * Mathf.Rad2Deg
+                : Random.Range(0f, 360f);
+            hasInitializedOrbitAngle = true;
+        }
 
-        // 목표 앞쪽 상공의 목표 지점 계산
+        // 개체별 각속도로 목표 주위를 회전하며 접근
+        currentOrbitAngle = Mathf.Repeat(currentOrbitAngle + personalOrbitSpeed * Time.deltaTime, 360f);
+        float orbitRad = currentOrbitAngle * Mathf.Deg2Rad;
+        Vector3 horizontalDir = new Vector3(Mathf.Sin(orbitRad), 0f, Mathf.Cos(orbitRad));
+
         Vector3 desiredPos = targetPos
-            + horizontalDir * preferredHorizontalDistance
-            + Vector3.up * hoverHeightAboveTarget;
+            + horizontalDir * personalPreferredDistance
+            + Vector3.up * personalHoverHeight;
 
-        // 박쥐 특유의 위아래/좌우 흔들림 추가
         float t = Time.time + motionPhaseOffset;
         Vector3 rightAxis = Vector3.Cross(Vector3.up, -horizontalDir).normalized;
-        desiredPos += Vector3.up * (Mathf.Sin(t * bobFrequency) * bobAmplitude);
+        desiredPos += Vector3.up * (Mathf.Sin(t * personalBobFrequency) * personalBobAmplitude);
         desiredPos += rightAxis * (Mathf.Sin(t * weaveFrequency) * weaveAmplitude);
 
         Vector3 toDesired = desiredPos - transform.position;
         float distToDesired = toDesired.magnitude;
 
+        Vector3 seekVelocity = Vector3.zero;
         if (distToDesired > 0.05f)
         {
-            float moveStep = Mathf.Min(distToDesired, enemyStats.MoveSpeed * Time.deltaTime);
-            MoveWithCollision(toDesired.normalized * moveStep);
+            float desiredSpeed = Mathf.Min(enemyStats.MoveSpeed, distToDesired * 4f);
+            seekVelocity = (toDesired / distToDesired) * desiredSpeed;
         }
 
+        Vector3 separationVelocity = ComputeSeparationVector();
+        Vector3 combinedVelocity = seekVelocity + separationVelocity;
+
+        float maxMoveSpeed = enemyStats.MoveSpeed * 1.25f;
+        if (combinedVelocity.magnitude > maxMoveSpeed)
+        {
+            combinedVelocity = combinedVelocity.normalized * maxMoveSpeed;
+        }
+
+        MoveWithCollision(combinedVelocity * Time.deltaTime);
         RotateTowards(GetTargetAimPosition());
+    }
+
+    // =========================================================
+    // 개체 간 겹침 방지 반발 벡터 계산
+    // =========================================================
+    private Vector3 ComputeSeparationVector()
+    {
+        if (separationRadius <= 0.01f || separationStrength <= 0f)
+            return Vector3.zero;
+
+        Vector3 push = Vector3.zero;
+        float radiusSqr = separationRadius * separationRadius;
+
+        for (int i = 0; i < activeFliers.Count; i++)
+        {
+            FlyingEnemyAI other = activeFliers[i];
+            if (other == null || other == this || !other.isActiveAndEnabled)
+                continue;
+
+            if (other.enemyStats != null && other.enemyStats.IsDead)
+                continue;
+
+            Vector3 diff = transform.position - other.transform.position;
+            float distSqr = diff.sqrMagnitude;
+
+            if (distSqr < radiusSqr)
+            {
+                float dist = Mathf.Sqrt(distSqr);
+                Vector3 awayDir = dist > 0.0001f
+                    ? (diff / dist)
+                    : Random.onUnitSphere;
+
+                float weight = 1f - (dist / separationRadius);
+                push += awayDir * weight;
+            }
+        }
+
+        return push * separationStrength;
     }
 
     // =========================================================
@@ -333,9 +450,11 @@ public class FlyingEnemyAI : MonoBehaviour
         hasHitDuringCurrentDive = false;
 
         // -----------------------------------------------------
-        // Phase A: 전조 동작 (공중에서 멈춰 뒤로 젖히며 조준)
+        // Phase A: 전조 동작 (랜덤 전조 시간 동안 공중에서 조준)
         // -----------------------------------------------------
         attackState = AttackState.WindUp;
+        float currentWindUpDuration = Random.Range(windUpDurationRange.x, windUpDurationRange.y);
+
         Vector3 windUpStartPos = transform.position;
         Vector3 lockedAimPos = GetTargetAimPosition();
 
@@ -348,7 +467,7 @@ public class FlyingEnemyAI : MonoBehaviour
             + backDir * Mathf.Abs(windUpOffset.z);
 
         float elapsed = 0f;
-        while (elapsed < windUpDuration)
+        while (elapsed < currentWindUpDuration)
         {
             if (enemyStats == null || enemyStats.IsDead || currentTarget == null)
             {
@@ -358,15 +477,15 @@ public class FlyingEnemyAI : MonoBehaviour
             }
 
             elapsed += Time.deltaTime;
-            float ratio = Mathf.Clamp01(elapsed / windUpDuration);
+            float ratio = Mathf.Clamp01(elapsed / currentWindUpDuration);
             float ease = 1f - Mathf.Pow(1f - ratio, 2f);
 
-            // 전조 중에도 플레이어의 최신 위치를 추적해 조준
             lockedAimPos = GetTargetAimPosition();
             RotateTowards(lockedAimPos);
 
             Vector3 nextPos = Vector3.Lerp(windUpStartPos, windUpTargetPos, ease);
-            MoveWithCollision(nextPos - transform.position);
+            Vector3 separationStep = ComputeSeparationVector() * (0.4f * Time.deltaTime);
+            MoveWithCollision((nextPos - transform.position) + separationStep);
 
             yield return null;
         }
@@ -396,18 +515,17 @@ public class FlyingEnemyAI : MonoBehaviour
                 yield break;
             }
 
+            Vector3 prevPos = transform.position;
             float step = diveSpeed * Time.deltaTime;
             Vector3 actualMoved = MoveWithCollision(diveDir * step, out bool hitWallOrFloor);
             traveledDistance += actualMoved.magnitude;
 
-            // 돌진 경로 중 근접 타격 판정
-            if (!hasHitDuringCurrentDive && TryDealMeleeDiveDamage())
+            if (!hasHitDuringCurrentDive && TryDealMeleeDiveDamage(prevPos, transform.position))
             {
                 hasHitDuringCurrentDive = true;
-                break; // 적중 시 바로 상승 복귀 단계로 전환
+                break;
             }
 
-            // 바닥이나 벽에 부딪히면 돌진 중단
             if (hitWallOrFloor)
                 break;
 
@@ -415,13 +533,18 @@ public class FlyingEnemyAI : MonoBehaviour
         }
 
         // -----------------------------------------------------
-        // Phase C: 다시 공중 호버링 높이로 복귀
+        // Phase C: 다시 공중 호버링 높이로 복귀 + 다음 위치/쿨타임 랜덤 재설정
         // -----------------------------------------------------
         attackState = AttackState.Recovering;
 
+        if (rerollPositionAfterDive)
+        {
+            RollPersonalFlightParameters();
+        }
+
         Vector3 recoverStartPos = transform.position;
         float targetHoverY = currentTarget != null
-            ? currentTarget.position.y + hoverHeightAboveTarget
+            ? currentTarget.position.y + personalHoverHeight
             : Mathf.Max(baseIdleHeight, recoverStartPos.y + 1.5f);
 
         Vector3 recoverEndPos = new Vector3(
@@ -445,7 +568,8 @@ public class FlyingEnemyAI : MonoBehaviour
             float smoothT = 1f - Mathf.Pow(1f - t, 2f);
 
             Vector3 nextPos = Vector3.Lerp(recoverStartPos, recoverEndPos, smoothT);
-            MoveWithCollision(nextPos - transform.position);
+            Vector3 separationStep = ComputeSeparationVector() * (0.6f * Time.deltaTime);
+            MoveWithCollision((nextPos - transform.position) + separationStep);
 
             if (currentTarget != null)
                 RotateTowards(GetTargetAimPosition());
@@ -453,18 +577,26 @@ public class FlyingEnemyAI : MonoBehaviour
             yield return null;
         }
 
+        // 복귀 완료 후 현재 각도에서 이어서 선회하도록 갱신
+        hasInitializedOrbitAngle = false;
         baseIdleHeight = transform.position.y;
-        nextAttackTime = Time.time + attackCooldown;
+        nextAttackTime = Time.time + Random.Range(attackCooldownRange.x, attackCooldownRange.y);
         attackState = AttackState.None;
         attackRoutine = null;
     }
 
-    private bool TryDealMeleeDiveDamage()
+    private bool TryDealMeleeDiveDamage(Vector3 startPos, Vector3 endPos)
     {
-        if (enemyStats == null || enemyStats.IsDead)
+        if (enemyStats == null || enemyStats.IsDead || enemyStats.AttackPower <= 0f)
             return false;
 
-        Collider[] hits = Physics.OverlapSphere(transform.position, meleeHitRadius, targetMask, QueryTriggerInteraction.Ignore);
+        Collider[] hits = Physics.OverlapCapsule(
+            startPos,
+            endPos,
+            meleeHitRadius,
+            targetMask,
+            QueryTriggerInteraction.Collide
+        );
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -473,16 +605,25 @@ public class FlyingEnemyAI : MonoBehaviour
                 continue;
 
             PlayerStats player = hit.GetComponentInParent<PlayerStats>();
-            NPCStats npc = hit.GetComponentInParent<NPCStats>();
-
-            if ((player != null && !player.IsDead) || (npc != null && !npc.IsDead))
+            if (player != null && !player.IsDead)
             {
-                IHealth targetHealth = hit.GetComponentInParent<IHealth>();
-                if (targetHealth != null && !targetHealth.IsDead)
+                player.TakeDamage(enemyStats.AttackPower);
+                return true;
+            }
+
+            NPCStats npc = hit.GetComponentInParent<NPCStats>();
+            if (npc != null && !npc.IsDead)
+            {
+                IHealth npcHealth = hit.GetComponentInParent<IHealth>();
+                if (npcHealth != null)
                 {
-                    targetHealth.TakeDamage(enemyStats.AttackPower);
-                    return true;
+                    npcHealth.TakeDamage(enemyStats.AttackPower);
                 }
+                else
+                {
+                    npc.SendMessage("TakeDamage", enemyStats.AttackPower, SendMessageOptions.DontRequireReceiver);
+                }
+                return true;
             }
         }
 
@@ -504,7 +645,6 @@ public class FlyingEnemyAI : MonoBehaviour
                 playerTransform = foundPlayer.transform;
         }
 
-        // 돌진 중 맞으면 돌진 즉시 취소
         if (attackRoutine != null)
         {
             StopCoroutine(attackRoutine);
@@ -527,7 +667,7 @@ public class FlyingEnemyAI : MonoBehaviour
         if (playerTransform != null)
         {
             Vector3 away = transform.position - playerTransform.position;
-            away.y = 0.25f; // 공중형 적은 뒤로 밀리면서 살짝 위로 튕김
+            away.y = 0.25f;
             if (away.sqrMagnitude > 0.001f)
                 knockbackDir = away.normalized;
         }
@@ -555,6 +695,7 @@ public class FlyingEnemyAI : MonoBehaviour
         if (remainStun > 0f)
             yield return new WaitForSeconds(remainStun);
 
+        hasInitializedOrbitAngle = false;
         baseIdleHeight = transform.position.y;
         isStunned = false;
         stunRoutine = null;
@@ -592,10 +733,10 @@ public class FlyingEnemyAI : MonoBehaviour
             if (col == null || col.transform.IsChildOf(transform))
                 continue;
 
-            // 캐릭터/투사체는 장애물 정지 대상에서 제외
             if (col.GetComponentInParent<PlayerStats>() != null ||
                 col.GetComponentInParent<NPCStats>() != null ||
                 col.GetComponentInParent<EnemyStats>() != null ||
+                col.GetComponentInParent<WeaponBase>() != null ||
                 col.GetComponentInParent<Projectile>() != null)
             {
                 continue;
@@ -615,7 +756,7 @@ public class FlyingEnemyAI : MonoBehaviour
     }
 
     // =========================================================
-    // 타겟 탐색 / 시야 / 회전 헬퍼 (기존 EnemyAI와 동일 규격)
+    // 타겟 탐색 / 시야 / 회전 헬퍼
     // =========================================================
     private void FindNearestTarget()
     {
@@ -673,6 +814,11 @@ public class FlyingEnemyAI : MonoBehaviour
             }
         }
 
+        if (bestTarget != currentTarget)
+        {
+            hasInitializedOrbitAngle = false;
+        }
+
         currentTarget = bestTarget;
         targetPlayer = bestPlayer;
         targetNPC = bestNPC;
@@ -697,6 +843,7 @@ public class FlyingEnemyAI : MonoBehaviour
         currentTarget = null;
         targetPlayer = null;
         targetNPC = null;
+        hasInitializedOrbitAngle = false;
     }
 
     private void RotateTowards(Vector3 worldTarget)
@@ -767,6 +914,30 @@ public class FlyingEnemyAI : MonoBehaviour
         return false;
     }
 
+    private void OnValidate()
+    {
+        hoverHeightRange.x = Mathf.Max(0.5f, hoverHeightRange.x);
+        hoverHeightRange.y = Mathf.Max(hoverHeightRange.x, hoverHeightRange.y);
+
+        preferredDistanceRange.x = Mathf.Max(1f, preferredDistanceRange.x);
+        preferredDistanceRange.y = Mathf.Max(preferredDistanceRange.x, preferredDistanceRange.y);
+
+        if (orbitAngularSpeedRange.y < orbitAngularSpeedRange.x)
+            orbitAngularSpeedRange.y = orbitAngularSpeedRange.x;
+
+        bobAmplitudeRange.x = Mathf.Max(0f, bobAmplitudeRange.x);
+        bobAmplitudeRange.y = Mathf.Max(bobAmplitudeRange.x, bobAmplitudeRange.y);
+
+        bobFrequencyRange.x = Mathf.Max(0.1f, bobFrequencyRange.x);
+        bobFrequencyRange.y = Mathf.Max(bobFrequencyRange.x, bobFrequencyRange.y);
+
+        windUpDurationRange.x = Mathf.Max(0.05f, windUpDurationRange.x);
+        windUpDurationRange.y = Mathf.Max(windUpDurationRange.x, windUpDurationRange.y);
+
+        attackCooldownRange.x = Mathf.Max(0.1f, attackCooldownRange.x);
+        attackCooldownRange.y = Mathf.Max(attackCooldownRange.x, attackCooldownRange.y);
+    }
+
     // =========================================================
     // Scene Debug
     // =========================================================
@@ -780,6 +951,9 @@ public class FlyingEnemyAI : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, meleeHitRadius);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, separationRadius);
 
         if (Application.isPlaying && attackState == AttackState.Diving)
         {

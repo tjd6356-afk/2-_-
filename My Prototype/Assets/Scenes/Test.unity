@@ -1178,7 +1178,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7306682803856176399, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -3.85
       objectReference: {fileID: 0}
     - target: {fileID: 7306682803856176399, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1186,7 +1186,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7306682803856176399, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -6.74
       objectReference: {fileID: 0}
     - target: {fileID: 7306682803856176399, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2363,6 +2363,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a43b92beee0f0044397d88fa9d98e00c, type: 3}
+--- !u!1 &1377380429 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4291878487679062315, guid: 14032c72f92091147b4f2ea100359b22, type: 3}
+  m_PrefabInstance: {fileID: 2143946476}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1391177171
 GameObject:
   m_ObjectHideFlags: 0
@@ -3302,7 +3307,7 @@ PrefabInstance:
     - target: {fileID: 5956689484520826921, guid: 68a513216baccdf479efd72143379fd7, type: 3}
       propertyPath: upgradeUIPanel
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1377380429}
     - target: {fileID: 5956689484520826921, guid: 68a513216baccdf479efd72143379fd7, type: 3}
       propertyPath: interactionCamera
       value: 

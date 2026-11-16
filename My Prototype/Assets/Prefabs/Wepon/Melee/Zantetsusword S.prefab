@@ -98,7 +98,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   attackRange: 4.2
   attackWidth: 6.3
-  attackHeight: 1
+  attackHeight: 1.5
   damageMultiplier: 2
   baseAttackInterval: 0.2
   enemyMask:
