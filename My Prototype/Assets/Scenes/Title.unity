@@ -1146,6 +1146,7 @@ GameObject:
   - component: {fileID: 734484500}
   - component: {fileID: 734484501}
   - component: {fileID: 734484502}
+  - component: {fileID: 734484503}
   m_Layer: 0
   m_Name: TitleManager
   m_TagString: Untagged
@@ -1181,6 +1182,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleUIController
   lobbySceneName: LobbyScene
+  doorTransition: {fileID: 734484503}
   newPlayPanel: {fileID: 1596516469}
   exitPanel: {fileID: 774253426}
   settingPanel: {fileID: 0}
@@ -1229,6 +1231,81 @@ MonoBehaviour:
     m_RotationOrder: 4
   cockroachAnimation: {fileID: 1754956129}
   cockroachDelay: 10
+--- !u!114 &734484503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 734484499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0e9434139fbe6b4296d65ac5acd5d98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleDoorTransition
+  titleCamera: {fileID: 1155837000}
+  door2: {fileID: 2075058900}
+  titleButtons:
+  - {fileID: 1626597850}
+  - {fileID: 1066613474}
+  replayHoverAnimation: {fileID: 734484502}
+  cameraTargetY: -2.34
+  alignCameraXToDoor: 1
+  doorLookHeightOffset: 0
+  cameraAlignDuration: 0.7
+  cameraPassDistance: 2
+  cameraForwardDuration: 2
+  sceneLoadZ: 7.88
+  doorOpenXDistance: 3
+  doorOpenDuration: 1.3
+  cameraCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  doorCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &774253426
 GameObject:
   m_ObjectHideFlags: 0
@@ -1684,7 +1761,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 734484501}
         m_TargetAssemblyTypeName: TitleUIController, Assembly-CSharp
-        m_MethodName: OnNewPlayYesButton
+        m_MethodName: OnReplayButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

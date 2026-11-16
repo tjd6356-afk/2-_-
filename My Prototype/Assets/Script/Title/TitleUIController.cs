@@ -13,6 +13,11 @@ public class TitleUIController : MonoBehaviour
     private string lobbySceneName =
         "LobbyScene";
 
+    [Header("Title Transition")]
+
+    [SerializeField]
+    private TitleDoorTransition
+    doorTransition;
 
     // =========================================================
     // Panels
@@ -170,12 +175,26 @@ public class TitleUIController : MonoBehaviour
 
     public void OnNewPlayYesButton()
     {
-        Debug.Log(
-            $"New Game Start : {lobbySceneName}"
-        );
+        if (doorTransition == null)
+        {
+            Debug.LogError(
+                "[Title] TitleDoorTransition이 없습니다."
+            );
+
+            return;
+        }
 
 
-        SceneManager.LoadScene(
+        // New Play Panel 숨김
+        if (newPlayPanel != null)
+        {
+            newPlayPanel.SetActive(
+                false
+            );
+        }
+
+
+        doorTransition.PlayTransition(
             lobbySceneName
         );
     }
@@ -340,6 +359,27 @@ public class TitleUIController : MonoBehaviour
 
         exitPanel.SetActive(
             false
+        );
+    }
+
+    // =========================================================
+    // REPLAY
+    // =========================================================
+
+    public void OnReplayButton()
+    {
+        if (doorTransition == null)
+        {
+            Debug.LogError(
+                "[Title] TitleDoorTransition이 없습니다."
+            );
+
+            return;
+        }
+
+
+        doorTransition.PlayTransition(
+            lobbySceneName
         );
     }
 }

@@ -103,7 +103,7 @@ public class TitleReplayHoverAnimation : MonoBehaviour
 
     private Coroutine animationRoutine;
 
-
+    private bool transitionLocked;
     private bool isHovered;
 
 
@@ -146,6 +146,9 @@ public class TitleReplayHoverAnimation : MonoBehaviour
 
     public void EnterHover()
     {
+        if (transitionLocked)
+            return;
+
         if (isHovered)
             return;
 
@@ -175,6 +178,9 @@ public class TitleReplayHoverAnimation : MonoBehaviour
 
     public void ExitHover()
     {
+        if (transitionLocked)
+            return;
+
         if (!isHovered)
             return;
 
@@ -520,5 +526,39 @@ public class TitleReplayHoverAnimation : MonoBehaviour
 
         animationRoutine =
             null;
+    }
+
+    // =========================================================
+    // Scene Transition
+    // =========================================================
+
+    public void LockForSceneTransition()
+    {
+        transitionLocked =
+            true;
+
+
+        isHovered =
+            false;
+
+
+        if (animationRoutine != null)
+        {
+            StopCoroutine(
+                animationRoutine
+            );
+
+
+            animationRoutine =
+                null;
+        }
+
+
+        // 바퀴벌레 연출도 정지
+        if (cockroachAnimation != null)
+        {
+            cockroachAnimation
+                .StopAndReset();
+        }
     }
 }
