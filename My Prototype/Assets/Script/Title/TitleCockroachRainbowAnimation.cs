@@ -9,7 +9,7 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
     [Header("Renderers")]
 
-    [Tooltip("비워두면 이 오브젝트와 자식의 Renderer를 자동으로 찾습니다.")]
+    [Tooltip("비워두면 자식 Renderer를 자동으로 찾습니다.")]
     [SerializeField]
     private List<Renderer> targetRenderers =
         new List<Renderer>();
@@ -21,15 +21,15 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
     [Header("Rotation")]
 
-    [Tooltip("회전시킬 로컬 축")]
+    [Tooltip("연출 시작 시 고정할 X축 각도")]
     [SerializeField]
-    private Vector3 rotationAxis =
-        Vector3.up;
+    private float fixedTiltX =
+        -65f;
 
 
-    [Tooltip("초당 회전 각도")]
+    [Tooltip("Y축 초당 회전 속도")]
     [SerializeField]
-    private float rotationSpeed =
+    private float yRotationSpeed =
         360f;
 
 
@@ -39,23 +39,39 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
     [Header("Rainbow")]
 
-    [Tooltip("색상이 한 바퀴 순환하는 속도")]
+    [Tooltip("색상 변화 속도")]
     [SerializeField]
     private float colorCycleSpeed =
         0.5f;
 
 
-    [Tooltip("색상의 채도")]
-    [SerializeField, Range(0f, 1f)]
+    [Range(0f, 1f)]
+    [SerializeField]
     private float saturation =
         1f;
 
 
-    [Tooltip("색상의 밝기")]
-    [SerializeField, Range(0f, 1f)]
+    [Range(0f, 1f)]
+    [SerializeField]
     private float brightness =
         1f;
 
+    // =========================================================
+    // Up / Down Movement
+    // =========================================================
+
+    [Header("Up Down Movement")]
+
+    [Tooltip("위아래로 움직이는 최대 거리")]
+    [SerializeField]
+    private float moveHeight =
+        0.4f;
+
+
+    [Tooltip("위아래 왕복 속도")]
+    [SerializeField]
+    private float moveSpeed =
+        2f;
 
     // =========================================================
     // Runtime
@@ -64,7 +80,16 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
     private bool isPlaying;
 
 
+    // 연출 시작 전 원래 회전
     private Quaternion originalRotation;
+
+
+    // 원래 Euler 값
+    private Vector3 originalEuler;
+
+
+    // Y축 누적 회전값
+    private float currentYRotation;
 
 
     private float hue;
@@ -83,6 +108,10 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
     {
         originalRotation =
             transform.localRotation;
+
+
+        originalEuler =
+            transform.localEulerAngles;
 
 
         // ==========================================
@@ -114,10 +143,6 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
                 new MaterialPropertyBlock()
             );
         }
-
-
-        isPlaying =
-            false;
     }
 
 
@@ -132,19 +157,38 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
 
         // =====================================================
-        // 회전
+        // Y축 회전값만 증가
         // =====================================================
 
-        transform.Rotate(
-            rotationAxis,
-            rotationSpeed *
-            Time.unscaledDeltaTime,
-            Space.Self
-        );
+        currentYRotation +=
+            yRotationSpeed *
+            Time.unscaledDeltaTime;
+
+
+        currentYRotation =
+            Mathf.Repeat(
+                currentYRotation,
+                360f
+            );
 
 
         // =====================================================
-        // Rainbow Color
+        // X축은 항상 -65도 고정
+        //
+        // Y축만 계속 회전
+        // Z축은 원래 값 유지
+        // =====================================================
+
+        transform.localRotation =
+            Quaternion.Euler(
+                fixedTiltX,
+                currentYRotation,
+                originalEuler.z
+            );
+
+
+        // =====================================================
+        // Rainbow
         // =====================================================
 
         hue +=
@@ -179,8 +223,32 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
     public void Play()
     {
+        if (isPlaying)
+            return;
+
+
         isPlaying =
             true;
+
+
+        // ==========================================
+        // 현재 Y축을 시작점으로 사용
+        // ==========================================
+
+        currentYRotation =
+            originalEuler.y;
+
+
+        // ==========================================
+        // 연출 시작하는 순간 X = -65도로 눕힘
+        // ==========================================
+
+        transform.localRotation =
+            Quaternion.Euler(
+                fixedTiltX,
+                currentYRotation,
+                originalEuler.z
+            );
     }
 
 
@@ -198,10 +266,16 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
             0f;
 
 
+        currentYRotation =
+            originalEuler.y;
+
+
+        // 원래 자세 복구
         transform.localRotation =
             originalRotation;
 
 
+        // 원래 Material 색 복구
         ClearColorOverride();
     }
 
@@ -235,14 +309,14 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
             );
 
 
-            // URP Lit
+            // URP
             block.SetColor(
                 "_BaseColor",
                 color
             );
 
 
-            // Built-in Standard 대응
+            // Standard Shader
             block.SetColor(
                 "_Color",
                 color
@@ -257,7 +331,7 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
 
     // =========================================================
-    // 원래 Material 상태로 복구
+    // Material 복구
     // =========================================================
 
     private void ClearColorOverride()
@@ -283,10 +357,10 @@ public class TitleCockroachRainbowAnimation : MonoBehaviour
 
     private void OnValidate()
     {
-        rotationSpeed =
+        yRotationSpeed =
             Mathf.Max(
                 0f,
-                rotationSpeed
+                yRotationSpeed
             );
 
 

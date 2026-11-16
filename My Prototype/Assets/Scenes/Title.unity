@@ -3121,7 +3121,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.602
+      value: -0.147
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3193,9 +3193,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleCockroachRainbowAnimation
   targetRenderers: []
-  rotationAxis: {x: 0, y: 1, z: 0}
-  rotationSpeed: 360
-  colorCycleSpeed: 1.5
+  fixedTiltX: -65
+  yRotationSpeed: 800
+  colorCycleSpeed: 2.5
   saturation: 1
   brightness: 1
 --- !u!1001 &1820319166
