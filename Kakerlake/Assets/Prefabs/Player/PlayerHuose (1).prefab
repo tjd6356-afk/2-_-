@@ -121,7 +121,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2492902924318218505}
-  - {fileID: 6660953927190580745}
   m_Father: {fileID: 5402233463809076476}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8530701020885841720
@@ -921,100 +920,6 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 60a6a344a10071e4390b12615a4465aa, type: 3}
   m_PrefabInstance: {fileID: 6378177194051815840}
-  m_PrefabAsset: {fileID: 0}
---- !u!1001 &6627837620817586658
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 2052109972322482333}
-    m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -0.147
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.355
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -7511558181221131132, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 1f4bb81c96164fa459663264670ff6cf, type: 2}
-    - target: {fileID: 919132149155446097, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      propertyPath: m_Name
-      value: aaaaaa3
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 215088398009057037}
-  m_SourcePrefab: {fileID: 100100000, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
---- !u!1 &6285801197433541811 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-  m_PrefabInstance: {fileID: 6627837620817586658}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &215088398009057037
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6285801197433541811}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b1ea257fbe4f5342bdd4e6152ed2664, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TitleCockroachRainbowAnimation
-  targetRenderers: []
-  fixedTiltX: -65
-  yRotationSpeed: 800
-  colorCycleSpeed: 2.5
-  saturation: 1
-  brightness: 1
-  moveHeight: 1
-  moveSpeed: 8
---- !u!4 &6660953927190580745 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 09bbdc3feccbd8244b9a4dfc6d972f9a, type: 3}
-  m_PrefabInstance: {fileID: 6627837620817586658}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6670626328303151286
 PrefabInstance:
