@@ -45,8 +45,18 @@ public class MeleeWeapon : WeaponBase
     [SerializeField]
     private float baseAttackInterval = 0.5f;
 
+    
+
     [SerializeField]
     private LayerMask enemyMask = ~0;
+
+    [Tooltip("근접 공격으로 타격할 문(DoorController) 레이어")]
+    [SerializeField]
+    private LayerMask doorMask = ~0;
+
+    [Tooltip("문 타격 시 전달할 충격 속도 (0 이하이면 DoorController 기본값 사용)")]
+    [SerializeField]
+    private float doorImpactSpeed = 30f;
 
     // =========================================================
     // 가드 설정 (우클릭 홀드)
@@ -561,27 +571,49 @@ public class MeleeWeapon : WeaponBase
         float damage = PlayerStats.AttackPower * damageMultiplier;
 
         Vector3 attackDirection = WeaponManager != null ? WeaponManager.transform.forward : transform.forward;
+        Vector3 rightAxis = WeaponManager != null ? WeaponManager.transform.right : transform.right;
         Vector3 upAxis = WeaponManager != null ? WeaponManager.transform.up : transform.up;
 
         Quaternion boxRotation = Quaternion.LookRotation(attackDirection, upAxis);
         Vector3 boxCenter = attackPoint.position + attackDirection * (attackRange * 0.5f);
         Vector3 halfExtents = new Vector3(attackWidth * 0.5f, attackHeight * 0.5f, attackRange * 0.5f);
 
+        LayerMask combinedMask = enemyMask | doorMask;
+
         Collider[] hits = Physics.OverlapBox(
             boxCenter,
             halfExtents,
             boxRotation,
-            enemyMask,
+            combinedMask,
             QueryTriggerInteraction.Ignore
         );
 
+        // 전방 밀어내기 방향에 현재 휘두르는 좌/우 방향 성분을 살짝 더해 자연스럽게 젖혀지도록 계산
+        bool nextSwingToLeft = !isSwungToLeft;
+        float swingHorizontalSign = nextSwingToLeft ? -1f : 1f;
+        Vector3 doorHitDirection = (attackDirection + rightAxis * (swingHorizontalSign * 0.45f)).normalized;
+
         HashSet<IHealth> hitTargets = new HashSet<IHealth>();
+        HashSet<DoorController> hitDoors = new HashSet<DoorController>();
 
         foreach (Collider hit in hits)
         {
             if (hit == null)
                 continue;
 
+            // 1. 문(DoorController) 타격 처리
+            DoorController door = hit.GetComponentInParent<DoorController>();
+            if (door != null)
+            {
+                if (hitDoors.Add(door))
+                {
+                    Vector3 hitPoint = GetClosestPointSafe(hit, boxCenter);
+                    door.HitByMelee(doorHitDirection, hitPoint, doorImpactSpeed);
+                }
+                continue;
+            }
+
+            // 2. 적/체력 대상 타격 처리
             IHealth health = hit.GetComponentInParent<IHealth>();
             if (health == null)
                 continue;
@@ -598,6 +630,17 @@ public class MeleeWeapon : WeaponBase
 
             health.TakeDamage(damage);
         }
+    }
+
+    private Vector3 GetClosestPointSafe(Collider col, Vector3 point)
+    {
+        if (col is BoxCollider || col is SphereCollider || col is CapsuleCollider ||
+            (col is MeshCollider meshCol && meshCol.convex))
+        {
+            return col.ClosestPoint(point);
+        }
+
+        return col.ClosestPointOnBounds(point);
     }
 
     private void OnValidate()

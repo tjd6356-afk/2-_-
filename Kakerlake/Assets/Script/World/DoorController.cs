@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -134,8 +134,17 @@ public class DoorController : MonoBehaviour
     private bool allowPlayerInteraction = true;
 
 
+    
+
     [SerializeField]
     private bool reactToProjectile = true;
+
+    [SerializeField]
+    private bool reactToMelee = true;
+
+    [Tooltip("근접 공격 피격 시 문에 전달할 기본 충격 속도")]
+    [SerializeField]
+    private float meleeImpactSpeed = 30f;
 
 
     // =========================================================
@@ -432,183 +441,106 @@ public class DoorController : MonoBehaviour
         if (!reactToProjectile)
             return;
 
+        ApplyImpactImpulse(
+            projectileVelocity,
+            hitPoint
+        );
+    }
 
+    // =========================================================
+    // Melee Hit
+    // =========================================================
+
+    public void HitByMelee(
+        Vector3 hitDirection,
+        Vector3 hitPoint,
+        float customImpactSpeed = -1f
+    )
+    {
+        if (!reactToMelee)
+            return;
+
+        if (hitDirection.sqrMagnitude <= 0.0001f)
+            return;
+
+        float speed =
+            customImpactSpeed > 0f
+                ? customImpactSpeed
+                : meleeImpactSpeed;
+
+        ApplyImpactImpulse(
+            hitDirection.normalized * speed,
+            hitPoint
+        );
+    }
+
+    private void ApplyImpactImpulse(
+        Vector3 impactVelocity,
+        Vector3 hitPoint
+    )
+    {
         if (doorPivot == null)
             return;
 
-
-        // ==========================================
         // E키 애니메이션이 진행 중이라면 중단
-        // ==========================================
-
         if (manualRoutine != null)
         {
-            StopCoroutine(
-                manualRoutine
-            );
-
-
-            manualRoutine =
-                null;
+            StopCoroutine(manualRoutine);
+            manualRoutine = null;
         }
 
+        isManualMoving = false;
 
-        isManualMoving =
-            false;
-
-
-        // ==========================================
-        // 총알 속도
-        // ==========================================
-
-        float projectileSpeed =
-            projectileVelocity.magnitude;
-
-
-        if (projectileSpeed <= 0.01f)
+        float impactSpeed = impactVelocity.magnitude;
+        if (impactSpeed <= 0.01f)
             return;
 
-
-        Vector3 forceDirection =
-            projectileVelocity.normalized;
-
-
-        // 수직 성분은 문의 좌우 회전에 필요 없음
-        forceDirection.y =
-            0f;
-
+        Vector3 forceDirection = impactVelocity.normalized;
+        forceDirection.y = 0f;
 
         if (forceDirection.sqrMagnitude <= 0.001f)
             return;
 
-
         forceDirection.Normalize();
 
+        // 경첩 → 맞은 위치
+        Vector3 lever = hitPoint - doorPivot.position;
+        lever.y = 0f;
 
-        // ==========================================
-        // 경첩 → 총알 맞은 위치
-        // ==========================================
+        float leverStrength = Mathf.Clamp01(
+            lever.magnitude / Mathf.Max(0.01f, fullForceLeverDistance)
+        );
 
-        Vector3 lever =
-            hitPoint -
-            doorPivot.position;
+        Vector3 localLever = doorPivot.InverseTransformDirection(lever);
+        Vector3 localForceDirection = doorPivot.InverseTransformDirection(forceDirection);
 
-
-        lever.y =
-            0f;
-
-
-        // ==========================================
-        // 경첩에서 먼 곳을 맞을수록 더 강하게
-        // ==========================================
-
-        float leverStrength =
-            Mathf.Clamp01(
-                lever.magnitude /
-                Mathf.Max(
-                    0.01f,
-                    fullForceLeverDistance
-                )
-            );
-
-
-        // =====================================================
-        // Door Pivot의 Local 좌표 기준으로 회전 방향 계산
-        // =====================================================
-
-        Vector3 localLever =
-            doorPivot.InverseTransformDirection(
-                lever
-            );
-
-
-        Vector3 localForceDirection =
-            doorPivot.InverseTransformDirection(
-                forceDirection
-            );
-
-
-        float torque =
-            Vector3.Cross(
-                localLever,
-                localForceDirection
-            ).y;
-
-
-        float directionSign;
-
-
-        if (Mathf.Abs(torque) >
-            0.001f)
-        {
-            directionSign =
-                Mathf.Sign(
-                    torque
-                );
-        }
-        else
-        {
-            directionSign =
-                1f;
-        }
-
-
-        // =====================================================
-        // 모델의 회전축 방향이 반대일 경우 보정
-        // =====================================================
+        float torque = Vector3.Cross(localLever, localForceDirection).y;
+        float directionSign = Mathf.Abs(torque) > 0.001f ? Mathf.Sign(torque) : 1f;
 
         if (invertProjectileDirection)
         {
-            directionSign *=
-                -1f;
+            directionSign *= -1f;
         }
 
-
-        // ==========================================
-        // 탄속 → 문 각속도
-        // ==========================================
-
         float impactAngularVelocity =
-            projectileSpeed *
+            impactSpeed *
             shotAngularVelocityMultiplier *
-            Mathf.Max(
-                0.25f,
-                leverStrength
-            );
+            Mathf.Max(0.25f, leverStrength);
 
-
-        impactAngularVelocity =
-            Mathf.Clamp(
-                impactAngularVelocity,
-                minimumShotAngularVelocity,
-                maximumShotAngularVelocity
-            );
-
-
-        // 기존에 문이 움직이고 있었다면
-        // 기존 힘에 새 총알 힘을 추가
-        shotAngularVelocity +=
-            directionSign *
-            impactAngularVelocity;
-
-
-        shotAngularVelocity =
-            Mathf.Clamp(
-                shotAngularVelocity,
-                -maximumShotAngularVelocity,
-                maximumShotAngularVelocity
-            );
-
-
-        isShotSwinging =
-            true;
-
-
-        Debug.Log(
-            $"[Door] Projectile Hit / " +
-            $"Speed={projectileSpeed:F1} / " +
-            $"Angular={shotAngularVelocity:F1}"
+        impactAngularVelocity = Mathf.Clamp(
+            impactAngularVelocity,
+            minimumShotAngularVelocity,
+            maximumShotAngularVelocity
         );
+
+        shotAngularVelocity += directionSign * impactAngularVelocity;
+        shotAngularVelocity = Mathf.Clamp(
+            shotAngularVelocity,
+            -maximumShotAngularVelocity,
+            maximumShotAngularVelocity
+        );
+
+        isShotSwinging = true;
     }
 
 

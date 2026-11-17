@@ -57,6 +57,15 @@ public class SwordWaveProjectile : MonoBehaviour
     [SerializeField]
     private bool hitTriggerColliders = false;
 
+    [Tooltip("검기로 타격할 문(DoorController) 레이어")]
+    [SerializeField]
+    private LayerMask doorMask = ~0;
+
+    [Tooltip("검기가 문을 맞혔을 때 전달할 충격 속도 배율 (검기 속도 × 배율)")]
+    [Min(0.1f)]
+    [SerializeField]
+    private float doorImpactSpeedMultiplier = 1f;
+
     [Header("Optional VFX")]
     [Tooltip("(선택) 적중 시 생성할 타격 이펙트 프리팹")]
     [SerializeField]
@@ -73,6 +82,7 @@ public class SwordWaveProjectile : MonoBehaviour
     private float remainingDistanceAfterHit;
 
     private readonly HashSet<IHealth> hitTargets = new HashSet<IHealth>();
+    private readonly HashSet<DoorController> hitDoors = new HashSet<DoorController>(); // <- 추가
 
     public void Launch(Vector3 direction, float damage, PlayerStats owner)
     {
@@ -92,6 +102,7 @@ public class SwordWaveProjectile : MonoBehaviour
         hasTriggeredFirstHit = false;
         remainingDistanceAfterHit = extraTravelAfterFirstHit;
         hitTargets.Clear();
+        hitDoors.Clear();
         isLaunched = true;
 
         // 발사 직후 영점 거리에 있는 적도 즉시 판정
@@ -146,6 +157,10 @@ public class SwordWaveProjectile : MonoBehaviour
                 if (hitPlayer != null && hitPlayer == ownerStats)
                     continue;
 
+                // 문은 벽처럼 검기를 막지 않고 베어 열면서 통과하도록 제외
+                if (col.GetComponentInParent<DoorController>() != null)
+                    continue;
+
                 if (wallHits[i].distance < nearestWallDist)
                 {
                     nearestWallDist = wallHits[i].distance;
@@ -173,11 +188,13 @@ public class SwordWaveProjectile : MonoBehaviour
             ? QueryTriggerInteraction.Collide
             : QueryTriggerInteraction.Ignore;
 
+        LayerMask combinedMask = enemyMask | doorMask;
+
         Collider[] hits = Physics.OverlapBox(
             sweepCenter,
             sweptHalfExtents,
             transform.rotation,
-            enemyMask,
+            combinedMask,
             triggerMode
         );
 
@@ -210,6 +227,7 @@ public class SwordWaveProjectile : MonoBehaviour
                 remainingDistanceAfterHit = Mathf.Max(0f, extraTravelAfterFirstHit - consumedFollowThrough);
 
                 ApplyDamageWithinReach(hits, startPos, maxReachThisFrame);
+                ApplyDoorHitsWithinReach(hits, startPos, maxReachThisFrame);
                 transform.position = startPos + moveDirection * maxReachThisFrame;
 
                 if (remainingDistanceAfterHit <= 0f || hitObstacle)
@@ -219,6 +237,7 @@ public class SwordWaveProjectile : MonoBehaviour
                 return;
             }
 
+            ApplyDoorHitsWithinReach(hits, startPos, stepDistance);
             transform.position = endPos;
             if (hitObstacle)
             {
@@ -228,6 +247,7 @@ public class SwordWaveProjectile : MonoBehaviour
         }
 
         ApplyDamageWithinReach(hits, startPos, stepDistance);
+        ApplyDoorHitsWithinReach(hits, startPos, stepDistance);
         transform.position = endPos;
         remainingDistanceAfterHit -= stepDistance;
 
@@ -268,6 +288,45 @@ public class SwordWaveProjectile : MonoBehaviour
                 Instantiate(hitEffectPrefab, closestPoint, Quaternion.LookRotation(-moveDirection));
             }
         }
+    }
+
+    private void ApplyDoorHitsWithinReach(Collider[] hits, Vector3 startPos, float maxForwardReach)
+    {
+        float reachLimit = maxForwardReach + (hitboxSize.z * 0.5f);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider col = hits[i];
+            if (col == null || col.isTrigger)
+                continue;
+
+            DoorController door = col.GetComponentInParent<DoorController>();
+            if (door == null)
+                continue;
+
+            Vector3 closestPoint = GetClosestPointSafe(col, startPos);
+            float forwardDist = Vector3.Dot(closestPoint - startPos, moveDirection);
+
+            if (forwardDist > reachLimit)
+                continue;
+
+            if (!hitDoors.Add(door))
+                continue;
+
+            Vector3 impactVelocity = moveDirection * (speed * doorImpactSpeedMultiplier);
+            door.HitByProjectile(impactVelocity, closestPoint);
+        }
+    }
+
+    private Vector3 GetClosestPointSafe(Collider col, Vector3 point)
+    {
+        if (col is BoxCollider || col is SphereCollider || col is CapsuleCollider ||
+            (col is MeshCollider meshCol && meshCol.convex))
+        {
+            return col.ClosestPoint(point);
+        }
+
+        return col.ClosestPointOnBounds(point);
     }
 
     private bool TryGetValidTarget(Collider col, out IHealth health)

@@ -104,8 +104,12 @@ MonoBehaviour:
   enemyMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  doorMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  doorImpactSpeed: 30
   hitTriggerColliders: 1
-  debugMeleeHitLog: 1
+  debugMeleeHitLog: 0
   sheathMoveSpeedMultiplier: 0.7
   sheathLocalPosition: {x: -0.8, y: 0.7, z: 0.7}
   sheathLocalEuler: {x: -120, y: 0, z: 0}

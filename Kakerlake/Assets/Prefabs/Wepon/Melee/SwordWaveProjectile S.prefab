@@ -60,6 +60,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   hitTriggerColliders: 1
+  doorMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  doorImpactSpeedMultiplier: 0.3
   hitEffectPrefab: {fileID: 6163372132465508053, guid: 57acce838ea6f6e40944edca6edca423, type: 3}
 --- !u!1 &4971724366152045810
 GameObject:

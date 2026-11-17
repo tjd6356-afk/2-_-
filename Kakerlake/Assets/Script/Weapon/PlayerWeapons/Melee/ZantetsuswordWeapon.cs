@@ -89,6 +89,15 @@ public class ZantetsuswordWeapon : WeaponBase
     [SerializeField]
     private LayerMask enemyMask = ~0;
 
+    // ▼ 아래 두 변수만 새로 추가
+    [Tooltip("근접 공격으로 타격할 문(DoorController) 레이어")]
+    [SerializeField]
+    private LayerMask doorMask = ~0;
+
+    [Tooltip("문 타격 시 전달할 충격 속도 (0 이하이면 DoorController 기본값 사용)")]
+    [SerializeField]
+    private float doorImpactSpeed = 30f;
+
     [Tooltip("적의 Is Trigger 콜라이더도 근접 공격으로 타격할지 여부")]
     [SerializeField]
     private bool hitTriggerColliders = true;
@@ -949,6 +958,7 @@ public class ZantetsuswordWeapon : WeaponBase
             ? attackDirection.normalized
             : (WeaponManager != null ? WeaponManager.transform.forward : transform.forward);
 
+        Vector3 rightAxis = WeaponManager != null ? WeaponManager.transform.right : transform.right;
         Vector3 upAxis = WeaponManager != null ? WeaponManager.transform.up : transform.up;
 
         Quaternion boxRotation = Quaternion.LookRotation(dir, upAxis);
@@ -960,15 +970,22 @@ public class ZantetsuswordWeapon : WeaponBase
             ? QueryTriggerInteraction.Collide
             : QueryTriggerInteraction.Ignore;
 
+        LayerMask combinedMask = enemyMask | doorMask;
+
         Collider[] hits = Physics.OverlapBox(
             boxCenter,
             halfExtents,
             boxRotation,
-            enemyMask,
+            combinedMask,
             triggerMode
         );
 
+        bool nextSwingToLeft = !isSwungToLeft;
+        float swingHorizontalSign = nextSwingToLeft ? -1f : 1f;
+        Vector3 doorHitDirection = (dir + rightAxis * (swingHorizontalSign * 0.45f)).normalized;
+
         HashSet<IHealth> hitTargets = new HashSet<IHealth>();
+        HashSet<DoorController> hitDoors = new HashSet<DoorController>();
         int validHitCount = 0;
 
         foreach (Collider hit in hits)
@@ -976,6 +993,26 @@ public class ZantetsuswordWeapon : WeaponBase
             if (hit == null)
                 continue;
 
+            // 1. 문(DoorController) 타격 처리 (문의 E키 감지용 Trigger 콜라이더는 제외)
+            if (!hit.isTrigger)
+            {
+                DoorController door = hit.GetComponentInParent<DoorController>();
+                if (door != null)
+                {
+                    if (hitDoors.Add(door))
+                    {
+                        Vector3 hitPoint = GetClosestPointSafe(hit, boxCenter);
+                        door.HitByMelee(doorHitDirection, hitPoint, doorImpactSpeed);
+                        validHitCount++;
+
+                        if (debugMeleeHitLog)
+                            Debug.Log($"[근접 판정] 문 '{door.name}' 타격 완료");
+                    }
+                    continue;
+                }
+            }
+
+            // 2. 적/체력 대상 타격 처리
             PlayerStats hitPlayer = hit.GetComponentInParent<PlayerStats>();
             if (hitPlayer != null && hitPlayer == PlayerStats)
                 continue;
@@ -1009,6 +1046,17 @@ public class ZantetsuswordWeapon : WeaponBase
         {
             Debug.LogWarning($"[근접 판정 실패] 박스 내 감지된 콜라이더 수: {hits.Length}개 / Origin: {origin}");
         }
+    }
+
+    private Vector3 GetClosestPointSafe(Collider col, Vector3 point)
+    {
+        if (col is BoxCollider || col is SphereCollider || col is CapsuleCollider ||
+            (col is MeshCollider meshCol && meshCol.convex))
+        {
+            return col.ClosestPoint(point);
+        }
+
+        return col.ClosestPointOnBounds(point);
     }
 
     private void OnValidate()
