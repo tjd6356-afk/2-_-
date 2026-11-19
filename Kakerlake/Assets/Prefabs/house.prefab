@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8094338472021859225}
   - component: {fileID: 3058207061193122139}
+  - component: {fileID: 755335246896613144}
   - component: {fileID: 3092891378608277061}
   m_Layer: 0
   m_Name: DoorEmpty
@@ -55,6 +56,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4, y: 3, z: 4}
   m_Center: {x: -0.1, y: 0, z: 0}
+--- !u!114 &755335246896613144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2687922139260126391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 2
+  customText: "\uBB38 \uC5F4\uAE30"
+  priority: 0
 --- !u!114 &3092891378608277061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,6 +105,8 @@ MonoBehaviour:
   explosionForceMultiplier: 1
   allowPlayerInteraction: 1
   reactToProjectile: 1
+  reactToMelee: 1
+  meleeImpactSpeed: 30
 --- !u!1 &4896992373068637826
 GameObject:
   m_ObjectHideFlags: 0
