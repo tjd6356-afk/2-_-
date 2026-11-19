@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5844651155533903998}
   - component: {fileID: 615067090122609451}
   - component: {fileID: 3384597817301541429}
+  - component: {fileID: 1202276696827648311}
   - component: {fileID: -5510337387403554966}
   m_Layer: 0
   m_Name: StageExit
@@ -33,7 +34,8 @@ Transform:
   m_LocalPosition: {x: 0, y: -0, z: 0}
   m_LocalScale: {x: 3, y: 0.5, z: 3}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 7250280816666097976}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &220213774771227234
@@ -127,6 +129,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageExitTrigger
   stageExitPanel: {fileID: 0}
+--- !u!114 &1202276696827648311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3742544038581103749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 5
+  customText: "\uC0C1\uD638\uC791\uC6A9"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 7250280816666097976}
 --- !u!54 &-5510337387403554966
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -154,3 +172,34 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!1 &5315565333362482061
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7250280816666097976}
+  m_Layer: 0
+  m_Name: InteractionUIEmpty
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7250280816666097976
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5315565333362482061}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5075421890989991274}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
