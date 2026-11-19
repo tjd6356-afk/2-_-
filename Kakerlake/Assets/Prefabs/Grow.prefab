@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5184031056752181437}
   - component: {fileID: 8692032803056213427}
   - component: {fileID: 9083466235103660158}
+  - component: {fileID: 1154548478788124458}
   m_Layer: 0
   m_Name: GrowEmpty3
   m_TagString: Untagged
@@ -74,6 +75,22 @@ MonoBehaviour:
   growDuration: 10
   harvestAmount: 2
   harvestSpawnPoint: {fileID: 1000848097790923308}
+--- !u!114 &1154548478788124458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223531644309125295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 1
+  customText: "\uC544\uC774\uD15C \uC2EC\uAE30"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 1000848097790923308}
 --- !u!1 &1524411240572018404
 GameObject:
   m_ObjectHideFlags: 0
@@ -116,6 +133,7 @@ GameObject:
   - component: {fileID: 870316239189826891}
   - component: {fileID: 6649021955970045188}
   - component: {fileID: 4485056644410269256}
+  - component: {fileID: 5614672485398347544}
   m_Layer: 0
   m_Name: GrowEmpty5
   m_TagString: Untagged
@@ -179,6 +197,22 @@ MonoBehaviour:
   growDuration: 10
   harvestAmount: 2
   harvestSpawnPoint: {fileID: 2878654961801899835}
+--- !u!114 &5614672485398347544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3056325443801535940}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 1
+  customText: "\uC544\uC774\uD15C \uC2EC\uAE30"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 2878654961801899835}
 --- !u!1 &4375624661671052150
 GameObject:
   m_ObjectHideFlags: 0
@@ -221,6 +255,7 @@ GameObject:
   - component: {fileID: 5922845940475835659}
   - component: {fileID: 2384396772427497529}
   - component: {fileID: 232075091784095505}
+  - component: {fileID: 6042194782091356772}
   m_Layer: 0
   m_Name: GrowEmpty2
   m_TagString: Untagged
@@ -284,6 +319,22 @@ MonoBehaviour:
   growDuration: 10
   harvestAmount: 2
   harvestSpawnPoint: {fileID: 6570857907515247166}
+--- !u!114 &6042194782091356772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4585084299394969591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 1
+  customText: "\uC544\uC774\uD15C \uC2EC\uAE30"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 6570857907515247166}
 --- !u!1 &6300164263159395868
 GameObject:
   m_ObjectHideFlags: 0
@@ -295,6 +346,7 @@ GameObject:
   - component: {fileID: 8326765000602555718}
   - component: {fileID: 517510912264642177}
   - component: {fileID: 5404530755689600021}
+  - component: {fileID: 5462258153556617148}
   m_Layer: 0
   m_Name: GrowEmpty1
   m_TagString: Untagged
@@ -358,6 +410,22 @@ MonoBehaviour:
   growDuration: 10
   harvestAmount: 2
   harvestSpawnPoint: {fileID: 2488885436111037015}
+--- !u!114 &5462258153556617148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6300164263159395868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 1
+  customText: "\uC544\uC774\uD15C \uC2EC\uAE30"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 2488885436111037015}
 --- !u!1 &6582514984073231979
 GameObject:
   m_ObjectHideFlags: 0
@@ -406,6 +474,7 @@ GameObject:
   - component: {fileID: 7065183268970662367}
   - component: {fileID: 5782091906879225595}
   - component: {fileID: 6822528677945233108}
+  - component: {fileID: 8105206483285535547}
   m_Layer: 0
   m_Name: GrowEmpty4
   m_TagString: Untagged
@@ -469,6 +538,22 @@ MonoBehaviour:
   growDuration: 10
   harvestAmount: 2
   harvestSpawnPoint: {fileID: 4417850424315273722}
+--- !u!114 &8105206483285535547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7288838895145272677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 1
+  customText: "\uC544\uC774\uD15C \uC2EC\uAE30"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 4417850424315273722}
 --- !u!1 &8366337552522645858
 GameObject:
   m_ObjectHideFlags: 0
@@ -576,7 +661,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.21
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1078,7 +1163,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.21
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1177,7 +1262,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.21
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1351,7 +1436,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.21
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1450,7 +1535,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.21
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12efe02b100e8364cb90076227a343ae, type: 3}
       propertyPath: m_LocalPosition.z
