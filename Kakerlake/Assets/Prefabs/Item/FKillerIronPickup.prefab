@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8359337293619989836}
   - component: {fileID: 7894174494596894262}
   - component: {fileID: 6315939368336245169}
+  - component: {fileID: -390625679190308497}
   m_Layer: 0
   m_Name: FKillerIronPickup
   m_TagString: Untagged
@@ -97,6 +98,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
   itemData: {fileID: 11400000, guid: 0f3e274865e54c442886333ca7a8943a, type: 2}
   amount: 1
+--- !u!114 &-390625679190308497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1528062636059491173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 7
+  customText: "\uC544\uC774\uD15C \uC90D\uAE30"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 6311144930142286589}
 --- !u!1 &7526803598353474808
 GameObject:
   m_ObjectHideFlags: 0

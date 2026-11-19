@@ -15,7 +15,9 @@ public class InteractionPromptTrigger : MonoBehaviour
         Door,
         DungeonMove,
         ScenePortal,
-        Custom
+        Custom,
+        Upgrad,
+        Item
     }
 
 
@@ -315,6 +317,13 @@ public class InteractionPromptTrigger : MonoBehaviour
 
                 return "이동하기";
 
+            case PromptType.Upgrad:
+
+                return "강화하기";
+
+            case PromptType.Item:
+
+                return "아이템 줍기";
 
             case PromptType.Custom:
 

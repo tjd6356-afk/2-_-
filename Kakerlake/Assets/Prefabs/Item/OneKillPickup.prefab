@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8359337293619989836}
   - component: {fileID: 7894174494596894262}
   - component: {fileID: 6315939368336245169}
+  - component: {fileID: 817207200278268409}
   m_Layer: 0
   m_Name: OneKillPickup
   m_TagString: Untagged
@@ -97,6 +98,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
   itemData: {fileID: 11400000, guid: 0c1c84326bc2ac74d8140c0a5c0b0b29, type: 2}
   amount: 99
+--- !u!114 &817207200278268409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1528062636059491173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03219728f760fd94e8f6683b84dbab4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionPromptTrigger
+  promptType: 7
+  customText: "\uC0C1\uD638\uC791\uC6A9"
+  promptPrefab: {fileID: 8237327489912998589, guid: 44d82d633ce66694f8e04731ef56f385, type: 3}
+  promptSpawnPoint: {fileID: 6311144930142286589}
 --- !u!1 &7526803598353474808
 GameObject:
   m_ObjectHideFlags: 0
