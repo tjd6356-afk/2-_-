@@ -9,9 +9,26 @@ public class InventoryDisplayUI : MonoBehaviour
 
     [SerializeField]
     private InventoryItemActionMenu actionMenu;
-
-
     private InventoryManager.InventorySlot selectedSlot;
+
+    // =========================================================
+    // Double Click
+    // =========================================================
+
+    [Header("Double Click")]
+
+    [Tooltip("이 시간 안에 같은 아이템을 두 번 클릭하면 더블클릭")]
+    [SerializeField]
+    private float doubleClickTime =
+        0.3f;
+
+
+    private InventoryManager.InventorySlot
+        lastClickedSlot;
+
+
+    private float lastClickTime =
+        -10f;
 
     // =========================================================
     // List
@@ -87,13 +104,25 @@ public class InventoryDisplayUI : MonoBehaviour
                 RefreshInventory;
         }
 
+
+        // Inventory가 닫히면
+        // ActionPanel도 완전히 초기화
         if (actionMenu != null)
         {
             actionMenu.Close();
         }
 
+
         selectedSlot =
             null;
+
+
+        lastClickedSlot =
+            null;
+
+
+        lastClickTime =
+            -10f;
     }
 
 
@@ -195,48 +224,94 @@ public class InventoryDisplayUI : MonoBehaviour
     }
 
     private void OnItemClicked(
-    InventoryManager.InventorySlot slot,
-    RectTransform buttonRect
-)
+        InventoryManager.InventorySlot slot,
+        RectTransform buttonRect
+    )
     {
-        if (slot == null)
+        if (slot == null ||
+            slot.ItemData == null)
+        {
             return;
+        }
 
 
         // =========================================================
-        // 같은 아이템을 다시 클릭
+        // 실제 Double Click 검사
         // =========================================================
 
-        if (selectedSlot == slot)
+        bool isDoubleClick =
+            lastClickedSlot == slot &&
+            (
+                Time.unscaledTime -
+                lastClickTime
+            ) <= doubleClickTime;
+
+
+        // =========================================================
+        // 다른 Item을 클릭
+        // =========================================================
+
+        if (selectedSlot != slot)
+        {
+            // 기존 ActionPanel 닫기
+            if (actionMenu != null)
+            {
+                actionMenu.Close();
+            }
+
+
+            selectedSlot =
+                slot;
+
+
+            // Detail은 새로운 Item으로 변경
+            ShowItemDetail(
+                slot
+            );
+        }
+
+
+        // =========================================================
+        // 같은 Item Double Click
+        // =========================================================
+
+        if (isDoubleClick)
         {
             if (actionMenu != null)
             {
-                actionMenu.Toggle(
+                // Toggle이 아니라 Show
+                //
+                // 이미 열려 있어도 닫히지 않는다.
+                actionMenu.Show(
                     slot,
                     buttonRect
                 );
             }
 
+
+            // 연속 3클릭이 또 Double Click으로
+            // 처리되는 것을 방지
+            lastClickedSlot =
+                null;
+
+
+            lastClickTime =
+                -10f;
+
+
             return;
         }
 
 
         // =========================================================
-        // 다른 아이템 선택
+        // 이번 Click 저장
         // =========================================================
 
-        if (actionMenu != null)
-        {
-            actionMenu.Close();
-        }
-
-
-        selectedSlot =
+        lastClickedSlot =
             slot;
 
 
-        ShowItemDetail(
-            slot
-        );
+        lastClickTime =
+            Time.unscaledTime;
     }
 }

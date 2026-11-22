@@ -396,10 +396,6 @@ public class InventoryItemActionMenu : MonoBehaviour
         }
 
 
-        // 설정 메뉴 닫기
-        Close();
-
-
         // =========================================================
         // Inventory 반투명
         // =========================================================
@@ -492,8 +488,6 @@ public class InventoryItemActionMenu : MonoBehaviour
             );
         }
 
-
-        Close();
     }
 
 
@@ -543,8 +537,6 @@ public class InventoryItemActionMenu : MonoBehaviour
             return;
         }
 
-
-        Close();
     }
 
 
@@ -612,6 +604,27 @@ public class InventoryItemActionMenu : MonoBehaviour
 
         Debug.Log(
             "[Inventory] Item Effect 종료"
+        );
+    }
+
+    // =========================================================
+    // Action Menu 강제 Open
+    //
+    // 같은 Item이어도 닫지 않고 계속 유지
+    // =========================================================
+
+    public void Show(
+        InventoryManager.InventorySlot slot,
+        RectTransform sourceButton
+    )
+    {
+        if (slot == null)
+            return;
+
+
+        Open(
+            slot,
+            sourceButton
         );
     }
 
