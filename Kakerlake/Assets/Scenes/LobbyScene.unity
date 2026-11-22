@@ -2567,7 +2567,7 @@ GameObject:
   m_Component:
   - component: {fileID: 971842783}
   m_Layer: 0
-  m_Name: Woodbari
+  m_Name: Woodbaris
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

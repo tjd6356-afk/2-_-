@@ -434,10 +434,24 @@ public class ShopUIController : MonoBehaviour
 
 
         // =====================================================
-        // 5. 선택 UI 초기화
+        // 5. 선택 상태 유지
+        //
+        // 상품 이미지는 그대로 보여주고
+        // 재료가 변경되었으므로 구매 가능 여부만 다시 계산
         // =====================================================
 
-        ClearSelection();
+        if (buyButton != null)
+        {
+            buyButton.gameObject.SetActive(
+                true
+            );
+
+
+            buyButton.interactable =
+                CanAfford(
+                    selectedEntry
+                );
+        }
     }
 
 
