@@ -374,13 +374,27 @@ public class InventoryItemActionMenu : MonoBehaviour
 
 
             // =====================================================
-            // Parts / History
+            // History
+            // =====================================================
+
+            case ItemType.History:
+
+                playerStats.Heal(
+                    data.HealAmount
+                );
+
+                break;
+
+            // =====================================================
+            // History
             // =====================================================
 
             case ItemType.Parts:
-            case ItemType.History:
 
-                // 별도 수치 효과 없음
+                playerStats.Heal(
+                    data.HealAmount
+                );
+
                 break;
         }
 
@@ -389,7 +403,12 @@ public class InventoryItemActionMenu : MonoBehaviour
         // Food / Danger만 소비
         // =========================================================
 
-        if (data.IsConsumable &&
+        bool consumeItem =
+        data.ItemType == ItemType.Food ||
+        data.ItemType == ItemType.Danger;
+
+
+        if (consumeItem &&
             InventoryManager.Instance != null)
         {
             InventoryManager.Instance.RemoveItem(

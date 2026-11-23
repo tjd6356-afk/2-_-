@@ -140,7 +140,9 @@ public class ItemData : ScriptableObject
         get
         {
             return itemType == ItemType.Food ||
-                   itemType == ItemType.Danger;
+                   itemType == ItemType.Danger ||
+                   itemType == ItemType.History ||
+                   itemType == ItemType.Parts;
         }
     }
 
