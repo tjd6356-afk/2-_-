@@ -17,7 +17,7 @@ MonoBehaviour:
   itemDescription: "\uC5D4\uBC8C\uC758 \uBAA8\uC790\uB2E4."
   itemIcon: {fileID: 0}
   itemType: 3
-  healAmount: 5
+  healAmount: 0.1
   damageAmount: 0
   useEffectText: "\uC8C4\uC545\uAC10 \uBCF4\uB2E4\uB294 \uC7AC\uBBF8\uAC00 \uB4F1\uC904\uAE30\uB97C
     \uD0C0\uACE0 \uD750\uB978\uB2E4.\n\uCCB4\uB825\uC774 \uC870\uAE08 \uD68C\uBCF5
