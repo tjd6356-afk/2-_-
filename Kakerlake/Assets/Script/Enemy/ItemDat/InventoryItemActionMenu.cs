@@ -1,3 +1,4 @@
+using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -323,6 +324,8 @@ public class InventoryItemActionMenu : MonoBehaviour
         ItemData data =
             currentSlot.ItemData;
 
+        ItemData usedItemData =
+            currentSlot.ItemData;
 
         PlayerStats playerStats =
             FindFirstObjectByType<PlayerStats>();
@@ -424,6 +427,9 @@ public class InventoryItemActionMenu : MonoBehaviour
                 "[ItemAction] ItemEffectMessageUI가 없습니다."
             );
         }
+
+        RefreshCurrentItemOrClose(
+            usedItemData);
     }
 
 
@@ -443,6 +449,8 @@ public class InventoryItemActionMenu : MonoBehaviour
         ItemData data =
             currentSlot.ItemData;
 
+        ItemData usedItemData =
+            currentSlot.ItemData;
 
         PlayerStats player =
             FindFirstObjectByType<PlayerStats>();
@@ -488,6 +496,9 @@ public class InventoryItemActionMenu : MonoBehaviour
             );
         }
 
+        RefreshCurrentItemOrClose(
+        usedItemData);
+
     }
 
 
@@ -507,6 +518,8 @@ public class InventoryItemActionMenu : MonoBehaviour
         PlayerHeldItemController holder =
             FindFirstObjectByType<PlayerHeldItemController>();
 
+        ItemData usedItemData =
+            currentSlot.ItemData;
 
         if (holder == null)
         {
@@ -537,6 +550,8 @@ public class InventoryItemActionMenu : MonoBehaviour
             return;
         }
 
+        RefreshCurrentItemOrClose(
+            usedItemData);
     }
 
 
@@ -559,6 +574,7 @@ public class InventoryItemActionMenu : MonoBehaviour
 
         currentSourceButton =
             null;
+        
     }
 
     private void FadeInventoryForEffect()
@@ -628,6 +644,84 @@ public class InventoryItemActionMenu : MonoBehaviour
         );
     }
 
+    // =========================================================
+    // 현재 Item이 Inventory에 아직 남아있는지 확인
+    // =========================================================
+
+    private void RefreshCurrentItemOrClose(
+        ItemData itemData
+    )
+    {
+        if (itemData == null)
+        {
+            Close();
+
+            return;
+        }
+
+
+        if (InventoryManager.Instance == null)
+        {
+            Close();
+
+            return;
+        }
+
+
+        InventoryManager.InventorySlot
+            foundSlot =
+                null;
+
+
+        // =========================================================
+        // 같은 ItemData가 Inventory에 아직 존재하는지 검사
+        // =========================================================
+
+        foreach (
+            InventoryManager.InventorySlot slot
+            in InventoryManager.Instance.Items)
+        {
+            if (slot == null ||
+                slot.ItemData == null)
+            {
+                continue;
+            }
+
+
+            if (slot.ItemData ==
+                itemData)
+            {
+                foundSlot =
+                    slot;
+
+                break;
+            }
+        }
+
+
+        // =========================================================
+        // 더 이상 Inventory에 없음
+        // → 마지막 Item을 사용/버린 것
+        // =========================================================
+
+        if (foundSlot == null)
+        {
+            Close();
+
+            return;
+        }
+
+
+        // =========================================================
+        // 아직 Item이 남아있음
+        //
+        // 새 Slot 참조로 갱신
+        // ActionPanel은 그대로 유지
+        // =========================================================
+
+        currentSlot =
+            foundSlot;
+    }
 
     // 인벤토리가 닫히면 반드시 같이 닫힘
     private void OnDisable()

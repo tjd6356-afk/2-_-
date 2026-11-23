@@ -15,6 +15,11 @@ public class InventoryUIController : MonoBehaviour
     [SerializeField]
     private GameObject inventoryRoot;
 
+    [Header("Inventory Action Menu")]
+
+    [SerializeField]
+    private InventoryItemActionMenu actionMenu;
+
     [Header("Tab")]
 
     [SerializeField]
@@ -113,6 +118,17 @@ public class InventoryUIController : MonoBehaviour
 
         if (inventoryKeyPressed)
         {
+            // =====================================================
+            // 인벤토리 Open / Close 키를 누르는 순간
+            // ActionPanel 무조건 닫기
+            // =====================================================
+
+            if (actionMenu != null)
+            {
+                actionMenu.Close();
+            }
+
+
             ToggleInventory();
         }
     }
@@ -329,6 +345,10 @@ public class InventoryUIController : MonoBehaviour
         if (inventoryRoot == null)
             return;
 
+        if (actionMenu != null)
+        {
+            actionMenu.Close();
+        }
 
         inventoryRoot.SetActive(
             false

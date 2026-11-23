@@ -68,6 +68,29 @@ public class InventoryDisplayUI : MonoBehaviour
 
     private void OnEnable()
     {
+        // =========================================================
+        // Inventory를 새로 열 때
+        // ActionPanel은 반드시 닫힌 상태로 시작
+        // =========================================================
+
+        if (actionMenu != null)
+        {
+            actionMenu.Close();
+        }
+
+
+        selectedSlot =
+            null;
+
+
+        lastClickedSlot =
+            null;
+
+
+        lastClickTime =
+            -10f;
+
+
         StartCoroutine(
             RefreshNextFrame()
         );

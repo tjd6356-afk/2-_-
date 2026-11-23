@@ -560,6 +560,17 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.036855325, y: 0.009318934, z: 0.020098211}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &183195174 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6211539458969618031, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
+  m_PrefabInstance: {fileID: 8619575314300630996}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d7dc8903bd81fc4ca5891ba17ee340e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryItemActionMenu
 --- !u!1001 &204065842
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6483,9 +6494,9 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: blockingUIRoots.Array.size
-      value: 5
-      objectReference: {fileID: 0}
+      propertyPath: actionMenu
+      value: 
+      objectReference: {fileID: 183195174}
     - target: {fileID: 598239770950074252, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: 'blockingUIRoots.Array.data[0]'
       value: 
@@ -6502,46 +6513,6 @@ PrefabInstance:
       propertyPath: 'blockingUIRoots.Array.data[4]'
       value: 
       objectReference: {fileID: 2129237571}
-    - target: {fileID: 1629649719515015493, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1629649719515015493, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1629649719515015493, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2384196456900662266, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0.000004019377
-      objectReference: {fileID: 0}
-    - target: {fileID: 3587498192145147331, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_fontAsset
-      value: 
-      objectReference: {fileID: 11400000, guid: 3ca7aeddbc2ac9d409e5da5b9c69cfa3, type: 2}
-    - target: {fileID: 3587498192145147331, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_hasFontAssetChanged
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5265917095387404900, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5265917095387404900, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5265917095387404900, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5863743926694904644, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6011981734689782225, guid: a63acf29f12f37c459aa9f2109c85c00, type: 3}
       propertyPath: m_Name
       value: InvetoryCanvas
