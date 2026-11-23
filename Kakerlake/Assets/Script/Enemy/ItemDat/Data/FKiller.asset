@@ -20,7 +20,7 @@ MonoBehaviour:
   itemIcon: {fileID: -4863336276314997047, guid: b2aa5ef75fab3ae4eb3ea7bde9b79dac, type: 3}
   itemType: 2
   healAmount: 0
-  damageAmount: 0
+  damageAmount: 3
   useEffectText: "\uACE4\uCDA9\uACFC \uC778\uAC04 \uC11C\uB85C\uAC00 \uBCC0\uD574\uBC84\uB9B0
     \uC774\uC0C1 \uBC14\uB014\uC218 \uC5C6\uB2E4\uB294 \uAC74 \uC774\uBBF8 \uC54C\uACE0
     \uC788\uB2E4."

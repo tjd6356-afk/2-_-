@@ -357,6 +357,10 @@ public class InventoryItemActionMenu : MonoBehaviour
                     data.HealAmount
                 );
 
+                playerStats.TakeDamage(
+                data.DamageAmount
+                );
+
                 break;
 
 
@@ -365,6 +369,10 @@ public class InventoryItemActionMenu : MonoBehaviour
             // =====================================================
 
             case ItemType.Danger:
+
+                playerStats.Heal(
+                    data.HealAmount
+                );
 
                 playerStats.TakeDamage(
                     data.DamageAmount
@@ -383,6 +391,10 @@ public class InventoryItemActionMenu : MonoBehaviour
                     data.HealAmount
                 );
 
+                playerStats.TakeDamage(
+                    data.DamageAmount
+                );
+
                 break;
 
             // =====================================================
@@ -393,6 +405,10 @@ public class InventoryItemActionMenu : MonoBehaviour
 
                 playerStats.Heal(
                     data.HealAmount
+                );
+
+                playerStats.TakeDamage(
+                    data.DamageAmount
                 );
 
                 break;
