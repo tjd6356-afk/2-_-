@@ -1294,6 +1294,7 @@ Transform:
   m_Children:
   - {fileID: 361959261}
   - {fileID: 1511880948}
+  - {fileID: 864046415}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &800398355
@@ -1328,13 +1329,21 @@ MonoBehaviour:
   enemyStats: {fileID: 800398355}
   agent: {fileID: 800398357}
   rollingModel: {fileID: 361959261}
-  detectionRange: 20
+  lookingEmpty: {fileID: 864046415}
+  detectionRange: 30
+  retreatDistance: 1
+  preferredDistance: 1.1
+  approachDistance: 1.2
+  retreatSpeedMultiplier: 1
+  rotationSpeed: 240
+  moveAngleTolerance: 8
   rollingRadius: 0.5
-  rollingSpeedMultiplier: 1
+  rollingSpeedMultiplier: 3
+  invertRollingDirection: 0
   attackInterval: 3
   attackWarningTime: 0.6
-  dashDistance: 20
-  dashSpeed: 12
+  dashDistance: 16
+  dashSpeed: 30
   damageRadius: 0.8
   damageHeightOffset: 0
   playerMask:
@@ -1342,8 +1351,12 @@ MonoBehaviour:
     m_Bits: 4294967295
   stunDuration: 1.2
   warningColor: {r: 1, g: 0, b: 0, a: 1}
-  modelRenderers: []
+  modelRenderers:
+  - {fileID: 2124075879}
   currentState: 0
+  movementState: 0
+  attackTimer: 0
+  currentPlayerDistance: 0
 --- !u!195 &800398357
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1437,6 +1450,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &864046414
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 864046415}
+  m_Layer: 0
+  m_Name: lookingEmpty
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &864046415
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864046414}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 800398353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &877777252
 PrefabInstance:
@@ -3911,6 +3955,11 @@ PrefabInstance:
 --- !u!4 &2124075878 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 1e90810031cebba4bae088f4d09578e1, type: 3}
+  m_PrefabInstance: {fileID: 2124075877}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2124075879 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 1e90810031cebba4bae088f4d09578e1, type: 3}
   m_PrefabInstance: {fileID: 2124075877}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1566518041401936650
