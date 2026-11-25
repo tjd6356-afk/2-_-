@@ -89,33 +89,26 @@ public class GrenadeProjectile : MonoBehaviour
 
 
         // =====================================================
-        // Door 충돌
+        // 회전문 / 미닫이문 충돌
         // =====================================================
 
-        DoorController door =
-            collision.collider
-                .GetComponentInParent<DoorController>();
+        Vector3 grenadeVelocity =
+            rb != null
+            ? rb.linearVelocity
+            : Vector3.zero;
 
 
-        if (door != null)
-        {
-            Vector3 grenadeVelocity =
-                rb != null
-                ? rb.linearVelocity
-                : Vector3.zero;
+        Vector3 hitPoint =
+            collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : transform.position;
 
 
-            Vector3 hitPoint =
-                collision.contactCount > 0
-                ? collision.GetContact(0).point
-                : transform.position;
-
-
-            door.HitByProjectile(
-                grenadeVelocity,
-                hitPoint
-            );
-        }
+        DoorHitUtility.HitProjectile(
+            collision.collider,
+            grenadeVelocity,
+            hitPoint
+        );
 
 
         // =====================================================

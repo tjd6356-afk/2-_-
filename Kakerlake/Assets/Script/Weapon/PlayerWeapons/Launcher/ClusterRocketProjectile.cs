@@ -150,29 +150,32 @@ public class ClusterRocketProjectile : MonoBehaviour
         }
 
 
-        // ==========================================
-        // Door 직접 명중
-        // ==========================================
+        // =====================================================
+        // 상호작용 Trigger 제외
+        // =====================================================
 
-        DoorController door =
-            hitCollider != null
-            ? hitCollider.GetComponentInParent<DoorController>()
-            : hitObject.GetComponentInParent<DoorController>();
-
-
-        if (door != null)
+        if (hitCollider != null &&
+            hitCollider.isTrigger &&
+            DoorHitUtility.IsDoor(hitCollider))
         {
-            Vector3 rocketVelocity =
-                transform.forward *
-                currentSpeed;
+            return;
+        }
 
 
-            door.HitByProjectile(
+        // =====================================================
+        // 회전문 / 미닫이문 직접 명중
+        // =====================================================
+
+        Vector3 rocketVelocity =
+            transform.forward *
+            currentSpeed;
+
+
+        if (DoorHitUtility.HitProjectile(
+                hitCollider,
                 rocketVelocity,
-                hitPoint
-            );
-
-
+                hitPoint))
+        {
             Explode();
 
             return;

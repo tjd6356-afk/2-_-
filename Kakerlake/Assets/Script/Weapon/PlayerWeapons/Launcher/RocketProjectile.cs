@@ -270,30 +270,32 @@ public class RocketProjectile : MonoBehaviour
         }
 
 
-        // ==========================================
-        // Door 직접 명중
-        // ==========================================
+        // =====================================================
+        // 문의 상호작용 Trigger 무시
+        // =====================================================
 
-        DoorController door =
-            hitCollider != null
-            ? hitCollider.GetComponentInParent<DoorController>()
-            : hitObject.GetComponentInParent<DoorController>();
-
-
-        if (door != null)
+        if (hitCollider != null &&
+            hitCollider.isTrigger &&
+            DoorHitUtility.IsDoor(hitCollider))
         {
-            Vector3 rocketVelocity =
-                transform.forward *
-                currentSpeed;
+            return;
+        }
 
 
-            door.HitByProjectile(
+        // =====================================================
+        // 회전문 / 미닫이문 직접 명중
+        // =====================================================
+
+        Vector3 rocketVelocity =
+            transform.forward *
+            currentSpeed;
+
+
+        if (DoorHitUtility.HitProjectile(
+                hitCollider,
                 rocketVelocity,
-                hitPoint
-            );
-
-
-            // 문에 맞았으면 바로 폭발
+                hitPoint))
+        {
             Explode();
 
             return;
@@ -379,6 +381,17 @@ public class RocketProjectile : MonoBehaviour
                 transform.position,
                 explosionRadius
             );
+
+        // =====================================================
+        // 폭발 범위 내 모든 문 충격 적용
+        // =====================================================
+
+        DoorHitUtility.HitExplosion(
+            hitColliders,
+            transform.position,
+            explosionRadius,
+            owner
+        );
 
 
         // 같은 캐릭터에 Collider가 여러 개 있어도

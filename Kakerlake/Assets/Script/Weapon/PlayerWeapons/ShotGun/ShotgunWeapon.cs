@@ -241,26 +241,14 @@ public class ShotgunWeapon : WeaponBase, IAmmoWeapon
 
 
                 // =====================================================
-                // Door 명중
+                // 산탄의 회전문 / 미닫이문 명중
                 // =====================================================
 
-                DoorController door =
-                    hit.collider
-                        .GetComponentInParent<DoorController>();
-
-
-                if (door != null)
-                {
-                    Vector3 fakeProjectileVelocity =
-                        spreadDirection *
-                        doorImpactSpeedPerPellet;
-
-
-                    door.HitByProjectile(
-                        fakeProjectileVelocity,
-                        hit.point
-                    );
-                }
+                DoorHitUtility.HitRaycast(
+                    hit,
+                    spreadDirection,
+                    doorImpactSpeedPerPellet
+                );
 
 
                 // =====================================================

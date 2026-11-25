@@ -97,16 +97,7 @@ public class Projectile : MonoBehaviour
             collision.gameObject;
 
         // =====================================================
-        // Door 명중
-        // =====================================================
-
-        DoorController door =
-            collision.collider
-                .GetComponentInParent<DoorController>();
-
-
-        // =====================================================
-        // 공용 충격 정보
+        // 회전문 / 미닫이문 명중
         // =====================================================
 
         Vector3 projectileVelocity =
@@ -121,50 +112,18 @@ public class Projectile : MonoBehaviour
             : transform.position;
 
 
-        // =====================================================
-        // Sliding Door 명중 (새로운 미닫이문)
-        // =====================================================
-
-        SlidingDoorController slidingDoor =
-            collision.collider
-                .GetComponentInParent<SlidingDoorController>();
-
-
-        if (slidingDoor != null)
+        if (projectileVelocity.sqrMagnitude <= 0.0001f)
         {
-            // 충돌 직후 Rigidbody 속도가 감소해도
-            // 미닫이문이 정상적으로 열리도록 보정
-            Vector3 slidingImpactVelocity =
-                projectileVelocity.sqrMagnitude > 0.0001f
-                ? projectileVelocity
-                : transform.forward * speed;
-
-
-            slidingDoor.HitByProjectile(
-                slidingImpactVelocity,
-                hitPoint
-            );
-
-
-            Destroy(gameObject);
-
-            return;
+            projectileVelocity =
+                transform.forward * speed;
         }
 
 
-        // =====================================================
-        // Door 명중 (기존 회전문)
-        // =====================================================
-
-
-        if (door != null)
-        {
-            door.HitByProjectile(
+        if (DoorHitUtility.HitProjectile(
+                collision.collider,
                 projectileVelocity,
-                hitPoint
-            );
-
-
+                hitPoint))
+        {
             Destroy(gameObject);
 
             return;

@@ -239,26 +239,14 @@ public class MinigunWeapon : WeaponBase, IAmmoWeapon
                 hit.point;
 
             // =====================================================
-            // Door 명중
+            // 회전문 / 미닫이문 Raycast 명중
             // =====================================================
 
-            DoorController door =
-                hit.collider
-                    .GetComponentInParent<DoorController>();
-
-
-            if (door != null)
-            {
-                Vector3 fakeProjectileVelocity =
-                    aimRay.direction.normalized *
-                    doorImpactSpeed;
-
-
-                door.HitByProjectile(
-                    fakeProjectileVelocity,
-                    hit.point
-                );
-            }
+            DoorHitUtility.HitRaycast(
+                hit,
+                aimRay.direction,
+                doorImpactSpeed
+            );
 
             // =====================================================
             // Enemy / NPC 공통 체력 검색

@@ -193,26 +193,14 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
             targetPoint = hit.point;
 
             // =====================================================
-            // Door 직접 명중
+            // 회전문 / 미닫이문 Raycast 명중
             // =====================================================
 
-            DoorController door =
-                hit.collider
-                    .GetComponentInParent<DoorController>();
-
-
-            if (door != null)
-            {
-                Vector3 fakeProjectileVelocity =
-                    aimRay.direction.normalized *
-                    doorImpactSpeed;
-
-
-                door.HitByProjectile(
-                    fakeProjectileVelocity,
-                    hit.point
-                );
-            }
+            DoorHitUtility.HitRaycast(
+                hit,
+                aimRay.direction,
+                doorImpactSpeed
+            );
 
             IHealth directHitTarget = hit.collider.GetComponentInParent<IHealth>();
             if (directHitTarget != null && !directHitTarget.IsDead)
@@ -242,77 +230,33 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
         // 스플래시 데미지 배율(explosionDamageMultiplier) 적용
         float splashDamage = PlayerStats.AttackPower * explosionDamageMultiplier;
 
-        Collider[] hitColliders = Physics.OverlapSphere(targetPoint, explosionRadius, aimMask, QueryTriggerInteraction.Ignore);
-        HashSet<IHealth> damagedTargets = new HashSet<IHealth>();
-        HashSet<DoorController> affectedDoors = new HashSet<DoorController>();
+        Collider[] hitColliders = Physics.OverlapSphere(
+        targetPoint,
+        explosionRadius,
+        aimMask,
+        QueryTriggerInteraction.Ignore
+        );
 
-        foreach (
-        Collider col
-        in hitColliders)
+
+        // =====================================================
+        // 폭발 범위 내 모든 종류의 문 감지
+        // =====================================================
+
+        DoorHitUtility.HitExplosion(
+            hitColliders,
+            targetPoint,
+            explosionRadius
+        );
+
+
+        HashSet<IHealth> damagedTargets =
+            new HashSet<IHealth>();
+
+        foreach (Collider col in hitColliders)
         {
             if (col == null)
                 continue;
 
-
-            // =====================================================
-            // Door Splash 충격
-            // =====================================================
-
-            DoorController door =
-                col.GetComponentInParent<DoorController>();
-
-
-            if (door != null &&
-                affectedDoors.Add(door))
-            {
-                Vector3 doorHitPoint =
-                    col.ClosestPoint(
-                        targetPoint
-                    );
-
-
-                if (
-                    (
-                        doorHitPoint -
-                        targetPoint
-                    ).sqrMagnitude <
-                    0.0001f
-                )
-                {
-                    doorHitPoint =
-                        col.bounds.center;
-                }
-
-
-                float distance =
-                    Vector3.Distance(
-                        targetPoint,
-                        doorHitPoint
-                    );
-
-
-                float strength =
-                    1f -
-                    Mathf.Clamp01(
-                        distance /
-                        Mathf.Max(
-                            0.01f,
-                            explosionRadius
-                        )
-                    );
-
-
-                door.HitByExplosion(
-                    targetPoint,
-                    doorHitPoint,
-                    strength
-                );
-            }
-
-
-            // =====================================================
-            // Health Splash Damage
-            // =====================================================
 
             IHealth health =
                 col.GetComponentInParent<IHealth>();
@@ -321,8 +265,7 @@ public class MinigunWeapon2 : WeaponBase, IAmmoWeapon
             if (health != null &&
                 !health.IsDead)
             {
-                if (damagedTargets.Add(
-                        health))
+                if (damagedTargets.Add(health))
                 {
                     health.TakeDamage(
                         splashDamage
