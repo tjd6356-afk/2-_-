@@ -1312,8 +1312,8 @@ MonoBehaviour:
   maxHealth: 300
   fireRate: 1
   reloadSpeed: 1
-  attackPower: 10
-  moveSpeed: 6
+  attackPower: 55
+  moveSpeed: 3
 --- !u!114 &800398356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1330,33 +1330,29 @@ MonoBehaviour:
   agent: {fileID: 800398357}
   rollingModel: {fileID: 361959261}
   lookingEmpty: {fileID: 864046415}
-  detectionRange: 30
-  retreatDistance: 1
-  preferredDistance: 1.1
-  approachDistance: 1.2
-  retreatSpeedMultiplier: 1
+  detectionRange: 22
+  startSpeedMultiplier: 0.6
+  maxSpeedMultiplier: 10
   rotationSpeed: 240
-  moveAngleTolerance: 8
   rollingRadius: 0.5
-  rollingSpeedMultiplier: 3
+  rollingSpeedMultiplier: 7
   invertRollingDirection: 0
-  attackInterval: 3
-  attackWarningTime: 0.6
-  dashDistance: 16
-  dashSpeed: 30
-  damageRadius: 0.8
-  damageHeightOffset: 0
+  explosionTime: 8
+  explosionRadius: 10
+  explosionPrefab: {fileID: 6609252621234395040, guid: b893e3f8a75df5c479ae997d60ba55a5, type: 3}
   playerMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  stunDuration: 1.2
   warningColor: {r: 1, g: 0, b: 0, a: 1}
+  startBlinkInterval: 0.6
+  finalBlinkInterval: 0.12
   modelRenderers:
   - {fileID: 2124075879}
   currentState: 0
-  movementState: 0
-  attackTimer: 0
-  currentPlayerDistance: 0
+  explosionTimer: 7
+  remainingTime: 5
+  currentMoveSpeed: 10
+  currentBlinkInterval: 1
 --- !u!195 &800398357
 NavMeshAgent:
   m_ObjectHideFlags: 0

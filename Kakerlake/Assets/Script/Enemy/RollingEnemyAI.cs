@@ -16,10 +16,8 @@ public class RollingEnemyAI : MonoBehaviour
 
     [SerializeField] private NavMeshAgent agent;
 
-    [Tooltip("Z축으로 구르는 모델")]
     [SerializeField] private Transform rollingModel;
 
-    [Tooltip("적의 정면 방향을 나타내는 Empty")]
     [SerializeField] private Transform lookingEmpty;
 
 
@@ -33,35 +31,19 @@ public class RollingEnemyAI : MonoBehaviour
 
 
     // =========================================================
-    // Distance Control
+    // Movement
     // =========================================================
 
-    [Header("Distance Control")]
+    [Header("Movement")]
 
-    [Tooltip("이 거리보다 가까우면 후진")]
-    [SerializeField] private float retreatDistance = 2.5f;
+    [Tooltip("처음 이동할 때 MoveSpeed 배율")]
+    [SerializeField] private float startSpeedMultiplier = 0.6f;
 
-    [Tooltip("플레이어와 유지하려는 목표 거리")]
-    [SerializeField] private float preferredDistance = 3.5f;
+    [Tooltip("자폭 직전 MoveSpeed 배율")]
+    [SerializeField] private float maxSpeedMultiplier = 3f;
 
-    [Tooltip("이 거리보다 멀어지면 전진")]
-    [SerializeField] private float approachDistance = 4.5f;
-
-    [Tooltip("후진 이동 속도 배율")]
-    [SerializeField] private float retreatSpeedMultiplier = 0.8f;
-
-
-    // =========================================================
-    // Rotation
-    // =========================================================
-
-    [Header("Rotation")]
-
-    [Tooltip("부모 오브젝트의 Y축 회전 속도")]
-    [SerializeField] private float rotationSpeed = 240f;
-
-    [Tooltip("플레이어 방향과 이 각도 이내일 때 이동 가능")]
-    [SerializeField] private float moveAngleTolerance = 8f;
+    [Tooltip("플레이어를 향해 Y축으로 회전하는 속도")]
+    [SerializeField] private float rotationSpeed = 180f;
 
 
     // =========================================================
@@ -75,49 +57,44 @@ public class RollingEnemyAI : MonoBehaviour
 
     [SerializeField] private float rollingSpeedMultiplier = 1f;
 
-    [Tooltip("구르는 방향이 반대일 경우 체크")]
     [SerializeField] private bool invertRollingDirection = false;
 
 
     // =========================================================
-    // Dash Attack
+    // Self Destruction
     // =========================================================
 
-    [Header("Dash Attack")]
+    [Header("Self Destruction")]
 
-    [SerializeField] private float attackInterval = 3f;
-
-    [SerializeField] private float attackWarningTime = 0.6f;
-
+    [Tooltip("플레이어를 감지한 후 자폭하기까지 걸리는 시간")]
     [Min(0.1f)]
-    [SerializeField] private float dashDistance = 6f;
+    [SerializeField] private float explosionTime = 8f;
 
+    [Tooltip("폭발 반경")]
     [Min(0.01f)]
-    [SerializeField] private float dashSpeed = 12f;
+    [SerializeField] private float explosionRadius = 4f;
 
-    [SerializeField] private float damageRadius = 0.8f;
-
-    [SerializeField] private float damageHeightOffset = 0f;
+    [Tooltip("폭발 이펙트 프리팹")]
+    [SerializeField] private ExplosionVFX explosionPrefab;
 
     [SerializeField] private LayerMask playerMask = ~0;
 
 
     // =========================================================
-    // Stun
+    // Warning Blink
     // =========================================================
 
-    [Header("Stun")]
-
-    [SerializeField] private float stunDuration = 1.2f;
-
-
-    // =========================================================
-    // Attack Warning
-    // =========================================================
-
-    [Header("Attack Warning")]
+    [Header("Warning Blink")]
 
     [SerializeField] private Color warningColor = Color.red;
+
+    [Tooltip("처음 색상이 바뀌는 간격")]
+    [Min(0.01f)]
+    [SerializeField] private float startBlinkInterval = 0.6f;
+
+    [Tooltip("자폭 직전 색상이 바뀌는 간격")]
+    [Min(0.01f)]
+    [SerializeField] private float finalBlinkInterval = 0.12f;
 
     [SerializeField] private Renderer[] modelRenderers;
 
@@ -130,18 +107,8 @@ public class RollingEnemyAI : MonoBehaviour
     {
         Idle,
         Chase,
-        AttackWarning,
-        Dash,
-        Stunned
+        Exploded
     }
-
-    public enum MovementState
-    {
-        Stop,
-        Forward,
-        Backward
-    }
-
 
     [Header("Runtime State")]
 
@@ -149,34 +116,37 @@ public class RollingEnemyAI : MonoBehaviour
     private EnemyState currentState = EnemyState.Idle;
 
     [SerializeField]
-    private MovementState movementState = MovementState.Stop;
+    private float explosionTimer;
 
     [SerializeField]
-    private float attackTimer;
+    private float remainingTime;
 
     [SerializeField]
-    private float currentPlayerDistance;
+    private float currentMoveSpeed;
+
+    [SerializeField]
+    private float currentBlinkInterval;
 
 
     public EnemyState CurrentState => currentState;
 
-    public bool IsStunned =>
-        currentState == EnemyState.Stunned;
+    // 기존 외부 스크립트 호환용
+    public bool IsStunned => false;
 
+
+    // =========================================================
+    // Runtime
+    // =========================================================
 
     private PlayerStats targetPlayer;
 
     private Transform player;
 
-    private float stateTimer;
+    private bool hasExploded;
 
-    private Vector3 dashDirection;
+    private float blinkTimer;
 
-    private float remainingDashDistance;
-
-    private Vector3 previousDashPosition;
-
-    private bool dashFinishPending;
+    private bool warningActive;
 
 
     // =========================================================
@@ -191,20 +161,10 @@ public class RollingEnemyAI : MonoBehaviour
 
 
     // =========================================================
-    // Damage Runtime
-    // =========================================================
-
-    private readonly HashSet<PlayerStats> damagedPlayers =
-        new HashSet<PlayerStats>();
-
-
-    // =========================================================
-    // Warning Runtime
+    // Material Runtime
     // =========================================================
 
     private MaterialPropertyBlock[] originalBlocks;
-
-    private bool warningActive;
 
 
     private bool CanUseAgent =>
@@ -221,12 +181,14 @@ public class RollingEnemyAI : MonoBehaviour
     {
         if (enemyStats == null)
         {
-            enemyStats = GetComponent<EnemyStats>();
+            enemyStats =
+                GetComponent<EnemyStats>();
         }
 
         if (agent == null)
         {
-            agent = GetComponent<NavMeshAgent>();
+            agent =
+                GetComponent<NavMeshAgent>();
         }
 
         if (rollingModel == null ||
@@ -241,26 +203,17 @@ public class RollingEnemyAI : MonoBehaviour
             return;
         }
 
-        if (lookingEmpty == null)
-        {
-            Debug.LogWarning(
-                "[RollingEnemy] Looking Empty가 없습니다. " +
-                "기본 Forward 방향을 사용합니다.",
-                this
-            );
-        }
-
         agent.updateRotation = false;
         agent.updatePosition = true;
 
 
-        // 모델의 초기 회전값 저장
+        // 모델 초기 회전 저장
 
         originalModelRotation =
             rollingModel.localRotation;
 
-        rollingAngle = 0f;
 
+        // Renderer 자동 탐색
 
         if (modelRenderers == null ||
             modelRenderers.Length == 0)
@@ -289,17 +242,27 @@ public class RollingEnemyAI : MonoBehaviour
     {
         currentState = EnemyState.Idle;
 
-        movementState = MovementState.Stop;
+        explosionTimer = 0f;
+        remainingTime = explosionTime;
 
-        previousPosition = transform.position;
+        currentMoveSpeed = 0f;
+        currentBlinkInterval = startBlinkInterval;
 
-        attackTimer = 0f;
+        blinkTimer = 0f;
+        rollingAngle = 0f;
 
-        stateTimer = 0f;
+        hasExploded = false;
 
-        dashFinishPending = false;
+        previousPosition =
+            transform.position;
 
-        damagedPlayers.Clear();
+        if (rollingModel != null)
+        {
+            rollingModel.localRotation =
+                originalModelRotation;
+        }
+
+        SetWarningColor(false);
 
         StopMoving();
     }
@@ -312,37 +275,26 @@ public class RollingEnemyAI : MonoBehaviour
     private void Update()
     {
         if (enemyStats == null ||
-            enemyStats.IsDead)
+            enemyStats.IsDead ||
+            hasExploded)
         {
-            StopMoving();
-            SetWarningColor(false);
             return;
         }
-
-        if (!CanUseAgent)
-            return;
 
 
         switch (currentState)
         {
             case EnemyState.Idle:
+
                 UpdateIdle();
+
                 break;
+
 
             case EnemyState.Chase:
+
                 UpdateChase();
-                break;
 
-            case EnemyState.AttackWarning:
-                UpdateAttackWarning();
-                break;
-
-            case EnemyState.Dash:
-                UpdateDash();
-                break;
-
-            case EnemyState.Stunned:
-                UpdateStunned();
                 break;
         }
     }
@@ -364,45 +316,201 @@ public class RollingEnemyAI : MonoBehaviour
     }
 
 
-    private bool CanDetectPlayer()
+    private bool HasValidPlayer()
     {
-        if (targetPlayer == null ||
-            player == null ||
-            targetPlayer.IsDead)
-        {
-            FindPlayer();
-        }
-
-        if (targetPlayer == null ||
-            player == null ||
-            targetPlayer.IsDead)
-        {
-            return false;
-        }
-
-        currentPlayerDistance =
-            GetPlayerDirection().magnitude;
-
-        return currentPlayerDistance <= detectionRange;
+        return targetPlayer != null &&
+               player != null &&
+               !targetPlayer.IsDead;
     }
 
 
     // =========================================================
-    // Player 방향
+    // Idle
     // =========================================================
 
-    private Vector3 GetPlayerDirection()
+    private void UpdateIdle()
     {
-        if (player == null)
-            return Vector3.zero;
+        if (!CanUseAgent)
+            return;
 
 
-        Vector3 direction =
-            player.position - transform.position;
+        if (!HasValidPlayer())
+        {
+            FindPlayer();
+        }
 
-        direction.y = 0f;
 
-        return direction;
+        if (!HasValidPlayer())
+            return;
+
+
+        float distance =
+            Vector3.Distance(
+                transform.position,
+                player.position
+            );
+
+
+        if (distance <= detectionRange)
+        {
+            StartChase();
+        }
+    }
+
+
+    // =========================================================
+    // Chase Start
+    // =========================================================
+
+    private void StartChase()
+    {
+        currentState =
+            EnemyState.Chase;
+
+        explosionTimer = 0f;
+
+        remainingTime =
+            explosionTime;
+
+        blinkTimer = 0f;
+
+        agent.ResetPath();
+
+        agent.isStopped = false;
+
+
+        // 자폭 경고 시작
+
+        SetWarningColor(true);
+
+
+        Debug.Log(
+            "[RollingEnemy] 자폭 추격 시작"
+        );
+    }
+
+
+    // =========================================================
+    // Chase Update
+    // =========================================================
+
+    private void UpdateChase()
+    {
+        // =====================================================
+        // 자폭 타이머
+        // =====================================================
+
+        explosionTimer += Time.deltaTime;
+
+        remainingTime =
+            Mathf.Max(
+                0f,
+                explosionTime - explosionTimer
+            );
+
+
+        // 제한 시간 종료 → 폭발
+
+        if (explosionTimer >= explosionTime)
+        {
+            Explode();
+
+            return;
+        }
+
+
+        // =====================================================
+        // 자폭 진행률
+        //
+        // 시작 = 0
+        // 자폭 직전 = 1
+        // =====================================================
+
+        float progress =
+            Mathf.Clamp01(
+                explosionTimer /
+                Mathf.Max(0.1f, explosionTime)
+            );
+
+
+        // =====================================================
+        // 시간이 지날수록 이동 속도 증가
+        // =====================================================
+
+        float speedMultiplier =
+            Mathf.Lerp(
+                startSpeedMultiplier,
+                maxSpeedMultiplier,
+                progress
+            );
+
+
+        currentMoveSpeed =
+            enemyStats.MoveSpeed *
+            Mathf.Max(0f, speedMultiplier);
+
+
+        // =====================================================
+        // 시간이 지날수록 붉은색 점멸 속도 증가
+        // =====================================================
+
+        UpdateWarningBlink(progress);
+
+
+        // NavMesh에 올라와 있을 때만 이동
+
+        if (!CanUseAgent)
+            return;
+
+
+        // =====================================================
+        // 플레이어 방향으로 부드럽게 회전
+        // =====================================================
+
+        if (!HasValidPlayer())
+        {
+            FindPlayer();
+        }
+
+
+        if (HasValidPlayer())
+        {
+            Vector3 playerDirection =
+                player.position -
+                transform.position;
+
+            playerDirection.y = 0f;
+
+
+            RotateTowardsDirection(
+                playerDirection
+            );
+
+
+            Debug.DrawRay(
+                transform.position,
+                playerDirection,
+                Color.yellow
+            );
+        }
+
+
+        // =====================================================
+        // 바라보는 방향으로 무조건 전진
+        //
+        // 플레이어를 지나쳐도 멈추지 않음
+        // =====================================================
+
+        MoveForward(
+            currentMoveSpeed
+        );
+
+
+        Debug.DrawRay(
+            transform.position,
+            GetForwardDirection() * 3f,
+            Color.cyan
+        );
     }
 
 
@@ -417,6 +525,7 @@ public class RollingEnemyAI : MonoBehaviour
             ? lookingEmpty.position - transform.position
             : transform.forward;
 
+
         direction.y = 0f;
 
 
@@ -426,249 +535,13 @@ public class RollingEnemyAI : MonoBehaviour
             direction.y = 0f;
         }
 
+
         return direction.normalized;
     }
 
 
     // =========================================================
-    // Idle
-    // =========================================================
-
-    private void UpdateIdle()
-    {
-        if (!CanDetectPlayer())
-            return;
-
-        currentState = EnemyState.Chase;
-
-        movementState = MovementState.Stop;
-
-        attackTimer = 0f;
-    }
-
-
-    // =========================================================
-    // Chase
-    // =========================================================
-
-    private void UpdateChase()
-    {
-        if (!CanDetectPlayer())
-        {
-            StopMoving();
-
-            currentState = EnemyState.Idle;
-
-            movementState = MovementState.Stop;
-
-            attackTimer = 0f;
-
-            return;
-        }
-
-
-        Vector3 playerDirection =
-            GetPlayerDirection();
-
-
-        float distance =
-            playerDirection.magnitude;
-
-
-        // =====================================================
-        // 돌진 사거리 내부에서만 공격 Timer 작동
-        // =====================================================
-
-        if (distance <= dashDistance)
-        {
-            attackTimer += Time.deltaTime;
-        }
-        else
-        {
-            attackTimer = 0f;
-        }
-
-
-        // 공격 Timer 완료
-
-        if (distance <= dashDistance &&
-            attackTimer >= attackInterval)
-        {
-            StartAttackWarning();
-            return;
-        }
-
-
-        // =====================================================
-        // Player 방향으로 Y축 회전
-        // =====================================================
-
-        RotateTowardsDirection(
-            playerDirection
-        );
-
-
-        // Debug Ray
-
-        Debug.DrawRay(
-            transform.position,
-            playerDirection,
-            Color.yellow
-        );
-
-        Debug.DrawRay(
-            transform.position,
-            GetForwardDirection() * 3f,
-            Color.cyan
-        );
-
-
-        // =====================================================
-        // 플레이어와 거리 유지
-        // =====================================================
-
-        UpdateDistanceMovement(distance);
-
-
-        // =====================================================
-        // 바라보는 방향이 충분히 맞지 않았다면
-        // 이동하지 않고 회전만 진행
-        // =====================================================
-
-        if (playerDirection.sqrMagnitude > 0.0001f)
-        {
-            float angle =
-                Vector3.Angle(
-                    GetForwardDirection(),
-                    playerDirection
-                );
-
-
-            if (angle > moveAngleTolerance)
-            {
-                StopMoving();
-                return;
-            }
-        }
-
-
-        // =====================================================
-        // 전진 / 후진
-        // =====================================================
-
-        switch (movementState)
-        {
-            case MovementState.Forward:
-
-                float forwardDistance =
-                    Mathf.Min(
-                        enemyStats.MoveSpeed * Time.deltaTime,
-                        Mathf.Max(
-                            0f,
-                            distance - preferredDistance
-                        )
-                    );
-
-                MoveStraight(
-                    GetForwardDirection(),
-                    forwardDistance
-                );
-
-                break;
-
-
-            case MovementState.Backward:
-
-                float backwardDistance =
-                    Mathf.Min(
-                        enemyStats.MoveSpeed *
-                        retreatSpeedMultiplier *
-                        Time.deltaTime,
-
-                        Mathf.Max(
-                            0f,
-                            preferredDistance - distance
-                        )
-                    );
-
-                MoveStraight(
-                    -GetForwardDirection(),
-                    backwardDistance
-                );
-
-                break;
-
-
-            case MovementState.Stop:
-
-                StopMoving();
-
-                break;
-        }
-    }
-
-
-    // =========================================================
-    // Distance Control
-    // =========================================================
-
-    private void UpdateDistanceMovement(float distance)
-    {
-        // 너무 가까우면 후진
-
-        if (distance < retreatDistance)
-        {
-            movementState =
-                MovementState.Backward;
-
-            return;
-        }
-
-
-        // 너무 멀어지면 전진
-
-        if (distance > approachDistance)
-        {
-            movementState =
-                MovementState.Forward;
-
-            return;
-        }
-
-
-        // =====================================================
-        // 후진 중이라면 목표 거리까지 계속 후진
-        // =====================================================
-
-        if (movementState == MovementState.Backward)
-        {
-            if (distance >= preferredDistance - 0.03f)
-            {
-                movementState =
-                    MovementState.Stop;
-            }
-
-            return;
-        }
-
-
-        // =====================================================
-        // 전진 중이라면 목표 거리까지 계속 전진
-        // =====================================================
-
-        if (movementState == MovementState.Forward)
-        {
-            if (distance <= preferredDistance + 0.03f)
-            {
-                movementState =
-                    MovementState.Stop;
-            }
-        }
-    }
-
-
-    // =========================================================
-    // Y축 방향 전환
+    // Y축 회전
     // =========================================================
 
     private void RotateTowardsDirection(
@@ -685,13 +558,9 @@ public class RollingEnemyAI : MonoBehaviour
         targetDirection.Normalize();
 
 
-        Vector3 forward =
-            GetForwardDirection();
-
-
         float angle =
             Vector3.SignedAngle(
-                forward,
+                GetForwardDirection(),
                 targetDirection,
                 Vector3.up
             );
@@ -705,8 +574,6 @@ public class RollingEnemyAI : MonoBehaviour
             );
 
 
-        // 부모는 Y축으로만 방향 전환
-
         transform.Rotate(
             Vector3.up,
             rotateAmount,
@@ -716,42 +583,38 @@ public class RollingEnemyAI : MonoBehaviour
 
 
     // =========================================================
-    // 직선 이동
+    // Forward Movement
     // =========================================================
 
-    private float MoveStraight(
-        Vector3 direction,
-        float distance
-    )
+    private void MoveForward(float speed)
     {
         if (!CanUseAgent)
-            return 0f;
+            return;
 
 
-        if (distance <= 0.0001f)
-        {
-            StopMoving();
-            return 0f;
-        }
+        Vector3 direction =
+            GetForwardDirection();
 
 
-        direction.y = 0f;
-        direction.Normalize();
+        float moveDistance =
+            speed * Time.deltaTime;
 
 
         Vector3 startPosition =
             agent.nextPosition;
 
 
-        Vector3 targetPosition =
+        Vector3 nextPosition =
             startPosition +
-            direction * distance;
+            direction * moveDistance;
 
 
-        // NavMesh 경계 또는 장애물 확인
+        // =====================================================
+        // NavMesh 경계 및 장애물 검사
+        // =====================================================
 
         if (agent.Raycast(
-                targetPosition,
+                nextPosition,
                 out NavMeshHit hit))
         {
             float availableDistance =
@@ -761,45 +624,40 @@ public class RollingEnemyAI : MonoBehaviour
                 );
 
 
-            distance =
+            moveDistance =
                 Mathf.Clamp(
                     availableDistance - 0.03f,
                     0f,
-                    distance
+                    moveDistance
                 );
         }
 
 
-        if (distance <= 0.0001f)
-        {
-            StopMoving();
-            return 0f;
-        }
+        if (moveDistance <= 0.0001f)
+            return;
 
 
         agent.isStopped = false;
 
 
-        // LookingEmpty 기준 직선 이동
-        // SetDestination을 사용하지 않음
+        // 플레이어 위치가 아닌
+        // 현재 바라보는 방향으로 계속 이동
 
         agent.Move(
-            direction * distance
+            direction * moveDistance
         );
-
-
-        return distance;
     }
 
 
     // =========================================================
-    // 모델 Z축 구르기
+    // Model X축 Rolling
     // =========================================================
 
     private void LateUpdate()
     {
         Vector3 movement =
-            transform.position - previousPosition;
+            transform.position -
+            previousPosition;
 
 
         previousPosition =
@@ -807,7 +665,7 @@ public class RollingEnemyAI : MonoBehaviour
 
 
         if (rollingModel == null ||
-            !CanUseAgent)
+            currentState != EnemyState.Chase)
         {
             return;
         }
@@ -815,13 +673,6 @@ public class RollingEnemyAI : MonoBehaviour
 
         movement.y = 0f;
 
-
-        // =====================================================
-        // LookingEmpty 방향 기준 이동량
-        //
-        // 전진 = 양수
-        // 후진 = 음수
-        // =====================================================
 
         float signedDistance =
             Vector3.Dot(
@@ -835,7 +686,9 @@ public class RollingEnemyAI : MonoBehaviour
 
 
         float direction =
-            invertRollingDirection ? -1f : 1f;
+            invertRollingDirection
+            ? -1f
+            : 1f;
 
 
         float rotationAmount =
@@ -853,354 +706,60 @@ public class RollingEnemyAI : MonoBehaviour
             );
 
 
-        // =====================================================
-        // 모델의 초기 회전값 유지
-        // Local X축 회전만 추가
-        // =====================================================
+        // 기존에 수정했던 X축 회전 유지
 
         rollingModel.localRotation =
-        originalModelRotation *
-        Quaternion.AngleAxis(
-        rollingAngle,
-        Vector3.right
-        );
+            originalModelRotation *
+            Quaternion.AngleAxis(
+                rollingAngle,
+                Vector3.right
+            );
     }
 
 
     // =========================================================
-    // Attack Warning
+    // Warning Blink
     // =========================================================
 
-    private void StartAttackWarning()
+    private void UpdateWarningBlink(float progress)
     {
-        StopMoving();
+        // 자폭 시간이 가까워질수록
+        // 점멸 간격이 짧아짐
 
-        movementState =
-            MovementState.Stop;
-
-
-        // 공격 시작 시 Player 방향 기억
-
-        dashDirection =
-            GetPlayerDirection();
-
-
-        if (dashDirection.sqrMagnitude <= 0.0001f)
-        {
-            dashDirection =
-                GetForwardDirection();
-        }
-
-
-        dashDirection.Normalize();
-
-
-        currentState =
-            EnemyState.AttackWarning;
-
-
-        stateTimer =
-            Mathf.Max(0f, attackWarningTime);
-
-
-        attackTimer = 0f;
-
-
-        SetWarningColor(true);
-
-
-        Debug.Log(
-            "[RollingEnemy] 돌진 공격 준비"
-        );
-    }
-
-
-    private void UpdateAttackWarning()
-    {
-        // 저장된 공격 방향으로만 회전
-        // Player의 새로운 위치는 반영하지 않음
-
-        RotateTowardsDirection(
-            dashDirection
-        );
-
-
-        stateTimer -= Time.deltaTime;
-
-
-        float angle =
-            Vector3.Angle(
-                GetForwardDirection(),
-                dashDirection
+        currentBlinkInterval =
+            Mathf.Max(
+                0.01f,
+                Mathf.Lerp(
+                    startBlinkInterval,
+                    finalBlinkInterval,
+                    progress
+                )
             );
 
 
-        // 공격 예고가 끝났고 방향까지 맞으면 돌진
+        blinkTimer += Time.deltaTime;
 
-        if (stateTimer <= 0f &&
-            angle <= 0.5f)
+
+        if (blinkTimer >= currentBlinkInterval)
         {
-            StartDash();
-        }
-    }
+            int toggleCount =
+                Mathf.FloorToInt(
+                    blinkTimer / currentBlinkInterval
+                );
+
+            blinkTimer -=
+                toggleCount * currentBlinkInterval;
 
 
-    // =========================================================
-    // Dash Start
-    // =========================================================
+            // 프레임이 느려져도 점멸 횟수 유지
 
-    private void StartDash()
-    {
-        SetWarningColor(false);
-
-
-        currentState =
-            EnemyState.Dash;
-
-
-        // 현재 LookingEmpty 방향으로 고정
-
-        dashDirection =
-            GetForwardDirection();
-
-
-        remainingDashDistance =
-            dashDistance;
-
-
-        previousDashPosition =
-            transform.position;
-
-
-        dashFinishPending =
-            false;
-
-
-        damagedPlayers.Clear();
-
-
-        agent.ResetPath();
-
-        agent.isStopped = false;
-
-
-        Debug.Log(
-            "[RollingEnemy] 돌진 시작"
-        );
-    }
-
-
-    // =========================================================
-    // Dash Movement
-    // =========================================================
-
-    private void UpdateDash()
-    {
-        // 이전 위치부터 현재 위치까지 공격 판정
-
-        CheckDashDamage(
-            previousDashPosition,
-            transform.position
-        );
-
-
-        previousDashPosition =
-            transform.position;
-
-
-        // 마지막 공격 판정까지 끝났다면 경직
-
-        if (dashFinishPending ||
-            remainingDashDistance <= 0.001f)
-        {
-            StartStun();
-            return;
-        }
-
-
-        float requestedDistance =
-            Mathf.Min(
-                dashSpeed * Time.deltaTime,
-                remainingDashDistance
-            );
-
-
-        float movedDistance =
-            MoveStraight(
-                dashDirection,
-                requestedDistance
-            );
-
-
-        remainingDashDistance -=
-            movedDistance;
-
-
-        // 벽에 막히거나 최대 거리 이동 시 종료
-
-        if (movedDistance <= 0.0001f ||
-            movedDistance < requestedDistance - 0.001f ||
-            remainingDashDistance <= 0.001f)
-        {
-            dashFinishPending = true;
-        }
-
-
-        Debug.DrawRay(
-            transform.position,
-            dashDirection * remainingDashDistance,
-            Color.red
-        );
-    }
-
-
-    // =========================================================
-    // Dash Damage
-    // =========================================================
-
-    private void CheckDashDamage(
-        Vector3 startPosition,
-        Vector3 endPosition
-    )
-    {
-        Vector3 offset =
-            Vector3.up * damageHeightOffset;
-
-
-        Vector3 start =
-            startPosition + offset;
-
-
-        Vector3 end =
-            endPosition + offset;
-
-
-        Collider[] hits;
-
-
-        if ((end - start).sqrMagnitude <= 0.000001f)
-        {
-            hits = Physics.OverlapSphere(
-                start,
-                damageRadius,
-                playerMask,
-                QueryTriggerInteraction.Ignore
-            );
-        }
-        else
-        {
-            hits = Physics.OverlapCapsule(
-                start,
-                end,
-                damageRadius,
-                playerMask,
-                QueryTriggerInteraction.Ignore
-            );
-        }
-
-
-        foreach (Collider hit in hits)
-        {
-            if (hit == null)
-                continue;
-
-
-            PlayerStats hitPlayer =
-                hit.GetComponentInParent<PlayerStats>();
-
-
-            if (hitPlayer == null ||
-                hitPlayer.IsDead)
+            if (toggleCount % 2 != 0)
             {
-                continue;
+                SetWarningColor(
+                    !warningActive
+                );
             }
-
-
-            // 한 번의 돌진당 한 번만 데미지
-
-            if (!damagedPlayers.Add(hitPlayer))
-                continue;
-
-
-            hitPlayer.TakeDamage(
-                enemyStats.AttackPower
-            );
-
-
-            Debug.Log(
-                $"[RollingEnemy] 돌진 명중 / " +
-                $"Damage = {enemyStats.AttackPower}"
-            );
         }
-    }
-
-
-    // =========================================================
-    // Stun
-    // =========================================================
-
-    private void StartStun()
-    {
-        StopMoving();
-
-        SetWarningColor(false);
-
-
-        currentState =
-            EnemyState.Stunned;
-
-
-        movementState =
-            MovementState.Stop;
-
-
-        stateTimer =
-            Mathf.Max(0f, stunDuration);
-
-
-        attackTimer = 0f;
-
-
-        Debug.Log(
-            "[RollingEnemy] 경직 시작"
-        );
-    }
-
-
-    private void UpdateStunned()
-    {
-        stateTimer -= Time.deltaTime;
-
-
-        if (stateTimer > 0f)
-            return;
-
-
-        currentState =
-            EnemyState.Idle;
-
-
-        Debug.Log(
-            "[RollingEnemy] 경직 종료"
-        );
-    }
-
-
-    // =========================================================
-    // Stop
-    // =========================================================
-
-    private void StopMoving()
-    {
-        if (!CanUseAgent)
-            return;
-
-
-        agent.isStopped = true;
-
-        agent.ResetPath();
-
-        agent.velocity = Vector3.zero;
     }
 
 
@@ -1236,6 +795,8 @@ public class RollingEnemyAI : MonoBehaviour
 
             if (active)
             {
+                // 원래 색상 상태 저장
+
                 modelRenderer.GetPropertyBlock(
                     originalBlocks[i]
                 );
@@ -1250,11 +811,15 @@ public class RollingEnemyAI : MonoBehaviour
                 );
 
 
+                // URP
+
                 warningBlock.SetColor(
                     "_BaseColor",
                     warningColor
                 );
 
+
+                // 일반 Material
 
                 warningBlock.SetColor(
                     "_Color",
@@ -1268,6 +833,8 @@ public class RollingEnemyAI : MonoBehaviour
             }
             else
             {
+                // 원래 Material 상태로 복구
+
                 modelRenderer.SetPropertyBlock(
                     originalBlocks[i].isEmpty
                     ? null
@@ -1275,6 +842,142 @@ public class RollingEnemyAI : MonoBehaviour
                 );
             }
         }
+    }
+
+
+    // =========================================================
+    // Self Destruction
+    // =========================================================
+
+    private void Explode()
+    {
+        if (hasExploded ||
+            enemyStats.IsDead)
+        {
+            return;
+        }
+
+
+        hasExploded = true;
+
+        currentState =
+            EnemyState.Exploded;
+
+        currentMoveSpeed = 0f;
+
+        remainingTime = 0f;
+
+
+        StopMoving();
+
+        SetWarningColor(false);
+
+
+        // =====================================================
+        // 1. 폭발 이펙트 생성
+        // =====================================================
+
+        if (explosionPrefab != null)
+        {
+            ExplosionVFX explosion =
+                Instantiate(
+                    explosionPrefab,
+                    transform.position,
+                    Quaternion.identity
+                );
+
+
+            explosion.SetRadius(
+                explosionRadius
+            );
+        }
+
+
+        // =====================================================
+        // 2. 폭발 범위 탐색
+        // =====================================================
+
+        Collider[] hitColliders =
+            Physics.OverlapSphere(
+                transform.position,
+                explosionRadius,
+                playerMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+
+        HashSet<PlayerStats> damagedPlayers =
+            new HashSet<PlayerStats>();
+
+
+        foreach (Collider hit in hitColliders)
+        {
+            if (hit == null)
+                continue;
+
+
+            PlayerStats hitPlayer =
+                hit.GetComponentInParent<PlayerStats>();
+
+
+            if (hitPlayer == null ||
+                hitPlayer.IsDead)
+            {
+                continue;
+            }
+
+
+            // 여러 Collider에 감지되어도
+            // 데미지는 한 번만 적용
+
+            if (!damagedPlayers.Add(hitPlayer))
+                continue;
+
+
+            hitPlayer.TakeDamage(
+                enemyStats.AttackPower
+            );
+
+
+            Debug.Log(
+                $"[RollingEnemy] 폭발 명중 / " +
+                $"Damage : {enemyStats.AttackPower}"
+            );
+        }
+
+
+        // =====================================================
+        // 3. 자폭한 적 사망
+        //
+        // 기존 EnemyStats의 사망 기능 활용
+        // =====================================================
+
+        Debug.Log(
+            "[RollingEnemy] 자폭 완료"
+        );
+
+
+        enemyStats.TakeDamage(
+            enemyStats.CurrentHealth
+        );
+    }
+
+
+    // =========================================================
+    // Stop Movement
+    // =========================================================
+
+    private void StopMoving()
+    {
+        if (!CanUseAgent)
+            return;
+
+
+        agent.isStopped = true;
+
+        agent.ResetPath();
+
+        agent.velocity = Vector3.zero;
     }
 
 
@@ -1287,52 +990,6 @@ public class RollingEnemyAI : MonoBehaviour
         SetWarningColor(false);
 
         StopMoving();
-
-        damagedPlayers.Clear();
-    }
-
-
-    // =========================================================
-    // Inspector Protection
-    // =========================================================
-
-    private void OnValidate()
-    {
-        retreatDistance =
-            Mathf.Max(0.1f, retreatDistance);
-
-        preferredDistance =
-            Mathf.Max(retreatDistance + 0.1f, preferredDistance);
-
-        approachDistance =
-            Mathf.Max(preferredDistance + 0.1f, approachDistance);
-
-        dashDistance =
-            Mathf.Max(approachDistance, dashDistance);
-
-        detectionRange =
-            Mathf.Max(dashDistance, detectionRange);
-
-        rotationSpeed =
-            Mathf.Max(1f, rotationSpeed);
-
-        retreatSpeedMultiplier =
-            Mathf.Max(0f, retreatSpeedMultiplier);
-
-        moveAngleTolerance =
-            Mathf.Clamp(moveAngleTolerance, 1f, 30f);
-
-        rollingRadius =
-            Mathf.Max(0.01f, rollingRadius);
-
-        attackInterval =
-            Mathf.Max(0f, attackInterval);
-
-        attackWarningTime =
-            Mathf.Max(0f, attackWarningTime);
-
-        stunDuration =
-            Mathf.Max(0f, stunDuration);
     }
 
 
@@ -1342,7 +999,7 @@ public class RollingEnemyAI : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        // Detection Range
+        // 플레이어 감지 범위
 
         Gizmos.color = Color.yellow;
 
@@ -1352,54 +1009,24 @@ public class RollingEnemyAI : MonoBehaviour
         );
 
 
-        // Retreat Distance
-
-        Gizmos.color = new Color(1f, 0.5f, 0f);
-
-        Gizmos.DrawWireSphere(
-            transform.position,
-            retreatDistance
-        );
-
-
-        // Preferred Distance
-
-        Gizmos.color = Color.green;
-
-        Gizmos.DrawWireSphere(
-            transform.position,
-            preferredDistance
-        );
-
-
-        // Approach Distance
-
-        Gizmos.color = Color.blue;
-
-        Gizmos.DrawWireSphere(
-            transform.position,
-            approachDistance
-        );
-
-
-        // Dash Range
+        // 폭발 범위
 
         Gizmos.color = Color.red;
 
         Gizmos.DrawWireSphere(
             transform.position,
-            dashDistance
+            explosionRadius
         );
 
 
-        // Looking Empty 방향
+        // 현재 바라보는 방향
 
         Gizmos.color = Color.cyan;
 
         Gizmos.DrawLine(
             transform.position,
             transform.position +
-            GetForwardDirection() * dashDistance
+            GetForwardDirection() * 3f
         );
     }
 }
