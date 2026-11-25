@@ -7,7 +7,7 @@ public class Projectile : MonoBehaviour
     [SerializeField] private float lifeTime = 5f;
 
     private Rigidbody rb;
-
+     
     private float damage;
 
     // 이 총알을 발사한 캐릭터
@@ -105,30 +105,67 @@ public class Projectile : MonoBehaviour
                 .GetComponentInParent<DoorController>();
 
 
-        if (door != null)
+        // =====================================================
+        // 공용 충격 정보
+        // =====================================================
+
+        Vector3 projectileVelocity =
+            rb != null
+            ? rb.linearVelocity
+            : transform.forward * speed;
+
+
+        Vector3 hitPoint =
+            collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : transform.position;
+
+
+        // =====================================================
+        // Sliding Door 명중 (새로운 미닫이문)
+        // =====================================================
+
+        SlidingDoorController slidingDoor =
+            collision.collider
+                .GetComponentInParent<SlidingDoorController>();
+
+
+        if (slidingDoor != null)
         {
-            Vector3 projectileVelocity =
-                rb != null
-                ? rb.linearVelocity
+            // 충돌 직후 Rigidbody 속도가 감소해도
+            // 미닫이문이 정상적으로 열리도록 보정
+            Vector3 slidingImpactVelocity =
+                projectileVelocity.sqrMagnitude > 0.0001f
+                ? projectileVelocity
                 : transform.forward * speed;
 
 
-            Vector3 hitPoint =
-                collision.contactCount > 0
-                ? collision.GetContact(0).point
-                : transform.position;
+            slidingDoor.HitByProjectile(
+                slidingImpactVelocity,
+                hitPoint
+            );
 
 
+            Destroy(gameObject);
+
+            return;
+        }
+
+
+        // =====================================================
+        // Door 명중 (기존 회전문)
+        // =====================================================
+
+
+        if (door != null)
+        {
             door.HitByProjectile(
                 projectileVelocity,
                 hitPoint
             );
 
 
-            Destroy(
-                gameObject
-            );
-
+            Destroy(gameObject);
 
             return;
         }
