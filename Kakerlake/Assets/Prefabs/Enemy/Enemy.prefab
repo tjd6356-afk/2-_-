@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3999734106327792010}
   - component: {fileID: 2223447249212923560}
   - component: {fileID: 1322128847459957766}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: HPBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -93,7 +93,7 @@ GameObject:
   - component: {fileID: 1838236345115302885}
   - component: {fileID: 4352824083180150948}
   - component: {fileID: 7822493213012700734}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Enemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -224,10 +224,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
+  m_Radius: 0.6
+  m_Height: 2.5
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.3, z: 0}
 --- !u!195 &4175748206305615774
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -247,7 +247,7 @@ NavMeshAgent:
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 1
-  m_BaseOffset: 1
+  m_BaseOffset: 0.8
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!114 &1838236345115302885
@@ -319,7 +319,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7297325005206393780}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -353,7 +353,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9195850568283672912}
   - component: {fileID: 5599552862040267425}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: HealthUIAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -408,7 +408,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5666960485707214776}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: FirePoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -442,7 +442,7 @@ GameObject:
   - component: {fileID: 1682711199084956494}
   - component: {fileID: 675844386210659765}
   - component: {fileID: 3863110216026322432}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: EnemyHealthCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -543,7 +543,7 @@ GameObject:
   - component: {fileID: 7306701553577843698}
   - component: {fileID: 6560906148686252242}
   - component: {fileID: 6690971899403950556}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ExGun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -632,7 +632,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 850915487519095160}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: HealthUIRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -666,7 +666,7 @@ GameObject:
   - component: {fileID: 3172619782859558324}
   - component: {fileID: 8182752480992549562}
   - component: {fileID: 1573694093930469459}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: HPFill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -778,9 +778,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5568371526223589888, guid: dfbbbdf4ebc7f984d952421a0daabb09, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: dfbbbdf4ebc7f984d952421a0daabb09, type: 3}
       propertyPath: m_Name
       value: FKiller
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: dfbbbdf4ebc7f984d952421a0daabb09, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8821623529969584324, guid: dfbbbdf4ebc7f984d952421a0daabb09, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
