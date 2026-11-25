@@ -852,6 +852,7 @@ public class RollingEnemyAI : MonoBehaviour
     private void Explode()
     {
         if (hasExploded ||
+            enemyStats == null ||
             enemyStats.IsDead)
         {
             return;
@@ -860,8 +861,7 @@ public class RollingEnemyAI : MonoBehaviour
 
         hasExploded = true;
 
-        currentState =
-            EnemyState.Exploded;
+        currentState = EnemyState.Exploded;
 
         currentMoveSpeed = 0f;
 
@@ -874,6 +874,17 @@ public class RollingEnemyAI : MonoBehaviour
 
 
         // =====================================================
+        // 공용 폭발 위치 및 범위
+        // =====================================================
+
+        Vector3 explosionCenter =
+            transform.position;
+
+        float radius =
+            Mathf.Max(0.01f, explosionRadius);
+
+
+        // =====================================================
         // 1. 폭발 이펙트 생성
         // =====================================================
 
@@ -882,25 +893,26 @@ public class RollingEnemyAI : MonoBehaviour
             ExplosionVFX explosion =
                 Instantiate(
                     explosionPrefab,
-                    transform.position,
+                    explosionCenter,
                     Quaternion.identity
                 );
 
 
-            explosion.SetRadius(
-                explosionRadius
-            );
+            // RollingEnemyAI의 폭발 범위를
+            // ExplosionVFX에 전달
+
+            explosion.SetRadius(radius);
         }
 
 
         // =====================================================
-        // 2. 폭발 범위 탐색
+        // 2. 실제 폭발 데미지 범위
         // =====================================================
 
         Collider[] hitColliders =
             Physics.OverlapSphere(
-                transform.position,
-                explosionRadius,
+                explosionCenter,
+                radius,
                 playerMask,
                 QueryTriggerInteraction.Ignore
             );
@@ -927,12 +939,13 @@ public class RollingEnemyAI : MonoBehaviour
             }
 
 
-            // 여러 Collider에 감지되어도
-            // 데미지는 한 번만 적용
+            // 중복 데미지 방지
 
             if (!damagedPlayers.Add(hitPlayer))
                 continue;
 
+
+            // 공용 EnemyStats의 공격력 사용
 
             hitPlayer.TakeDamage(
                 enemyStats.AttackPower
@@ -948,12 +961,11 @@ public class RollingEnemyAI : MonoBehaviour
 
         // =====================================================
         // 3. 자폭한 적 사망
-        //
-        // 기존 EnemyStats의 사망 기능 활용
         // =====================================================
 
         Debug.Log(
-            "[RollingEnemy] 자폭 완료"
+            $"[RollingEnemy] 자폭 완료 / " +
+            $"Explosion Radius : {radius}"
         );
 
 
