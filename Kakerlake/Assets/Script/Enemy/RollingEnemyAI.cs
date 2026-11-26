@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -70,6 +70,13 @@ public class RollingEnemyAI : MonoBehaviour
     [Min(0.1f)]
     [SerializeField] private float explosionTime = 8f;
 
+    [Tooltip("플레이어와 접촉 시 즉시 자폭할지 여부")]
+    [SerializeField] private bool explodeOnPlayerContact = true;
+
+    [Tooltip("적 중심으로부터 플레이어 콜라이더 표면을 감지할 접촉 폭발 반경")]
+    [Min(0.1f)]
+    [SerializeField] private float contactExplosionRadius = 0.9f;
+
     [Tooltip("폭발 반경")]
     [Min(0.01f)]
     [SerializeField] private float explosionRadius = 4f;
@@ -88,13 +95,17 @@ public class RollingEnemyAI : MonoBehaviour
 
     [SerializeField] private Color warningColor = Color.red;
 
-    [Tooltip("처음 색상이 바뀌는 간격")]
+    [Tooltip("처음 경고 신호가 발생하는 간격 (초)")]
     [Min(0.01f)]
     [SerializeField] private float startBlinkInterval = 0.6f;
 
-    [Tooltip("자폭 직전 색상이 바뀌는 간격")]
+    [Tooltip("자폭 직전 경고 신호가 발생하는 간격 (초)")]
     [Min(0.01f)]
     [SerializeField] private float finalBlinkInterval = 0.12f;
+
+    [Tooltip("한 번 색이 변한 뒤 원래 색으로 서서히 페이드 아웃되는 시간 (초)")]
+    [Min(0.02f)]
+    [SerializeField] private float warningFadeDuration = 0.35f;
 
     [SerializeField] private Renderer[] modelRenderers;
 
@@ -146,7 +157,9 @@ public class RollingEnemyAI : MonoBehaviour
 
     private float blinkTimer;
 
-    private bool warningActive;
+    private float fadeTimer;
+
+    private float warningIntensity;
 
 
     // =========================================================
@@ -165,6 +178,12 @@ public class RollingEnemyAI : MonoBehaviour
     // =========================================================
 
     private MaterialPropertyBlock[] originalBlocks;
+
+    private Color[] originalBaseColors;
+
+    private Color[] originalColors;
+
+    private MaterialPropertyBlock workingBlock;
 
 
     private bool CanUseAgent =>
@@ -208,13 +227,11 @@ public class RollingEnemyAI : MonoBehaviour
 
 
         // 모델 초기 회전 저장
-
         originalModelRotation =
             rollingModel.localRotation;
 
 
         // Renderer 자동 탐색
-
         if (modelRenderers == null ||
             modelRenderers.Length == 0)
         {
@@ -226,10 +243,42 @@ public class RollingEnemyAI : MonoBehaviour
         originalBlocks =
             new MaterialPropertyBlock[modelRenderers.Length];
 
-        for (int i = 0; i < originalBlocks.Length; i++)
+        originalBaseColors =
+            new Color[modelRenderers.Length];
+
+        originalColors =
+            new Color[modelRenderers.Length];
+
+        workingBlock =
+            new MaterialPropertyBlock();
+
+        for (int i = 0; i < modelRenderers.Length; i++)
         {
             originalBlocks[i] =
                 new MaterialPropertyBlock();
+
+            Renderer modelRenderer =
+                modelRenderers[i];
+
+            if (modelRenderer == null)
+                continue;
+
+            modelRenderer.GetPropertyBlock(
+                originalBlocks[i]
+            );
+
+            Material sharedMat =
+                modelRenderer.sharedMaterial;
+
+            originalBaseColors[i] =
+                (sharedMat != null && sharedMat.HasProperty("_BaseColor"))
+                ? sharedMat.GetColor("_BaseColor")
+                : Color.white;
+
+            originalColors[i] =
+                (sharedMat != null && sharedMat.HasProperty("_Color"))
+                ? sharedMat.GetColor("_Color")
+                : Color.white;
         }
     }
 
@@ -249,6 +298,8 @@ public class RollingEnemyAI : MonoBehaviour
         currentBlinkInterval = startBlinkInterval;
 
         blinkTimer = 0f;
+        fadeTimer = 0f;
+        warningIntensity = 0f;
         rollingAngle = 0f;
 
         hasExploded = false;
@@ -262,7 +313,7 @@ public class RollingEnemyAI : MonoBehaviour
                 originalModelRotation;
         }
 
-        SetWarningColor(false);
+        ResetWarningColor();
 
         StopMoving();
     }
@@ -354,6 +405,12 @@ public class RollingEnemyAI : MonoBehaviour
         if (distance <= detectionRange)
         {
             StartChase();
+
+            if (explodeOnPlayerContact &&
+                IsTouchingPlayer())
+            {
+                Explode();
+            }
         }
     }
 
@@ -379,9 +436,8 @@ public class RollingEnemyAI : MonoBehaviour
         agent.isStopped = false;
 
 
-        // 자폭 경고 시작
-
-        SetWarningColor(true);
+        // 자폭 경고 첫 펄스 즉시 발생
+        TriggerWarningPulse();
 
 
         Debug.Log(
@@ -412,6 +468,19 @@ public class RollingEnemyAI : MonoBehaviour
         // 제한 시간 종료 → 폭발
 
         if (explosionTimer >= explosionTime)
+        {
+            Explode();
+
+            return;
+        }
+
+
+        // =====================================================
+        // 플레이어와 몸통 콜라이더 접촉 검사 → 즉시 폭발
+        // =====================================================
+
+        if (explodeOnPlayerContact &&
+            IsTouchingPlayer())
         {
             Explode();
 
@@ -451,7 +520,7 @@ public class RollingEnemyAI : MonoBehaviour
 
 
         // =====================================================
-        // 시간이 지날수록 붉은색 점멸 속도 증가
+        // 시간이 지날수록 경고 펄스 빈도 증가 + 서서히 페이드 아웃
         // =====================================================
 
         UpdateWarningBlink(progress);
@@ -506,11 +575,112 @@ public class RollingEnemyAI : MonoBehaviour
         );
 
 
+        // 이동 직후에도 접촉 판정 한 번 더 수행
+        if (explodeOnPlayerContact &&
+            IsTouchingPlayer())
+        {
+            Explode();
+
+            return;
+        }
+
+
         Debug.DrawRay(
             transform.position,
             GetForwardDirection() * 3f,
             Color.cyan
         );
+    }
+
+
+    // =========================================================
+    // Player Contact Check (Collider Surface Overlap)
+    // =========================================================
+
+    private Vector3 GetContactCheckCenter()
+    {
+        return rollingModel != null
+            ? rollingModel.position
+            : transform.position + Vector3.up * rollingRadius;
+    }
+
+    private bool IsTouchingPlayer()
+    {
+        Vector3 checkCenter =
+            GetContactCheckCenter();
+
+        float checkRadius =
+            Mathf.Max(0.1f, contactExplosionRadius);
+
+        Collider[] hits =
+            Physics.OverlapSphere(
+                checkCenter,
+                checkRadius,
+                playerMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider hit = hits[i];
+            if (hit == null)
+                continue;
+
+            PlayerStats hitPlayer =
+                hit.GetComponentInParent<PlayerStats>();
+
+            if (hitPlayer != null &&
+                !hitPlayer.IsDead)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other == null || other.isTrigger)
+            return;
+
+        TryExplodeByContact(other.gameObject);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision == null || collision.gameObject == null)
+            return;
+
+        TryExplodeByContact(collision.gameObject);
+    }
+
+    private void TryExplodeByContact(GameObject hitObject)
+    {
+        if (!explodeOnPlayerContact ||
+            hasExploded ||
+            enemyStats == null ||
+            enemyStats.IsDead)
+        {
+            return;
+        }
+
+        if (currentState != EnemyState.Chase &&
+            currentState != EnemyState.Idle)
+        {
+            return;
+        }
+
+        PlayerStats hitPlayer =
+            hitObject.GetComponentInParent<PlayerStats>();
+
+        if (hitPlayer == null ||
+            hitPlayer.IsDead)
+        {
+            return;
+        }
+
+        Explode();
     }
 
 
@@ -718,17 +888,15 @@ public class RollingEnemyAI : MonoBehaviour
 
 
     // =========================================================
-    // Warning Blink
+    // Warning Pulse & Fade Out
     // =========================================================
 
     private void UpdateWarningBlink(float progress)
     {
-        // 자폭 시간이 가까워질수록
-        // 점멸 간격이 짧아짐
-
+        // 자폭 시간이 가까워질수록 신호 간격이 짧아짐
         currentBlinkInterval =
             Mathf.Max(
-                0.01f,
+                0.02f,
                 Mathf.Lerp(
                     startBlinkInterval,
                     finalBlinkInterval,
@@ -736,30 +904,48 @@ public class RollingEnemyAI : MonoBehaviour
                 )
             );
 
-
         blinkTimer += Time.deltaTime;
-
 
         if (blinkTimer >= currentBlinkInterval)
         {
-            int toggleCount =
-                Mathf.FloorToInt(
-                    blinkTimer / currentBlinkInterval
-                );
-
-            blinkTimer -=
-                toggleCount * currentBlinkInterval;
-
-
-            // 프레임이 느려져도 점멸 횟수 유지
-
-            if (toggleCount % 2 != 0)
-            {
-                SetWarningColor(
-                    !warningActive
-                );
-            }
+            blinkTimer %= currentBlinkInterval;
+            TriggerWarningPulse();
         }
+
+        // 단발성으로 켜진 경고색을 서서히 원래 색으로 페이드 아웃
+        if (warningIntensity > 0f)
+        {
+            float effectiveFadeDuration =
+                Mathf.Max(
+                    0.02f,
+                    Mathf.Min(warningFadeDuration, currentBlinkInterval)
+                );
+
+            fadeTimer += Time.deltaTime;
+            float t = Mathf.Clamp01(fadeTimer / effectiveFadeDuration);
+
+            // 초반에 선명하게 빛난 뒤 부드럽게 빠지는 감쇠 곡선
+            warningIntensity =
+                t >= 1f
+                ? 0f
+                : Mathf.Pow(1f - t, 1.4f);
+
+            ApplyWarningColor(warningIntensity);
+        }
+    }
+
+    private void TriggerWarningPulse()
+    {
+        fadeTimer = 0f;
+        warningIntensity = 1f;
+        ApplyWarningColor(1f);
+    }
+
+    private void ResetWarningColor()
+    {
+        fadeTimer = 0f;
+        warningIntensity = 0f;
+        ApplyWarningColor(0f);
     }
 
 
@@ -767,7 +953,7 @@ public class RollingEnemyAI : MonoBehaviour
     // Warning Color
     // =========================================================
 
-    private void SetWarningColor(bool active)
+    private void ApplyWarningColor(float intensity)
     {
         if (modelRenderers == null ||
             originalBlocks == null)
@@ -775,70 +961,69 @@ public class RollingEnemyAI : MonoBehaviour
             return;
         }
 
-
-        if (warningActive == active)
-            return;
-
-
-        warningActive = active;
-
+        intensity = Mathf.Clamp01(intensity);
 
         for (int i = 0; i < modelRenderers.Length; i++)
         {
             Renderer modelRenderer =
                 modelRenderers[i];
 
-
             if (modelRenderer == null)
                 continue;
 
-
-            if (active)
+            if (intensity <= 0.001f)
             {
-                // 원래 색상 상태 저장
-
-                modelRenderer.GetPropertyBlock(
-                    originalBlocks[i]
-                );
-
-
-                MaterialPropertyBlock warningBlock =
-                    new MaterialPropertyBlock();
-
-
-                modelRenderer.GetPropertyBlock(
-                    warningBlock
-                );
-
-
-                // URP
-
-                warningBlock.SetColor(
-                    "_BaseColor",
-                    warningColor
-                );
-
-
-                // 일반 Material
-
-                warningBlock.SetColor(
-                    "_Color",
-                    warningColor
-                );
-
-
-                modelRenderer.SetPropertyBlock(
-                    warningBlock
-                );
-            }
-            else
-            {
-                // 원래 Material 상태로 복구
-
+                // 원래 Material 상태로 완전 복구
                 modelRenderer.SetPropertyBlock(
                     originalBlocks[i].isEmpty
                     ? null
                     : originalBlocks[i]
+                );
+            }
+            else
+            {
+                // 원본 PropertyBlock 유지 후 색상만 보간
+                modelRenderer.SetPropertyBlock(
+                    originalBlocks[i].isEmpty
+                    ? null
+                    : originalBlocks[i]
+                );
+
+                if (workingBlock == null)
+                {
+                    workingBlock = new MaterialPropertyBlock();
+                }
+
+                modelRenderer.GetPropertyBlock(workingBlock);
+
+                Color blendedBaseColor =
+                    Color.Lerp(
+                        originalBaseColors[i],
+                        warningColor,
+                        intensity
+                    );
+
+                Color blendedColor =
+                    Color.Lerp(
+                        originalColors[i],
+                        warningColor,
+                        intensity
+                    );
+
+                // URP
+                workingBlock.SetColor(
+                    "_BaseColor",
+                    blendedBaseColor
+                );
+
+                // 일반 Material
+                workingBlock.SetColor(
+                    "_Color",
+                    blendedColor
+                );
+
+                modelRenderer.SetPropertyBlock(
+                    workingBlock
                 );
             }
         }
@@ -870,7 +1055,7 @@ public class RollingEnemyAI : MonoBehaviour
 
         StopMoving();
 
-        SetWarningColor(false);
+        ResetWarningColor();
 
 
         // =====================================================
@@ -999,7 +1184,7 @@ public class RollingEnemyAI : MonoBehaviour
 
     private void OnDisable()
     {
-        SetWarningColor(false);
+        ResetWarningColor();
 
         StopMoving();
     }
@@ -1019,6 +1204,19 @@ public class RollingEnemyAI : MonoBehaviour
             transform.position,
             detectionRange
         );
+
+
+        // 접촉 즉시 폭발 반경 (모델 중심 기준)
+
+        if (explodeOnPlayerContact)
+        {
+            Gizmos.color = Color.magenta;
+
+            Gizmos.DrawWireSphere(
+                GetContactCheckCenter(),
+                contactExplosionRadius
+            );
+        }
 
 
         // 폭발 범위

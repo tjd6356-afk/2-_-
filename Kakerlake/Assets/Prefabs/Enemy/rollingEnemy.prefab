@@ -454,7 +454,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d822eabfa17eec942bf89b8b1b4f40ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStats
-  maxHealth: 10
+  maxHealth: 30
   fireRate: 1
   reloadSpeed: 1
   attackPower: 55
@@ -504,15 +504,18 @@ MonoBehaviour:
   rollingRadius: 0.5
   rollingSpeedMultiplier: 7
   invertRollingDirection: 0
-  explosionTime: 8
+  explosionTime: 4
+  explodeOnPlayerContact: 1
+  contactExplosionRadius: 0.75
   explosionRadius: 15
   explosionPrefab: {fileID: 6609252621234395040, guid: 6403078ba442b5d46ae2dad05b0c987c, type: 3}
   playerMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  warningColor: {r: 1, g: 0, b: 0, a: 1}
+  warningColor: {r: 0.7882353, g: 0, b: 0, a: 1}
   startBlinkInterval: 0.6
   finalBlinkInterval: 0.12
+  warningFadeDuration: 0.4
   modelRenderers:
   - {fileID: 8458773746369505309}
   currentState: 0
