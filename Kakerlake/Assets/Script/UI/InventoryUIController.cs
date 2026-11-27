@@ -110,6 +110,11 @@ public class InventoryUIController : MonoBehaviour
         if (Keyboard.current == null)
             return;
 
+        if (StageExitPanelUI.BlocksInventoryInput)
+        {
+            return;
+        }
+
 
         bool inventoryKeyPressed =
             Keyboard.current.iKey.wasPressedThisFrame ||

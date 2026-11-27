@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public enum StageExitType
 {
@@ -136,6 +137,32 @@ public class StageExitPanelUI : MonoBehaviour
 
     private bool isMovingStage;
 
+    // 현재 Stage UI가 열려 있는가
+
+    public bool IsOpen =>
+        panelRoot != null &&
+        panelRoot.activeInHierarchy;
+
+
+    public bool IsMovingStage =>
+        isMovingStage;
+
+
+    // UI를 닫은 프레임 기록
+
+    private int closedFrame = -1;
+
+
+    // Inventory와의 입력 충돌 방지
+
+    public static bool BlocksInventoryInput =>
+        Instance != null &&
+        (
+            Instance.IsOpen ||
+            Instance.IsMovingStage ||
+            Instance.closedFrame == Time.frameCount
+        );
+
 
     // =========================================================
     // Awake
@@ -190,6 +217,35 @@ public class StageExitPanelUI : MonoBehaviour
     }
 
 
+    private void Update()
+    {
+        // UI가 닫혀 있으면 무시
+
+        if (!IsOpen)
+            return;
+
+
+        // 이미 Stage 이동 중이면 취소 불가
+
+        if (isMovingStage)
+            return;
+
+
+        if (Keyboard.current == null)
+            return;
+
+
+        // =====================================================
+        // ESC 또는 TAB으로 UI 닫기
+        // =====================================================
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame ||
+            Keyboard.current.tabKey.wasPressedThisFrame)
+        {
+            Close();
+        }
+    }
+
     // =========================================================
     // Panel Open
     // =========================================================
@@ -198,6 +254,9 @@ public class StageExitPanelUI : MonoBehaviour
     PlayerGameplayControl playerControl
 )
     {
+        if (IsOpen || isMovingStage)
+            return;
+
         currentPlayerControl =
             playerControl;
 
@@ -262,8 +321,35 @@ public class StageExitPanelUI : MonoBehaviour
     // Close
     // =========================================================
 
+    // =========================================================
+    // Close
+    // =========================================================
+
     public void Close()
     {
+        if (!IsOpen)
+            return;
+
+
+        // 이미 스테이지 이동이 확정되었다면
+        // UI를 닫지 못하게 한다.
+
+        if (isMovingStage)
+            return;
+
+
+        // =====================================================
+        // UI를 닫은 프레임 기록
+        // =====================================================
+
+        closedFrame =
+            Time.frameCount;
+
+
+        // =====================================================
+        // StageExitPanel 숨기기
+        // =====================================================
+
         if (panelRoot != null)
         {
             panelRoot.SetActive(
@@ -272,14 +358,25 @@ public class StageExitPanelUI : MonoBehaviour
         }
 
 
+        // =====================================================
+        // 플레이어 조작 복구
+        // =====================================================
+
         if (currentPlayerControl != null)
         {
             currentPlayerControl.UnlockControls();
         }
+        else
+        {
+            Cursor.lockState =
+                CursorLockMode.Locked;
+
+            Cursor.visible =
+                false;
+        }
 
 
-        currentPlayerControl =
-            null;
+        currentPlayerControl = null;
 
 
         Debug.Log(

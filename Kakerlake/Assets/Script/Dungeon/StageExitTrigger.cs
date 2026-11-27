@@ -1,84 +1,101 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(Collider))]
 public class StageExitTrigger : MonoBehaviour
 {
-    [Header("Runtime UI")]
+    [Header("UI")]
 
     [SerializeField]
     private StageExitPanelUI stageExitPanel;
 
 
+    // =========================================================
+    // Runtime
+    // =========================================================
+
+    private PlayerGameplayControl playerControl;
+
     private bool playerInside;
 
+    // 플레이어에게 Collider가 여러 개 있는 경우 대응
+    private readonly HashSet<Collider> playerColliders =
+        new HashSet<Collider>();
 
-    private void Start()
+
+    private void Awake()
     {
-        FindStageExitPanel();
-    }
+        Collider trigger =
+            GetComponent<Collider>();
+
+        trigger.isTrigger = true;
 
 
-    // =========================================================
-    // StageExitPanel 자동 탐색
-    // =========================================================
-
-    private void FindStageExitPanel()
-    {
-        // 1순위: Instance
-        if (StageExitPanelUI.Instance != null)
+        if (stageExitPanel == null)
         {
             stageExitPanel =
-                StageExitPanelUI.Instance;
-
-
-            Debug.Log(
-                "[StageExitTrigger] StageExitPanelUI 자동 연결 성공"
-            );
-
-            return;
-        }
-
-
-        // ==========================================
-        // 혹시 비활성화된 오브젝트에 붙어있더라도 검색
-        // ==========================================
-
-        stageExitPanel =
-            FindFirstObjectByType<StageExitPanelUI>(
-                FindObjectsInactive.Include
-            );
-
-
-        if (stageExitPanel != null)
-        {
-            Debug.Log(
-                "[StageExitTrigger] 비활성 UI까지 검색해서 연결 성공"
-            );
-        }
-        else
-        {
-            Debug.LogError(
-                "[StageExitTrigger] StageExitPanelUI를 찾지 못했습니다."
-            );
+                FindFirstObjectByType<StageExitPanelUI>(
+                    FindObjectsInactive.Include
+                );
         }
     }
 
 
     // =========================================================
-    // DungeonGenerator에서 직접 전달할 수도 있음
+    // DungeonGridGenerator 호환
     // =========================================================
 
     public void SetStageExitPanel(
         StageExitPanelUI panel
     )
     {
-        stageExitPanel =
-            panel;
+        stageExitPanel = panel;
+    }
 
 
-        if (stageExitPanel != null)
+    // =========================================================
+    // E키 상호작용
+    // =========================================================
+
+    private void Update()
+    {
+        if (!playerInside)
+            return;
+
+
+        if (stageExitPanel == null)
+            return;
+
+
+        if (stageExitPanel.IsOpen ||
+            stageExitPanel.IsMovingStage)
         {
+            return;
+        }
+
+
+        // 다른 UI 사용 중이면 상호작용 금지
+
+        if (PlayerGameplayControl.GameplayLocked)
+            return;
+
+
+        if (Keyboard.current == null)
+            return;
+
+
+        // 트리거 내부에서 E키를 눌렀을 때만 Open
+
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            stageExitPanel.Open(
+                playerControl
+            );
+
+
             Debug.Log(
-                "[StageExitTrigger] StageExitPanelUI 직접 등록 성공"
+                "[StageExit] E키 입력 / UI 열기"
             );
         }
     }
@@ -89,13 +106,9 @@ public class StageExitTrigger : MonoBehaviour
     // =========================================================
 
     private void OnTriggerEnter(
-    Collider other
-)
+        Collider other
+    )
     {
-        if (playerInside)
-            return;
-
-
         PlayerStats playerStats =
             other.GetComponentInParent<PlayerStats>();
 
@@ -104,65 +117,57 @@ public class StageExitTrigger : MonoBehaviour
             return;
 
 
-        playerInside =
-            true;
+        playerColliders.Add(other);
+
+        playerInside = true;
 
 
-        if (stageExitPanel == null)
-        {
-            FindStageExitPanel();
-        }
-
-
-        if (stageExitPanel == null)
-        {
-            Debug.LogError(
-                "[StageExitTrigger] StageExitPanelUI가 없습니다."
-            );
-
-            return;
-        }
-
-
-        // ==========================================
-        // Player 조작 관리자 찾기
-        // ==========================================
-
-        PlayerGameplayControl gameplayControl =
+        playerControl =
             playerStats.GetComponent<PlayerGameplayControl>();
 
 
-        if (gameplayControl == null)
-        {
-            gameplayControl =
-                playerStats.GetComponentInParent<PlayerGameplayControl>();
-        }
-
+        // 여기에서는 UI를 열지 않는다.
 
         Debug.Log(
-            "[StageExitTrigger] Stage Exit Panel Open"
-        );
-
-
-        stageExitPanel.Open(
-            gameplayControl
+            "[StageExit] Player 진입 / E키 입력 대기"
         );
     }
 
+
+    // =========================================================
+    // Player 퇴장
+    // =========================================================
 
     private void OnTriggerExit(
         Collider other
     )
     {
-        PlayerStats player =
-            other.GetComponentInParent<PlayerStats>();
-
-
-        if (player == null)
+        if (!playerColliders.Remove(other))
             return;
 
 
-        playerInside =
-            false;
+        // 플레이어의 다른 Collider가 아직 내부에 있음
+
+        if (playerColliders.Count > 0)
+            return;
+
+
+        playerInside = false;
+
+
+        if (stageExitPanel != null &&
+            stageExitPanel.IsOpen &&
+            !stageExitPanel.IsMovingStage)
+        {
+            stageExitPanel.Close();
+        }
+
+
+        playerControl = null;
+
+
+        Debug.Log(
+            "[StageExit] Player 퇴장"
+        );
     }
 }
