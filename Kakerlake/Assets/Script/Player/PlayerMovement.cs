@@ -19,6 +19,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float maxGlideDuration = 3f;     // 활공 최대 유지 시간
     [SerializeField] private float maxGlideFallSpeed = -2.5f; // 활공 중 최대 낙하 속도 (천천히 떨어지게)
 
+    [Header("Melee Attack Motion")]
+
+    [SerializeField]
+    private MeleeAttackMotion meleeAttackMotion; // 테스트 무기 내려치기 모드에서 이동에 사용하는 함수
+
+    private bool meleeMotionActive;
+
     private bool isGliding = false;
     private float currentGlideTime = 0f;
 
@@ -70,6 +77,12 @@ public class PlayerMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
 
+        if (meleeAttackMotion == null)
+        {
+            meleeAttackMotion =
+                GetComponent<MeleeAttackMotion>();
+        }
+
         if (playerStats == null)
         {
             playerStats =
@@ -104,6 +117,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void LateUpdate()
     {
+        // 내려치기 및 회전 베기 중
+        // 기존 카메라 방향 회전 방지
+
+        if (meleeMotionActive)
+            return;
+
+
         RotateWhileAiming();
     }
 
@@ -111,17 +131,77 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        // ==========================================
-        // 와이어가 현재 Player 이동을 제어 중
-        // ==========================================
+        meleeMotionActive = false;
+
+
+        // =====================================================
+        // Wire 이동 중
+        // =====================================================
 
         if (wireController != null &&
-        wireController.IsControllingMovement)
+            wireController.IsControllingMovement)
         {
             return;
         }
 
-        if (isSwingingByWeapon) return;
+
+        // =====================================================
+        // TestWeapon 근접 공격 이동
+        // =====================================================
+
+        if (meleeAttackMotion != null &&
+            meleeAttackMotion.TryGetAttackVelocity(
+                Time.deltaTime,
+                out Vector3 attackVelocity
+            ))
+        {
+            meleeMotionActive = true;
+
+
+            // 공격 중 기존 대시 종료
+            if (isDashing)
+            {
+                CancelInvoke(nameof(EndDash));
+
+                EndDash();
+            }
+
+
+            // 바닥 검사
+            CheckGround();
+
+
+            // 공격 방향으로 이동
+            controller.Move(
+                attackVelocity *
+                Time.deltaTime
+            );
+
+
+            // 공격 중에도 점프 및 중력 유지
+            JumpAndGravity();
+
+
+            // 외부 충격 및 와이어 관성 유지
+            ApplyWireMomentum();
+
+
+            // 일반 이동 및 대시 실행 방지
+            return;
+        }
+
+
+        // =====================================================
+        // 기존 무기 이동 제한
+        // =====================================================
+
+        if (isSwingingByWeapon)
+            return;
+
+
+        // =====================================================
+        // 기존 Player Movement
+        // =====================================================
 
         CheckGround();
 
@@ -131,6 +211,7 @@ public class PlayerMovement : MonoBehaviour
         if (isDashing)
         {
             DashMove();
+
             return;
         }
 

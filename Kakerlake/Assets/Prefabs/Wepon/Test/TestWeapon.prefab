@@ -132,7 +132,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4724381804754245148}
-  - component: {fileID: 4086378446172301856}
+  - component: {fileID: 1449547771023544226}
   m_Layer: 0
   m_Name: TestWeapon
   m_TagString: Untagged
@@ -157,7 +157,7 @@ Transform:
   - {fileID: 8561254899223168961}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4086378446172301856
+--- !u!114 &1449547771023544226
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -166,12 +166,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 5625060848823003018}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e60ccfb6bf11e5b4c897ec0c1eea08fe, type: 3}
+  m_Script: {fileID: 11500000, guid: 202d39921cb7650448f7abc181e1d0bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestWeapon
-  weaponId: weapon_070
+  weaponId: weapon_001
   weaponName: Weapon
-  weaponType: 1
+  weaponType: 0
   currentMode: 0
   attackPoint: {fileID: 8561254899223168961}
   weaponVisual: {fileID: 7323947540708326725}
@@ -180,16 +180,15 @@ MonoBehaviour:
   horizontalAttackRange: 4.2
   horizontalAttackWidth: 6.3
   horizontalAttackHeight: 1.5
-  horizontalDamageMultiplier: 1
+  horizontalDamageMultiplier: 3
   horizontalAttackInterval: 0.5
   horizontalSwingDuration: 0.15
   horizontalSwingAngle: 100
   verticalAttackRange: 4.5
   verticalAttackWidth: 1.5
   verticalAttackHeight: 4
-  verticalDamageMultiplier: 1.5
-  verticalAttackInterval: 0.8
-  verticalSwingDuration: 0.2
+  verticalDamageMultiplier: 3.5
+  verticalSwingDuration: 0.09
   verticalStartAngle: -100
   verticalEndAngle: 13
   swingCenterOffset: {x: 0, y: 0.7, z: 0.5}
@@ -222,6 +221,25 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  comboInputWindow: 0.6
+  firstAttackPause: 0.15
+  firstAdvanceDistance: 1.2
+  secondAttackPause: 0.1
+  secondRaiseDuration: 0.12
+  secondSwingDuration: 0.17
+  secondAdvanceDistance: 1.6
+  secondDamageMultiplier: 1.8
+  finisherPrepareDuration: 0.12
+  finisherSpinDuration: 0.42
+  finisherRadius: 3.5
+  finisherHeight: 2
+  finisherDamageMultiplier: 2.5
+  finisherRecovery: 0.25
+  guardMoveSpeedMultiplier: 0.5
+  guardDamageReduction: 0.6
+  guardLocalPosition: {x: 1, y: 0.75, z: 0.55}
+  guardLocalEuler: {x: 15, y: 0, z: 80}
+  guardTransitionSpeed: 16
   alignTrailToSwingPlane: 1
   enemyMask:
     serializedVersion: 2
@@ -230,6 +248,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   doorImpactSpeed: 30
+  comboStep: 0
+  queuedComboAttack: 0
+  comboTimeRemaining: 0
 --- !u!1 &6687318275619270710
 GameObject:
   m_ObjectHideFlags: 0

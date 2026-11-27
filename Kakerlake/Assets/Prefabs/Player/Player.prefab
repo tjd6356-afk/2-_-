@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 8235560101869539188}
   - component: {fileID: 8686138121981914851}
   - component: {fileID: 2357303669533229917}
+  - component: {fileID: 1708053839128180790}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -86,6 +87,7 @@ MonoBehaviour:
   glideGravity: -4
   maxGlideDuration: 3
   maxGlideFallSpeed: -2.5
+  meleeAttackMotion: {fileID: 0}
   groundCheckDistance: 0.09
   groundCheckRadiusMultiplier: 0.9
   cameraTransform: {fileID: 0}
@@ -201,6 +203,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDeathHandler
   playerStats: {fileID: 5351818697115213627}
   gameplayControl: {fileID: 5821247941830255217}
+--- !u!114 &1708053839128180790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001626158897247550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c56f97e5385b5e1438de5ba48e89e528, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeAttackMotion
+  playerVisual: {fileID: 5073353023078118861}
 --- !u!1 &1100990912702700306
 GameObject:
   m_ObjectHideFlags: 0

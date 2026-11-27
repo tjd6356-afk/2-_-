@@ -1311,7 +1311,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70d12c9acec761144b6c979de58f95db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPickup
-  weaponPrefab: {fileID: 4086378446172301856, guid: 541958d47bbc5fd44af6fafc0effa9e6, type: 3}
+  weaponPrefab: {fileID: 1449547771023544226, guid: 541958d47bbc5fd44af6fafc0effa9e6, type: 3}
   destroyAfterEquip: 0
 --- !u!65 &642580443
 BoxCollider:
