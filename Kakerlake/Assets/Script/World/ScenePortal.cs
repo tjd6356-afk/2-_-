@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 public class ScenePortal : MonoBehaviour
 {
@@ -157,6 +158,62 @@ public class ScenePortal : MonoBehaviour
 
 
     // =========================================================
+    // Player Interaction
+    // =========================================================
+
+    private void Update()
+    {
+        // 포탈 이동 연출 중에는 입력 금지
+        if (transitionPlaying)
+            return;
+
+
+        // 플레이어가 트리거 밖에 있으면 입력 금지
+        if (!playerInside)
+            return;
+
+
+        if (transitionPanel == null)
+            return;
+
+
+        // 이미 씬 전환 UI가 열려 있다면 무시
+        if (transitionPanel.IsOpen)
+            return;
+
+
+        // 인벤토리, NPC 대화, 상점 등의
+        // 다른 UI가 열려 있으면 입력 금지
+        if (PlayerGameplayControl.GameplayLocked)
+            return;
+
+
+        if (Keyboard.current == null)
+            return;
+
+
+        // =====================================================
+        // E키 입력
+        // =====================================================
+
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            transitionPanel.Open(
+                destinationSceneName,
+                destinationDisplayName,
+                playerControl,
+                this
+            );
+
+
+            Debug.Log(
+                "[ScenePortal] E키 입력 / 씬 전환 UI 열기"
+            );
+        }
+    }
+
+
+    // =========================================================
     // Player 진입
     // =========================================================
 
@@ -169,8 +226,7 @@ public class ScenePortal : MonoBehaviour
 
 
         PlayerStats playerStats =
-            other.GetComponentInParent
-            <PlayerStats>();
+            other.GetComponentInParent<PlayerStats>();
 
 
         if (playerStats == null)
@@ -186,23 +242,11 @@ public class ScenePortal : MonoBehaviour
 
 
         playerControl =
-            playerStats.GetComponent
-            <PlayerGameplayControl>();
+            playerStats.GetComponent<PlayerGameplayControl>();
 
 
-        if (transitionPanel == null)
-            return;
-
-
-        // =====================================================
-        // 이 Portal 자신도 UI에게 전달
-        // =====================================================
-
-        transitionPanel.Open(
-            destinationSceneName,
-            destinationDisplayName,
-            playerControl,
-            this
+        Debug.Log(
+            "[ScenePortal] Player 진입 / E키 입력 대기"
         );
     }
 
