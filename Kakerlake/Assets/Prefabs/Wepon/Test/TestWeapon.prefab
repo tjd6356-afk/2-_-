@@ -171,7 +171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TestWeapon
   weaponId: weapon_001
   weaponName: Weapon
-  weaponType: 0
+  weaponType: 1
   currentMode: 0
   attackPoint: {fileID: 8561254899223168961}
   weaponVisual: {fileID: 7323947540708326725}
@@ -187,7 +187,7 @@ MonoBehaviour:
   verticalAttackRange: 4.5
   verticalAttackWidth: 1.5
   verticalAttackHeight: 4
-  verticalDamageMultiplier: 3.5
+  verticalDamageMultiplier: 4.5
   verticalSwingDuration: 0.09
   verticalStartAngle: -100
   verticalEndAngle: 13
@@ -222,16 +222,16 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   comboInputWindow: 0.6
-  firstAttackPause: 0.15
-  firstAdvanceDistance: 1.2
-  secondAttackPause: 0.1
-  secondRaiseDuration: 0.12
-  secondSwingDuration: 0.17
-  secondAdvanceDistance: 1.6
+  firstAttackPause: 0.25
+  firstAdvanceDistance: 1.8
+  secondAttackPause: 0.2
+  secondRaiseDuration: 0.19
+  secondSwingDuration: 0.09
+  secondAdvanceDistance: 2.5
   secondDamageMultiplier: 1.8
-  finisherPrepareDuration: 0.12
-  finisherSpinDuration: 0.42
-  finisherRadius: 3.5
+  finisherPrepareDuration: 0.2
+  finisherSpinDuration: 0.15
+  finisherRadius: 4
   finisherHeight: 2
   finisherDamageMultiplier: 2.5
   finisherRecovery: 0.25
