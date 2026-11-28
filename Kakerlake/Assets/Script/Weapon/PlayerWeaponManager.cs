@@ -20,25 +20,26 @@ public class PlayerWeaponManager : MonoBehaviour
 
 
     // =========================================================
-    // Ranged Weapon Aim Pitch (총기류 상하 조준 회전)
+    // Ranged Weapon Aim Tracking (총기류 상하좌우 조준 회전)
     // =========================================================
 
-    [Header("Ranged Weapon Aim Pitch (총기류 상하 조준)")]
-    [Tooltip("원거리 무기 조준 시 총구가 시점을 따라 위아래로 회전할지 여부")]
-    [SerializeField] private bool enableRangedAimPitch = true;
+    [Header("Ranged Weapon Aim Tracking (총기류 상하좌우 조준)")]
+    [Tooltip("원거리 무기 조준 시 총구가 시점을 따라 상하좌우로 회전할지 여부")]
+    [SerializeField] private bool enableRangedAimTracking = true;
 
-    [Tooltip("체크 시 우클릭 조준 중에만 총구가 위아래로 움직이고, 해제하면 평상시에도 항상 시점을 따라갑니다.")]
-    [SerializeField] private bool pitchOnlyWhileAiming = true;
+    [Tooltip("체크 시 우클릭 조준 중에만 총구가 움직이고, 해제하면 평상시에도 항상 시점을 따라갑니다.")]
+    [SerializeField] private bool trackOnlyWhileAiming = true;
 
-    [Tooltip("상하 조준 회전을 적용하지 않을 무기 타입 (근접 무기 제외용)")]
+    [Tooltip("조준 회전을 적용하지 않을 무기 타입 (근접 무기 제외용)")]
     [SerializeField]
-    private List<WeaponType> pitchExcludedWeaponTypes =
+    private List<WeaponType> aimExcludedWeaponTypes =
         new List<WeaponType> { WeaponType.Melee };
 
-    [Tooltip("조준 시 총구가 위아래로 따라가는 회전 속도")]
+    [Tooltip("조준 시 총구가 시점을 따라가는 회전 속도")]
     [Min(1f)]
-    [SerializeField] private float aimPitchRotateSpeed = 20f;
+    [SerializeField] private float aimRotateSpeed = 20f;
 
+    [Header("Aim Angle Limits (상하좌우 회전 각도 제한)")]
     [Tooltip("무기가 위쪽으로 들릴 수 있는 최대 각도 (음수 = 위쪽)")]
     [Range(-85f, 0f)]
     [SerializeField] private float minAimPitch = -70f;
@@ -46,6 +47,26 @@ public class PlayerWeaponManager : MonoBehaviour
     [Tooltip("무기가 아래쪽으로 숙여질 수 있는 최대 각도 (양수 = 아래쪽)")]
     [Range(0f, 85f)]
     [SerializeField] private float maxAimPitch = 70f;
+
+    [Tooltip("무기가 왼쪽으로 돌아갈 수 있는 최대 각도 (음수 = 왼쪽)")]
+    [Range(-90f, 0f)]
+    [SerializeField] private float minAimYaw = -60f;
+
+    [Tooltip("무기가 오른쪽으로 돌아갈 수 있는 최대 각도 (양수 = 오른쪽)")]
+    [Range(0f, 90f)]
+    [SerializeField] private float maxAimYaw = 60f;
+
+    [Header("Aim Target Convergence (에임 지점 수렴 설정)")]
+    [Tooltip("화면 중앙 조준선 Raycast 최대 거리")]
+    [Min(5f)]
+    [SerializeField] private float maxAimDistance = 100f;
+
+    [Tooltip("벽에 너무 바짝 붙었을 때 총구가 과도하게 꺾이지 않도록 유지할 최소 거리")]
+    [Min(0.5f)]
+    [SerializeField] private float minConvergenceDistance = 2.0f;
+
+    [Tooltip("조준 지점 계산에 사용할 레이어")]
+    [SerializeField] private LayerMask aimMask = ~0;
 
     [Tooltip("(선택) 조준 시 Weapon Mount의 로컬 위치 오프셋 (기본 0,0,0)")]
     [SerializeField] private Vector3 aimMountPositionOffset = Vector3.zero;
@@ -59,11 +80,12 @@ public class PlayerWeaponManager : MonoBehaviour
     private WeaponPickup nearbyPickup;
 
 
-    // Aim Pitch Runtime
+    // Aim Tracking Runtime
     private ThirdPersonCamera thirdPersonCamera;
     private Vector3 defaultMountLocalPosition;
     private Quaternion defaultMountLocalRotation = Quaternion.identity;
     private float currentAimPitch;
+    private float currentAimYaw;
     private Vector3 currentMountPositionOffset;
 
 
@@ -223,59 +245,66 @@ public class PlayerWeaponManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        UpdateRangedAimPitch();
+        UpdateRangedAimTracking();
     }
 
 
     // =========================================================
-    // 총기류 상하 조준 회전 처리
+    // 총기류 상하좌우 조준 회전 처리
     // =========================================================
 
-    private void UpdateRangedAimPitch()
+    private void UpdateRangedAimTracking()
     {
         if (weaponMount == null)
             return;
 
         float targetPitch = 0f;
+        float targetYaw = 0f;
         Vector3 targetPosOffset = Vector3.zero;
 
-        if (CanApplyRangedAimPitch())
+        if (CanApplyRangedAimTracking())
         {
-            targetPitch = GetCameraLocalPitch();
+            GetCameraLocalAimAngles(out targetPitch, out targetYaw);
             targetPosOffset = aimMountPositionOffset;
         }
 
         currentAimPitch = Mathf.LerpAngle(
             currentAimPitch,
             targetPitch,
-            aimPitchRotateSpeed * Time.deltaTime
+            aimRotateSpeed * Time.deltaTime
+        );
+
+        currentAimYaw = Mathf.LerpAngle(
+            currentAimYaw,
+            targetYaw,
+            aimRotateSpeed * Time.deltaTime
         );
 
         currentMountPositionOffset = Vector3.Lerp(
             currentMountPositionOffset,
             targetPosOffset,
-            aimPitchRotateSpeed * Time.deltaTime
+            aimRotateSpeed * Time.deltaTime
         );
 
         weaponMount.localRotation =
             defaultMountLocalRotation *
-            Quaternion.Euler(currentAimPitch, 0f, 0f);
+            Quaternion.Euler(currentAimPitch, currentAimYaw, 0f);
 
         weaponMount.localPosition =
             defaultMountLocalPosition +
             currentMountPositionOffset;
     }
 
-    private bool CanApplyRangedAimPitch()
+    private bool CanApplyRangedAimTracking()
     {
-        if (!enableRangedAimPitch)
+        if (!enableRangedAimTracking)
             return false;
 
         if (currentWeapon == null)
             return false;
 
-        if (pitchExcludedWeaponTypes != null &&
-            pitchExcludedWeaponTypes.Contains(currentWeapon.WeaponType))
+        if (aimExcludedWeaponTypes != null &&
+            aimExcludedWeaponTypes.Contains(currentWeapon.WeaponType))
         {
             return false;
         }
@@ -286,7 +315,7 @@ public class PlayerWeaponManager : MonoBehaviour
         if (PlayerGameplayControl.GameplayLocked)
             return false;
 
-        if (pitchOnlyWhileAiming)
+        if (trackOnlyWhileAiming)
         {
             bool isAiming =
                 thirdPersonCamera != null
@@ -300,8 +329,11 @@ public class PlayerWeaponManager : MonoBehaviour
         return true;
     }
 
-    private float GetCameraLocalPitch()
+    private void GetCameraLocalAimAngles(out float pitch, out float yaw)
     {
+        pitch = 0f;
+        yaw = 0f;
+
         if (playerCamera == null && Camera.main != null)
         {
             playerCamera = Camera.main;
@@ -309,33 +341,71 @@ public class PlayerWeaponManager : MonoBehaviour
         }
 
         if (playerCamera == null)
-            return 0f;
+            return;
+
+        // 화면 중앙 조준선이 가리키는 월드 목표 지점 계산
+        Ray aimRay = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        float targetDistance = maxAimDistance;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            aimRay,
+            maxAimDistance,
+            aimMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider col = hits[i].collider;
+            if (col == null)
+                continue;
+
+            // 플레이어 본인의 콜라이더는 무시
+            if (col.transform == transform || col.transform.IsChildOf(transform))
+                continue;
+
+            if (hits[i].distance < targetDistance)
+            {
+                targetDistance = hits[i].distance;
+            }
+        }
+
+        targetDistance = Mathf.Max(minConvergenceDistance, targetDistance);
+        Vector3 targetPoint = aimRay.GetPoint(targetDistance);
+
+        Vector3 worldAimDir = targetPoint - weaponMount.position;
+        if (worldAimDir.sqrMagnitude < 0.0001f)
+            return;
 
         Transform referenceParent =
             weaponMount.parent != null
             ? weaponMount.parent
             : transform;
 
-        Vector3 localCamForward =
-            referenceParent.InverseTransformDirection(
-                playerCamera.transform.forward
-            );
+        Vector3 localAimDir =
+            referenceParent.InverseTransformDirection(worldAimDir.normalized);
 
-        if (localCamForward.sqrMagnitude < 0.0001f)
-            return 0f;
+        if (localAimDir.sqrMagnitude < 0.0001f)
+            return;
 
-        localCamForward.Normalize();
+        localAimDir.Normalize();
+
+        float horizontalLength = new Vector2(localAimDir.x, localAimDir.z).magnitude;
 
         float rawPitch =
-            -Mathf.Asin(Mathf.Clamp(localCamForward.y, -0.98f, 0.98f)) *
-            Mathf.Rad2Deg;
+            -Mathf.Atan2(localAimDir.y, horizontalLength) * Mathf.Rad2Deg;
 
-        return Mathf.Clamp(rawPitch, minAimPitch, maxAimPitch);
+        float rawYaw =
+            Mathf.Atan2(localAimDir.x, localAimDir.z) * Mathf.Rad2Deg;
+
+        pitch = Mathf.Clamp(rawPitch, minAimPitch, maxAimPitch);
+        yaw = Mathf.Clamp(rawYaw, minAimYaw, maxAimYaw);
     }
 
     private void ResetWeaponMountTransform()
     {
         currentAimPitch = 0f;
+        currentAimYaw = 0f;
         currentMountPositionOffset = Vector3.zero;
 
         if (weaponMount != null)

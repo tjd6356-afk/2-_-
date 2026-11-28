@@ -1100,6 +1100,18 @@ PrefabInstance:
       propertyPath: thirdPersonCamera
       value: 
       objectReference: {fileID: 1966443908}
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: playerCamera
+      value: 
+      objectReference: {fileID: 1966443905}
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: aimPitchRotateSpeed
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4525119024753954002, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
+      propertyPath: pitchOnlyWhileAiming
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5007453305914519943, guid: aaac80ed2b0703a468fe6e476a8fbafb, type: 3}
       propertyPath: playerCamera
       value: 
