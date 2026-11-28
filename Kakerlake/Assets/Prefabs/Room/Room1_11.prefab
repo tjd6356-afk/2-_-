@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 148685922391135761}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_W
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -42,7 +42,7 @@ GameObject:
   - component: {fileID: 8199591939066459587}
   - component: {fileID: 7797572974615207950}
   - component: {fileID: 4118048227193965953}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BattleTrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -117,6 +117,7 @@ MonoBehaviour:
   maximumFallTime: 5
   aerialSpawnDelayMin: 2
   aerialSpawnDelayMax: 2.2
+  aerialOnlyDelayReduction: 1.9
   aerialSpawnEffectPrefab: {fileID: 7995496726522067502, guid: 03d14ca5dfbf62a4ab6591b53b4adaea, type: 3}
   aerialSpawnHeightMin: 6
   aerialSpawnHeightMax: 7
@@ -137,7 +138,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1420212744033140549}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlacementPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -169,7 +170,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6141500708642105550}
   - component: {fileID: 1227934901158897063}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Room1_11
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -224,7 +225,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3212003372343188261}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_S
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -255,7 +256,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 696613354292360008}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_N
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -328,6 +329,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 4c6ec609863e60744867997dbb85de53, type: 3}
       propertyPath: m_Name
       value: Room1_11
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4c6ec609863e60744867997dbb85de53, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 4c6ec609863e60744867997dbb85de53, type: 3}
       propertyPath: m_TagString

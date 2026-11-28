@@ -286,7 +286,7 @@ MonoBehaviour:
   agent: {fileID: 4175748206305615774}
   suspendDuringHit:
   - {fileID: 344548900188897486}
-  meleeHorizontalSpeed: 30
+  meleeHorizontalSpeed: 35
   meleeLiftSpeed: 3
   meleeStunTime: 0.55
   meleeDamping: 0.6

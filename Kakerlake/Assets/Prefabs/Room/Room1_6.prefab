@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3948639660541370212}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_N
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -42,7 +42,7 @@ GameObject:
   - component: {fileID: 1928998972142854944}
   - component: {fileID: 2018580418601163553}
   - component: {fileID: 1354535369813382628}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BattleTrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -117,6 +117,7 @@ MonoBehaviour:
   maximumFallTime: 5
   aerialSpawnDelayMin: 2
   aerialSpawnDelayMax: 2.2
+  aerialOnlyDelayReduction: 1.9
   aerialSpawnEffectPrefab: {fileID: 7995496726522067502, guid: 03d14ca5dfbf62a4ab6591b53b4adaea, type: 3}
   aerialSpawnHeightMin: 6
   aerialSpawnHeightMax: 7
@@ -136,7 +137,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 900478710972522145}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlacementPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -167,7 +168,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7035830731827362134}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_E
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -199,7 +200,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6524260339866364508}
   - component: {fileID: 2973597133571661258}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Room1_6
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -295,6 +296,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 488e47a658c122641af567a06ab78aac, type: 3}
       propertyPath: m_Name
       value: Room1_6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 488e47a658c122641af567a06ab78aac, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 488e47a658c122641af567a06ab78aac, type: 3}
       propertyPath: m_TagString

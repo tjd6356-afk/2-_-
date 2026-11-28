@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3123005898974082939}
   - component: {fileID: 6288397412696537901}
   - component: {fileID: 3795671477796856216}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BossBattleTrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -78,6 +78,7 @@ MonoBehaviour:
   bossStats: {fileID: 0}
   bossAI: {fileID: 0}
   bossHealthUI: {fileID: 0}
+  bossName: BOSS
 --- !u!1 &7723088611808253194
 GameObject:
   m_ObjectHideFlags: 0
@@ -87,7 +88,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7485099039955585738}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BossRoom1
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -162,6 +163,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 7105589a644d4064698b3e46ff7f39fc, type: 3}
       propertyPath: m_Name
       value: BossRoom1 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7105589a644d4064698b3e46ff7f39fc, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 7105589a644d4064698b3e46ff7f39fc, type: 3}
       propertyPath: m_TagString

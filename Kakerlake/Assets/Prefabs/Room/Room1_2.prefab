@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7452829905271854789}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_W
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3793905689203882999}
   - component: {fileID: 2615082665257933387}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Room1_2
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -96,7 +96,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2994715506063596029}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_E
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -127,7 +127,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 371695561041139971}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlacementPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -158,7 +158,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2298033934814067441}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_N
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -189,7 +189,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6669980634617166384}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrierPoints_S
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -262,6 +262,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 517e0a6076d2b8048b3a3d8908650358, type: 3}
       propertyPath: m_Name
       value: Room1_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 517e0a6076d2b8048b3a3d8908650358, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 517e0a6076d2b8048b3a3d8908650358, type: 3}
       propertyPath: m_IsActive
