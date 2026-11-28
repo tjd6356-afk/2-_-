@@ -154,6 +154,20 @@ MonoBehaviour:
   playerCamera: {fileID: 0}
   characterController: {fileID: 934635378258857864}
   startingWeaponPrefab: {fileID: 5895482793363456999, guid: b1b431a2d3144be48bae817e07c2a640, type: 3}
+  enableRangedAimTracking: 1
+  trackOnlyWhileAiming: 0
+  aimExcludedWeaponTypes: 01000000
+  aimRotateSpeed: 20
+  minAimPitch: -70
+  maxAimPitch: 70
+  minAimYaw: -60
+  maxAimYaw: 60
+  maxAimDistance: 100
+  minConvergenceDistance: 8
+  aimMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  aimMountPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &8235560101869539188
 MonoBehaviour:
   m_ObjectHideFlags: 0
