@@ -181,8 +181,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   stunDuration: 0.2
-  knockbackDistance: 0.5
-  knockbackDuration: 0.12
+  knockbackDistance: 2
+  knockbackDuration: 0.01
   knockbackCurve:
     serializedVersion: 2
     m_Curve:
@@ -286,7 +286,7 @@ MonoBehaviour:
   agent: {fileID: 4175748206305615774}
   suspendDuringHit:
   - {fileID: 344548900188897486}
-  meleeHorizontalSpeed: 14
+  meleeHorizontalSpeed: 30
   meleeLiftSpeed: 3
   meleeStunTime: 0.55
   meleeDamping: 0.6
