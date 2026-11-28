@@ -155,7 +155,7 @@ MonoBehaviour:
   characterController: {fileID: 934635378258857864}
   startingWeaponPrefab: {fileID: 5895482793363456999, guid: b1b431a2d3144be48bae817e07c2a640, type: 3}
   enableRangedAimTracking: 1
-  trackOnlyWhileAiming: 0
+  trackOnlyWhileAiming: 1
   aimExcludedWeaponTypes: 01000000
   aimRotateSpeed: 20
   minAimPitch: -70
