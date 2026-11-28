@@ -207,7 +207,21 @@ public class EnemyStats : MonoBehaviour, IHealth
 
         OnDied?.Invoke();
 
-        Destroy(gameObject);
+        EnemyHitReaction reaction =
+        GetComponent<EnemyHitReaction>();
+
+        if (reaction != null &&
+            reaction.IsReacting)
+        {
+            // 피격 연출이 끝날 때까지
+            // 모델과 Rigidbody를 유지한다.
+
+            Destroy(gameObject, 2f);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
 

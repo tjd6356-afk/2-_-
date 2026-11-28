@@ -473,7 +473,12 @@ public class TestWeapon : WeaponBase
             if ((enemyMask.value & layerBit) == 0) continue;
             IHealth health = hit.GetComponentInParent<IHealth>();
             if (health == null || health.IsDead || !targets.Add(health)) continue;
-            health.TakeDamage(damage);
+            CombatImpact.Apply(
+            health,
+            damage,
+            WeaponType.Melee,
+            impactDirection
+            );
         }
     }
 

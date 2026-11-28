@@ -91,6 +91,8 @@ GameObject:
   - component: {fileID: 3383661770753467687}
   - component: {fileID: 4175748206305615774}
   - component: {fileID: 1838236345115302885}
+  - component: {fileID: 7758906413180123492}
+  - component: {fileID: 8496768376191496802}
   - component: {fileID: 4352824083180150948}
   - component: {fileID: 7822493213012700734}
   m_Layer: 3
@@ -268,6 +270,60 @@ MonoBehaviour:
     minAmount: 1
     maxAmount: 3
   randomDropRadius: 0.5
+--- !u!114 &7758906413180123492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1287184418823599086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78fa7919a20364e458544edcc93a2760, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHitReaction
+  body: {fileID: 7822493213012700734}
+  agent: {fileID: 4175748206305615774}
+  suspendDuringHit:
+  - {fileID: 344548900188897486}
+  meleeHorizontalSpeed: 14
+  meleeLiftSpeed: 3
+  meleeStunTime: 0.55
+  meleeDamping: 0.6
+  weakPushSpeed: 2.5
+  weakStunTime: 0.12
+  weakDamping: 7
+  weakRepeatInterval: 0.18
+  gravityDuringHit: 1
+  waitForGround: 1
+  maxLandingWait: 1.4
+  navMeshRecoveryRadius: 1.5
+  wallMask:
+    serializedVersion: 2
+    m_Bits: 128
+  minWallImpactSpeed: 5
+  debrisEffect: {fileID: 8496768376191496802}
+--- !u!114 &8496768376191496802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1287184418823599086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d4d90d4add9cc54e8144435774e2faa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WallImpactDebris
+  cubePrefab: {fileID: 231994588758506579, guid: 8e11cc8992ab63c409b2e150c263b1ce, type: 3}
+  debrisMaterial: {fileID: 0}
+  debrisCount: 14
+  minSize: 0.12
+  maxSize: 0.35
+  lifeTime: 2.5
+  spreadSpeed: 3
+  liftSpeed: 3
+  debrisLayerName: HitDebris
 --- !u!114 &4352824083180150948
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -305,8 +361,8 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
+  m_UseGravity: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0

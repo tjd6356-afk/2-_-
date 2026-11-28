@@ -895,8 +895,21 @@ public class EnemyAI : MonoBehaviour
     {
         if (enemyStats != null)
         {
-            enemyStats.OnDamaged -=
-                HandleDamaged;
+            enemyStats.OnDamaged -= HandleDamaged;
+        }
+
+        if (stunRoutine != null)
+        {
+            StopCoroutine(stunRoutine);
+
+            stunRoutine = null;
+        }
+
+        isStunned = false;
+
+        if (enemyShooter != null)
+        {
+            enemyShooter.SetStunned(false);
         }
     }
 
@@ -914,6 +927,21 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
+        // 새로운 피격 시스템 사용 중이면
+        // 기존 넉백은 실행하지 않는다.
+
+        EnemyHitReaction reaction =
+            GetComponent<EnemyHitReaction>();
+
+        if (reaction != null &&
+            reaction.isActiveAndEnabled &&
+            (
+                reaction.IsReacting ||
+                CombatImpact.IsApplyingTo(enemyStats)
+            ))
+        {
+            return;
+        }
 
         // Runtime 생성 Player라서 아직 못 찾았다면 재탐색
         if (playerTransform == null)
