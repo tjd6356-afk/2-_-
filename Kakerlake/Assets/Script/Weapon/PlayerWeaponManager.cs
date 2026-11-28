@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -18,12 +19,53 @@ public class PlayerWeaponManager : MonoBehaviour
     [SerializeField] private WeaponBase startingWeaponPrefab;
 
 
+    // =========================================================
+    // Ranged Weapon Aim Pitch (총기류 상하 조준 회전)
+    // =========================================================
+
+    [Header("Ranged Weapon Aim Pitch (총기류 상하 조준)")]
+    [Tooltip("원거리 무기 조준 시 총구가 시점을 따라 위아래로 회전할지 여부")]
+    [SerializeField] private bool enableRangedAimPitch = true;
+
+    [Tooltip("체크 시 우클릭 조준 중에만 총구가 위아래로 움직이고, 해제하면 평상시에도 항상 시점을 따라갑니다.")]
+    [SerializeField] private bool pitchOnlyWhileAiming = true;
+
+    [Tooltip("상하 조준 회전을 적용하지 않을 무기 타입 (근접 무기 제외용)")]
+    [SerializeField]
+    private List<WeaponType> pitchExcludedWeaponTypes =
+        new List<WeaponType> { WeaponType.Melee };
+
+    [Tooltip("조준 시 총구가 위아래로 따라가는 회전 속도")]
+    [Min(1f)]
+    [SerializeField] private float aimPitchRotateSpeed = 20f;
+
+    [Tooltip("무기가 위쪽으로 들릴 수 있는 최대 각도 (음수 = 위쪽)")]
+    [Range(-85f, 0f)]
+    [SerializeField] private float minAimPitch = -70f;
+
+    [Tooltip("무기가 아래쪽으로 숙여질 수 있는 최대 각도 (양수 = 아래쪽)")]
+    [Range(0f, 85f)]
+    [SerializeField] private float maxAimPitch = 70f;
+
+    [Tooltip("(선택) 조준 시 Weapon Mount의 로컬 위치 오프셋 (기본 0,0,0)")]
+    [SerializeField] private Vector3 aimMountPositionOffset = Vector3.zero;
+
+
     // 현재 생성되어 있는 실제 무기
     private WeaponBase currentWeapon;
 
 
     // 현재 가까이에 있는 무기 Pickup
     private WeaponPickup nearbyPickup;
+
+
+    // Aim Pitch Runtime
+    private ThirdPersonCamera thirdPersonCamera;
+    private Vector3 defaultMountLocalPosition;
+    private Quaternion defaultMountLocalRotation = Quaternion.identity;
+    private float currentAimPitch;
+    private Vector3 currentMountPositionOffset;
+
 
     public WeaponType ActiveWeaponType
     {
@@ -70,6 +112,23 @@ public class PlayerWeaponManager : MonoBehaviour
         {
             playerCamera =
                 Camera.main;
+        }
+
+
+        if (playerCamera != null)
+        {
+            thirdPersonCamera =
+                playerCamera.GetComponent<ThirdPersonCamera>();
+        }
+
+
+        if (weaponMount != null)
+        {
+            defaultMountLocalPosition =
+                weaponMount.localPosition;
+
+            defaultMountLocalRotation =
+                weaponMount.localRotation;
         }
     }
 
@@ -162,6 +221,131 @@ public class PlayerWeaponManager : MonoBehaviour
     }
 
 
+    private void LateUpdate()
+    {
+        UpdateRangedAimPitch();
+    }
+
+
+    // =========================================================
+    // 총기류 상하 조준 회전 처리
+    // =========================================================
+
+    private void UpdateRangedAimPitch()
+    {
+        if (weaponMount == null)
+            return;
+
+        float targetPitch = 0f;
+        Vector3 targetPosOffset = Vector3.zero;
+
+        if (CanApplyRangedAimPitch())
+        {
+            targetPitch = GetCameraLocalPitch();
+            targetPosOffset = aimMountPositionOffset;
+        }
+
+        currentAimPitch = Mathf.LerpAngle(
+            currentAimPitch,
+            targetPitch,
+            aimPitchRotateSpeed * Time.deltaTime
+        );
+
+        currentMountPositionOffset = Vector3.Lerp(
+            currentMountPositionOffset,
+            targetPosOffset,
+            aimPitchRotateSpeed * Time.deltaTime
+        );
+
+        weaponMount.localRotation =
+            defaultMountLocalRotation *
+            Quaternion.Euler(currentAimPitch, 0f, 0f);
+
+        weaponMount.localPosition =
+            defaultMountLocalPosition +
+            currentMountPositionOffset;
+    }
+
+    private bool CanApplyRangedAimPitch()
+    {
+        if (!enableRangedAimPitch)
+            return false;
+
+        if (currentWeapon == null)
+            return false;
+
+        if (pitchExcludedWeaponTypes != null &&
+            pitchExcludedWeaponTypes.Contains(currentWeapon.WeaponType))
+        {
+            return false;
+        }
+
+        if (playerStats != null && playerStats.IsDead)
+            return false;
+
+        if (PlayerGameplayControl.GameplayLocked)
+            return false;
+
+        if (pitchOnlyWhileAiming)
+        {
+            bool isAiming =
+                thirdPersonCamera != null
+                ? thirdPersonCamera.IsAiming
+                : (Mouse.current != null && Mouse.current.rightButton.isPressed);
+
+            if (!isAiming)
+                return false;
+        }
+
+        return true;
+    }
+
+    private float GetCameraLocalPitch()
+    {
+        if (playerCamera == null && Camera.main != null)
+        {
+            playerCamera = Camera.main;
+            thirdPersonCamera = playerCamera.GetComponent<ThirdPersonCamera>();
+        }
+
+        if (playerCamera == null)
+            return 0f;
+
+        Transform referenceParent =
+            weaponMount.parent != null
+            ? weaponMount.parent
+            : transform;
+
+        Vector3 localCamForward =
+            referenceParent.InverseTransformDirection(
+                playerCamera.transform.forward
+            );
+
+        if (localCamForward.sqrMagnitude < 0.0001f)
+            return 0f;
+
+        localCamForward.Normalize();
+
+        float rawPitch =
+            -Mathf.Asin(Mathf.Clamp(localCamForward.y, -0.98f, 0.98f)) *
+            Mathf.Rad2Deg;
+
+        return Mathf.Clamp(rawPitch, minAimPitch, maxAimPitch);
+    }
+
+    private void ResetWeaponMountTransform()
+    {
+        currentAimPitch = 0f;
+        currentMountPositionOffset = Vector3.zero;
+
+        if (weaponMount != null)
+        {
+            weaponMount.localPosition = defaultMountLocalPosition;
+            weaponMount.localRotation = defaultMountLocalRotation;
+        }
+    }
+
+
     // =========================================================
     // 새로운 무기 장착
     // =========================================================
@@ -200,6 +384,10 @@ public class PlayerWeaponManager : MonoBehaviour
             currentWeapon =
                 null;
         }
+
+
+        // 무기 교체 시 Mount 회전/위치 초기화
+        ResetWeaponMountTransform();
 
 
         // ==========================================
