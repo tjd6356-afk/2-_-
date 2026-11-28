@@ -1,3 +1,4 @@
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -34,7 +35,11 @@ public class NPCInteraction : MonoBehaviour
 
     private bool firstDialogueCompleted;
 
+    private bool isPlayingReactionDialogue;
+
     private PlayerGameplayControl playerControl;
+
+    private IHealth npcHealth;
 
 
     private void Awake()
@@ -51,11 +56,19 @@ public class NPCInteraction : MonoBehaviour
             interactionCamera =
                 Camera.main;
         }
+
+
+        npcHealth =
+            GetComponent<IHealth>();
     }
 
 
     private void Update()
     {
+        if (IsNPCDead())
+            return;
+
+
         // ==========================================
         // Player가 NPC 범위 안에 있어야 함
         // ==========================================
@@ -112,13 +125,6 @@ public class NPCInteraction : MonoBehaviour
         Ray ray;
 
 
-        // ==========================================
-        // 마우스가 게임에 잠겨있는 상태
-        //
-        // TPS에서는 마우스가 중앙에 잠겨 있으므로
-        // 화면 중앙 십자선 방향으로 검사
-        // ==========================================
-
         if (Cursor.lockState ==
             CursorLockMode.Locked)
         {
@@ -132,13 +138,6 @@ public class NPCInteraction : MonoBehaviour
                         )
                     );
         }
-
-        // ==========================================
-        // 마우스가 자유로운 상태
-        //
-        // 실제 마우스 위치로 검사
-        // ==========================================
-
         else
         {
             Vector2 mousePosition =
@@ -155,10 +154,6 @@ public class NPCInteraction : MonoBehaviour
         }
 
 
-        // ==========================================
-        // Raycast
-        // ==========================================
-
         if (!Physics.Raycast(
                 ray,
                 out RaycastHit hit,
@@ -173,12 +168,6 @@ public class NPCInteraction : MonoBehaviour
         Transform hitTransform =
             hit.collider.transform;
 
-
-        // ==========================================
-        // 클릭한 Collider가 이 NPC인가?
-        //
-        // NPC 루트 또는 NPC의 자식 Collider만 인정
-        // ==========================================
 
         bool clickedThisNPC =
             hitTransform == transform ||
@@ -199,11 +188,15 @@ public class NPCInteraction : MonoBehaviour
 
 
     // =========================================================
-    // 대화 시작
+    // 일반 대화 시작
     // =========================================================
 
     private void StartConversation()
     {
+        if (IsNPCDead())
+            return;
+
+
         if (npcData == null)
         {
             Debug.LogError(
@@ -224,9 +217,8 @@ public class NPCInteraction : MonoBehaviour
         }
 
 
-        // ==========================================
-        // 처음 대화
-        // ==========================================
+        isPlayingReactionDialogue = false;
+
 
         if (!firstDialogueCompleted)
         {
@@ -237,11 +229,6 @@ public class NPCInteraction : MonoBehaviour
                 playerControl
             );
         }
-
-        // ==========================================
-        // 재대화
-        // ==========================================
-
         else
         {
             if (npcData.RepeatDialogue.Count > 0)
@@ -255,8 +242,6 @@ public class NPCInteraction : MonoBehaviour
             }
             else
             {
-                // 반복 대사가 없으면
-                // 첫 대사를 다시 사용
                 dialogueManager.StartDialogue(
                     this,
                     npcData,
@@ -269,16 +254,72 @@ public class NPCInteraction : MonoBehaviour
 
 
     // =========================================================
-    // 첫 대화 완료
+    // 아이템 훔치기 / 오브젝트 훼손 반응 다이얼로그 출력
+    // =========================================================
+
+    public void TriggerReactionDialogue(
+        IReadOnlyList<string> reactionDialogue
+    )
+    {
+        if (IsNPCDead())
+            return;
+
+
+        if (npcData == null || dialogueManager == null)
+            return;
+
+
+        if (reactionDialogue == null || reactionDialogue.Count == 0)
+            return;
+
+
+        if (dialogueManager.IsDialogueOpen)
+            return;
+
+
+        PlayerGameplayControl targetControl =
+            playerControl != null
+            ? playerControl
+            : FindFirstObjectByType<PlayerGameplayControl>();
+
+
+        isPlayingReactionDialogue = true;
+
+
+        dialogueManager.StartDialogue(
+            this,
+            npcData,
+            reactionDialogue,
+            targetControl
+        );
+    }
+
+
+    // =========================================================
+    // 대화 완료
     // =========================================================
 
     public void OnDialogueFinished()
     {
+        // 기믹 반응 다이얼로그 종료 시에는 일반 첫 대화 완료 상태를 건드리지 않음
+        if (isPlayingReactionDialogue)
+        {
+            isPlayingReactionDialogue = false;
+            return;
+        }
+
+
         if (!firstDialogueCompleted)
         {
             firstDialogueCompleted =
                 true;
         }
+    }
+
+
+    private bool IsNPCDead()
+    {
+        return npcHealth != null && npcHealth.IsDead;
     }
 
 

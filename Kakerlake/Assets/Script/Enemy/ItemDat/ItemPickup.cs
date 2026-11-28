@@ -1,3 +1,4 @@
+﻿using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -26,6 +27,8 @@ public class ItemPickup : MonoBehaviour
 
     private bool collected;
 
+    public event Action OnItemCollected;
+
 
     public ItemData Data =>
         itemData;
@@ -43,9 +46,9 @@ public class ItemPickup : MonoBehaviour
     }
 
     public void Initialize(
-    ItemData data,
-    int newAmount = 1
-)
+        ItemData data,
+        int newAmount = 1
+    )
     {
         itemData =
             data;
@@ -76,7 +79,7 @@ public class ItemPickup : MonoBehaviour
             return;
 
         if (PlayerHeldItemController.Instance != null &&
-        PlayerHeldItemController.Instance.HasHeldItems)
+            PlayerHeldItemController.Instance.HasHeldItems)
         {
             return;
         }
@@ -133,6 +136,9 @@ public class ItemPickup : MonoBehaviour
             $"[ItemPickup] 수집 : " +
             $"{itemData.ItemTitle} x{amount}"
         );
+
+
+        OnItemCollected?.Invoke();
 
 
         Destroy(
