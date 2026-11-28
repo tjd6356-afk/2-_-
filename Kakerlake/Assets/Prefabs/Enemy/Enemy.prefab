@@ -178,7 +178,7 @@ MonoBehaviour:
   sightMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  stunDuration: 0.5
+  stunDuration: 0.2
   knockbackDistance: 0.5
   knockbackDuration: 0.12
   knockbackCurve:
